@@ -10,8 +10,6 @@ import Papa from 'papaparse';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import "@fortawesome/fontawesome-svg-core/styles.css";  
 import { faBorderAll, faCamera, faDownload, faHome, faRefresh } from '@fortawesome/free-solid-svg-icons';
-import Sidebar2 from "./posts/Sidebar_test";
-
 
 
 
@@ -46,16 +44,41 @@ ChartJS.register(
   Filler,
 );
 
-function LineChart1() {
+function LineChart1({timeData, valueData}) {
 
-  //updating data in the graph
-  const [timeData, setTimeData] = useState([]);
-  const [valueData, setValueData] = useState([]);
+
+  // //updating data in the graph
+  // var [timeData, setTimeData] = useState([]);
+  // var [valueData, setValueData] = useState([]);
+
   //showing Grid and Points in the graph
   const [showGrid, setGrid] = useState(true);
-  const [showPoints, setShowPoints] = useState(true);
-  
+  const [showPoints, setShowPoints] = useState(true); 
   const chartRef = React.useRef(null);
+
+ 
+
+  // const handleChartActions = (action) => {
+  //   switch (action) {
+  //     case 'upload':
+  //       document.getElementById('uploadfile').click();
+  //       break;
+  //     case 'download':
+  //       handleDownload();
+  //       break;
+  //     case 'resetZoom':
+  //       handleResetZoom();
+  //       break;
+  //     case 'togglePoints':
+  //       setShowPoints(!showPoints);
+  //       break;
+  //     case 'toggleGrid':
+  //       setGrid(!showGrid);
+  //       break;
+  //     default:
+  //       break;
+  //   }
+  // };
 
   const handleResetZoom = () => {
     if (chartRef && chartRef.current) {
@@ -99,6 +122,7 @@ function LineChart1() {
 
         }
         console.log(results)
+        console.log(newTimeData)
         setTimeData(newTimeData);
         setValueData(newValueData);
       }
@@ -273,16 +297,17 @@ function LineChart1() {
 
 return (
     <div className={styles.container2}>
-      <Sidebar2 />
+      <Sidebar />
         <div className={styles.buttonColumn}> 
-          <div>
-            <input style={{backgroundColor: "#e7e7e7", borderRadius: 15, padding: 6, textAlign: "center", marginLeft:"10px", marginTop: "100px", fontSize: 25, fontWeight: "bold"}} type="file" id="uploadfile" accept=".csv"></input>
+          {/* <div>
+            <input style={{ display: "none" }} type="file" id="uploadfile" accept=".csv" onChange={handleUploadConfirm}></input>
+            <button style={{ backgroundColor: "#e7e7e7", borderRadius: 15, padding: 6, textAlign: "center", marginLeft: "10px", marginTop: "100px", fontSize: 25, fontWeight: "bold" }} onClick={() => handleChartActions('upload')}>Upload File</button>
             <div className={styles.buttonText}>The file should contain the data you would like to visualize</div>
-          </div>
-          <div>
+          </div> */}
+          {/* <div>
             <button id="uploadconfirm" style={{backgroundColor: "#e7e7e7",  borderRadius: 20, padding: 20, textAlign: "center", marginLeft:"100px", fontSize: 25, fontWeight: "bold"}} onClick={handleUploadConfirm}>Upload File</button>
             <div className={styles.buttonText}>Confirm the upload of the file and proceed to visualization </div>
-          </div>
+          </div> */}
         </div>
       <div className={styles.card}
           style={{
@@ -305,7 +330,7 @@ return (
       </div> 
     </div>
 );
-
 }
+
 
 export default LineChart1;

@@ -2,7 +2,7 @@ import Head from 'next/head';
 import styles from '../styles/Home.module.css';
 import Sidebar from './posts/Sidebar';
 import Image from 'next/image';
-import Sidebar2 from './posts/Sidebar_test';
+
 
 
 export default function Home() {
@@ -13,7 +13,7 @@ export default function Home() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <Sidebar2 />
+      <Sidebar />
 
       <main className={styles.main}>
         <div className={styles.content}>

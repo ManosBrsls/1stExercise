@@ -1,10 +1,20 @@
-import React from 'react';
+
 import Link from 'next/link';
+import UploadButton from '../Uploadbutton';
+import React, { useEffect, useReducer, useState } from "react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faHome, faChartLine, faChartBar } from '@fortawesome/free-solid-svg-icons';
 import { faChartColumn } from '@fortawesome/free-solid-svg-icons/faChartColumn';
 
-const Sidebar = () => {
+const Sidebar = ({onDataUpload}) => {
+
+  // // State to hold uploaded data
+  // const [uploadedData, setUploadedData] = useState({ timeData: [], valueData: [] });
+
+  // // Function to handle uploaded data
+  // const handleDataUpload = (newTimeData, newValueData) => {
+  //   setUploadedData({ timeData: newTimeData, valueData: newValueData });
+  // };
   return (
     <div style={sidebarStyle}>
       <h2 style={{ marginBottom: '1.5em', color: '#fff', textAlign: 'center' }}>TechBioT</h2>
@@ -33,7 +43,9 @@ const Sidebar = () => {
             </a>
           </Link>
         </li>
-        
+        <li style={menuItemStyle}>
+          <UploadButton onDataUpload={onDataUpload} />
+        </li>
       </ul>
     </div>
   );
