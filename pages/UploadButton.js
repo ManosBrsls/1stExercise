@@ -1,8 +1,13 @@
 
-import React from 'react';
+import React, { useEffect, useReducer, useState } from "react";
+import Papa from 'papaparse';
 
 const UploadButton = ({ onDataUpload }) => {
+   const [timeData, setTimeData] = useState([]);
+   const [valueData, setValueData] = useState([]);
+
   const handleUploadConfirm = () => {
+    console.log("onDataUpload prop:", onDataUpload);
     Papa.parse(document.getElementById('uploadfile').files[0], {
       download: true,
       header: false,
