@@ -7,14 +7,10 @@ import { faHome, faChartLine, faChartBar } from '@fortawesome/free-solid-svg-ico
 import { faChartColumn } from '@fortawesome/free-solid-svg-icons/faChartColumn';
 
 const Sidebar = ({onDataUpload}) => {
+  const handleUpload = (timeData, valueData) => {
+    onDataUpload(timeData, valueData);
+};
 
-  // // State to hold uploaded data
-  // const [uploadedData, setUploadedData] = useState({ timeData: [], valueData: [] });
-
-  // // Function to handle uploaded data
-  // const handleDataUpload = (newTimeData, newValueData) => {
-  //   setUploadedData({ timeData: newTimeData, valueData: newValueData });
-  // };
   return (
     <div style={sidebarStyle}>
       <h2 style={{ marginBottom: '1.5em', color: '#fff', textAlign: 'center' }}>TechBioT</h2>
@@ -44,7 +40,7 @@ const Sidebar = ({onDataUpload}) => {
           </Link>
         </li>
         <li style={menuItemStyle}>
-          <UploadButton onDataUpload={onDataUpload} />
+          <UploadButton onUpload={handleUpload} />
         </li>
       </ul>
     </div>
