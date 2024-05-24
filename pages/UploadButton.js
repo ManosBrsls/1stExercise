@@ -1,13 +1,12 @@
-
 "use client";
 
 import React from 'react';
 import Papa from 'papaparse';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faUpLong, faUpload } from '@fortawesome/free-solid-svg-icons';
+
 
 function UploadButton({ onUpload }) {
     const handleUpload = (event) => {
+        console.log('File input change event triggered');
         const file = event.target.files[0];
         Papa.parse(file, {
             download: true,
@@ -27,6 +26,7 @@ function UploadButton({ onUpload }) {
     };
 
     const handleButtonClick = () => {
+        console.log('Upload button clicked');
         document.getElementById('uploadfile').click();
     };
 
@@ -46,18 +46,16 @@ function UploadButton({ onUpload }) {
                     padding: 6,
                     textAlign: 'center',
                     marginLeft: '10px',
-                    marginTop: '100px',
-                    fontSize: 25,
-                    fontWeight: 'bold'
+                    marginTop: '15px',
+                    fontSize: 10,
+                    fontWeight: 'bold',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                 }}
                 onClick={handleButtonClick}
             >
-            <FontAwesomeIcon 
-                icon={faUpload}
-                style={iconStyle}
-                fontSize={"3.5em"}
-            />
-                Upload File
+                Upload
             </button>
         </div>
     );
