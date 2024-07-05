@@ -71,12 +71,12 @@
     border-color 0.15s ease;
 }
 
-.card:hover,
+/* .card:hover,
 .card:focus,
 .card:active {
   color: #0070f3;
   border-color: #0070f3;
-}
+} */
 
 .card h3 {
   margin: 0 0 1rem 0;
@@ -113,11 +113,6 @@
 	flex-wrap: wrap; 
   margin-left: 1000px;
 }
-
-.container4 {
-  display: flex;
-}
-
 
 
 .logoContainer {
@@ -217,4 +212,31 @@
 
 .menuItemStyle:hover {
   background-color: #5a5757;
+}
+
+
+.label-black {
+  color: rgb(202, 13, 13);
+  
+}
+
+.container5{
+  --h5w-colorBar-ticks--color:white;
+  --h5w-tickLabels--color: white;
+  --h5w-ticks-color: white;
+  --h5w-tickLabels--color: #fcfcfc;
+  --h5w-axisLabels--color:#fcfcfc;
+  --h5w-grid--color: white;
+  --h5w-axisLabels--fontWeight: 100;
+  --h5w-tooltip--bgColor: rgba(255, 255, 255, 0.9);
+  --h5w-tickLabels--fontSize: 0.99em;
+  --h5w-grid--opacity: 0.6;
+  --h5w-colorBar-ticks--color:white;
+  --h5w-colorBar-tickLabels--fontSize: 0.9em;
+  --h5w-colorBar-bounds--color: #ffffff;
+  --h5w-colorBar-bounds--fontSize: 0.7em;
+}
+
+.container4{
+  --h5w-toolbar--bgColor: red;
 }

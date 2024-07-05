@@ -23,6 +23,7 @@ const handleUploadButtonClick = (event) => {
     event.stopPropagation();
 };
 
+
   return (
     <div style={sidebarStyle}>
       <h2 style={{ marginBottom: '1.5em', color: '#fff', textAlign: 'center' }}>TechBioT</h2>
@@ -55,7 +56,14 @@ const handleUploadButtonClick = (event) => {
               </div>
             )}
           </li>
-        
+          <li className={styles.menuItemStyle}>                 
+          <Link legacyBehavior href="/Heatmap">
+           <a style={linkStyle}>
+            <FontAwesomeIcon icon={faChartLine} style={iconStyle} />
+              GC IMS
+            </a>
+          </Link>
+        </li>
       </ul>
     </div>
   );

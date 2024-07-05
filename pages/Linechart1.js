@@ -260,7 +260,7 @@ return (
           }}
         >
           <div >
-            <button style={{ backgroundColor: "#e7e7e7", borderRadius: 15, padding: 6, textAlign: "center", marginLeft: "10px" }} onClick={handleDownload}><FontAwesomeIcon icon={faCamera} size="lg" className={styles.iconsmall}/>Export Chart</button>
+            <button style={{ backgroundColor: "#e7e7e7", borderRadius: 15, padding: 6, textAlign: "center", marginLeft: "10px" }} onClick={handleDownload}><FontAwesomeIcon icon={faCamera} size="lg" className={styles.iconsmall}/>Snap Shot</button>
             <Line ref={chartRef} data={data} options={options}></Line>
             <button style={{backgroundColor: "#e7e7e7",  borderRadius: 15, padding: 6, textAlign: "center"}} onClick={handleResetZoom}><FontAwesomeIcon icon={faRefresh} size="lg" />Reset Zoom</button>
             <button style={{backgroundColor: "#e7e7e7",  borderRadius: 15, padding: 6, textAlign: "center", marginLeft:"10px"}} onClick={() => setShowPoints(!showPoints)}><FontAwesomeIcon icon={faCircleDot} size="lg" />Show/Hide Points</button>
