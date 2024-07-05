@@ -7,7 +7,7 @@ import Image from 'next/image';
 
 export default function Home() {
   return (
-    <div className={styles.container4}>
+    <div className={styles.container4} >
       <Head>
         <title>Create Next App</title>
         <link rel="icon" href="/favicon.ico" />
