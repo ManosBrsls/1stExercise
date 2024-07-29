@@ -21,6 +21,7 @@
     "echarts": "^5.5.0",
     "html-to-image": "^1.11.11",
     "jsfive": "^0.3.14",
+    "ndarray": "^1.0.19",
     "next": "latest",
     "papaparse": "^5.4.1",
     "plotly.js": "^2.31.1",

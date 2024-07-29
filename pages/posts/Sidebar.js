@@ -1,37 +1,48 @@
+"use client"
+
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faHome, faChartLine } from '@fortawesome/free-solid-svg-icons';
 import UploadButton from '../UploadButton';
 import styles from "../../styles/Home.module.css";
+import GCIMSUploadButton from '../GcImsUploadButton';
 
 
 
-const Sidebar = ({onDataUpload}) => {
-  const handleUpload = (timeData, valueData) => {
-    console.log('Data uploaded', timeData, valueData);
-    onDataUpload(timeData, valueData);
-};
+const Sidebar = ({ onDataUpload, onSelectDataset, onGCIMSDataUpload }) => {
+  const [datasets, setDatasets] = useState({});
+  const [isIMSVisible, setIMSVisible] = useState(false);
+  const [isGCIMSVisible, setGCIMSVisible] = useState(false);
 
-const [isDropDownVisible, setDropDownVisible] = useState(false);
+  const handleUpload = (filename, timeData, valueData) => {
+    setDatasets((prevDatasets) => ({
+      ...prevDatasets,
+      [filename]: { timeData, valueData },
+    }));
+    onDataUpload(Object.keys(datasets));
+  };
 
-const handleIMSClick = (event) => {
-    setDropDownVisible(!isDropDownVisible);
-};
+  const handleIMSClick = () => {
+    setIMSVisible(!isIMSVisible);
+  };
 
-const handleUploadButtonClick = (event) => {
-    event.stopPropagation();
-};
+  const handleGCIMSClick = () => {
+    setGCIMSVisible(!isGCIMSVisible);
+  };
 
+  const handleDatasetClick = (filename) => {
+    onSelectDataset(datasets[filename].timeData, datasets[filename].valueData);
+  };
 
   return (
     <div style={sidebarStyle}>
       <h2 style={{ marginBottom: '1.5em', color: '#fff', textAlign: 'center' }}>TechBioT</h2>
       <ul style={{ listStyle: 'none', padding: 0 }}>
-        <li className={styles.menuItemStyle}>                 
+        <li className={styles.menuItemStyle}>
           <Link legacyBehavior href="/">
-           <a style={linkStyle}>
-            <FontAwesomeIcon icon={faHome} style={iconStyle} />
+            <a style={linkStyle}>
+              <FontAwesomeIcon icon={faHome} style={iconStyle} />
               Home
             </a>
           </Link>
@@ -39,30 +50,51 @@ const handleUploadButtonClick = (event) => {
         <li className={styles.menuItemStyle} onClick={handleIMSClick}>
           <a style={linkStyle}>
             <FontAwesomeIcon icon={faChartLine} style={iconStyle} />
-              IMS
+            IMS
           </a>
-          {isDropDownVisible && (
-              <div className={styles.dropdownMenu}>
-                  <Link legacyBehavior href="/Linechart1">
-                      <a className={styles.dropdownItem}>
-                          <span style={dropdownTextStyle}>IMS Graph</span>
-                          <FontAwesomeIcon icon={faChartLine} style={{ ...dropdownIconStyle, fontSize: '20px', width: '20px', height: '20px' }} />
-                      </a>
-                  </Link>
-                  <a className={styles.dropdownItem} onClick={handleUploadButtonClick}>
-                      <span style={dropdownTextStyle}>Upload File</span>
-                          <UploadButton onUpload={handleUpload} />
-                  </a>
-              </div>
-            )}
-          </li>
-          <li className={styles.menuItemStyle}>                 
-          <Link legacyBehavior href="/Heatmap">
-           <a style={linkStyle}>
+          {isIMSVisible && (
+            <div className={styles.dropdownMenu}>
+              <Link legacyBehavior href="/Linechart1">
+                <a className={styles.dropdownItem}>
+                  <span style={dropdownTextStyle}>IMS Graph</span>
+                  <FontAwesomeIcon icon={faChartLine} style={{ ...dropdownIconStyle, fontSize: '20px', width: '20px', height: '20px' }} />
+                </a>
+              </Link>
+              <a className={styles.dropdownItem} onClick={(e) => e.stopPropagation()}>
+                <span style={dropdownTextStyle}>Upload File</span>
+                <UploadButton onUpload={handleUpload} />
+              </a>
+              {Object.keys(datasets).map((filename) => (
+                <a
+                  key={filename}
+                  className={styles.dropdownItem}
+                  onClick={() => handleDatasetClick(filename)}
+                >
+                  <span style={dropdownTextStyle}>{filename}</span>
+                </a>
+              ))}
+            </div>
+          )}
+        </li>
+        <li className={styles.menuItemStyle} onClick={handleGCIMSClick}>
+          <a style={linkStyle}>
             <FontAwesomeIcon icon={faChartLine} style={iconStyle} />
-              GC IMS
-            </a>
-          </Link>
+            GC IMS
+          </a>
+          {isGCIMSVisible && (
+            <div className={styles.dropdownMenu}>
+              <Link legacyBehavior href="/Heatmap">
+                <a className={styles.dropdownItem}>
+                  <span style={dropdownTextStyle}>GC IMS Graph</span>
+                  <FontAwesomeIcon icon={faChartLine} style={{ ...dropdownIconStyle, fontSize: '20px', width: '20px', height: '20px' }} />
+                </a>
+              </Link>
+              <a className={styles.dropdownItem} onClick={(e) => e.stopPropagation()}>
+                <span style={dropdownTextStyle}>Upload File</span>
+                <GCIMSUploadButton onUpload={onGCIMSDataUpload} />
+              </a>
+            </div>
+          )}
         </li>
       </ul>
     </div>
@@ -78,10 +110,6 @@ const sidebarStyle = {
   borderRight: '10px solid #333',
   boxShadow: '5px 0px 15px rgba(0, 0, 0, 0.3)',
   transition: 'width 0.9s ease',
-};
-
-const menuItemStyle = {
-  marginBottom: '40px',
 };
 
 const linkStyle = {
@@ -110,9 +138,9 @@ const dropdownIconStyle = {
   marginLeft: '8px',
   display: 'flex',
   alignItems: 'center',
-  fontSize: '12px', // Attempting to decrease icon size
-  width: '12px', // Explicitly setting width
-  height: '12px', // Explicitly setting height
+  fontSize: '12px',
+  width: '12px',
+  height: '12px',
 };
 
 export default Sidebar;

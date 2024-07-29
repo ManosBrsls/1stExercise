@@ -237,17 +237,20 @@ function LineChart1() {
     },   
   };
 
-  const handleDataUpload = (newTimeData, newValueData) => {
+  const handleDataUpload = (filenames) => {
+    // Nothing to do here in this version
+  };
+
+  const handleSelectDataset = (newTimeData, newValueData) => {
     setTimeData(newTimeData);
     setValueData(newValueData);
-};
-
+  };
   
 
 
 return (
     <div className={styles.container2}>
-      <Sidebar onDataUpload={handleDataUpload}/>
+      <Sidebar onDataUpload={handleDataUpload} onSelectDataset={handleSelectDataset}/>
       <div className={styles.card}
           style={{
             borderRadius: "40px",
