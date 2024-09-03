@@ -23,6 +23,7 @@ const Sidebar = ({ onDataUpload, onSelectDataset, onGCIMSDataUpload }) => {
     onDataUpload(Object.keys(datasets));
   };
 
+
   const handleIMSClick = () => {
     setIMSVisible(!isIMSVisible);
   };
@@ -31,7 +32,7 @@ const Sidebar = ({ onDataUpload, onSelectDataset, onGCIMSDataUpload }) => {
     setGCIMSVisible(!isGCIMSVisible);
   };
 
-  const handleDatasetClick = (filename) => {
+  const handleIMSDatasetClick = (filename) => {
     onSelectDataset(datasets[filename].timeData, datasets[filename].valueData);
   };
 
@@ -68,7 +69,7 @@ const Sidebar = ({ onDataUpload, onSelectDataset, onGCIMSDataUpload }) => {
                 <a
                   key={filename}
                   className={styles.dropdownItem}
-                  onClick={() => handleDatasetClick(filename)}
+                  onClick={() => handleIMSDatasetClick(filename)}
                 >
                   <span style={dropdownTextStyle}>{filename}</span>
                 </a>

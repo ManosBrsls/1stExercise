@@ -19,7 +19,7 @@ function HeatmapUploader() {
   const [invertColorMap, setInvertColorMap] = useState(false);
   const [scaleType, setScaleType] = useState('linear');
   const [showGrid, setShowGrid] = useState(false);
-
+  
   const handleGCIMSDataUpload = (filename, buffer) => {
     try {
       const h5File = new jsfive.File(buffer);
@@ -48,7 +48,7 @@ function HeatmapUploader() {
 
   return (
     <div className={styles.container2}>
-      <Sidebar onGCIMSDataUpload={handleGCIMSDataUpload}/>
+      <Sidebar onGCIMSDataUpload={handleGCIMSDataUpload} />
       <div className={styles.card}
           style={{
             borderRadius: "40px",
