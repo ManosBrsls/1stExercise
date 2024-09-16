@@ -1,5 +1,4 @@
 "use client";
-
 import React, { useState } from 'react';
 import ndarray from 'ndarray';
 import { HeatmapVis, getDomain, Toolbar, DomainWidget, ColorMapSelector, ScaleSelector, Separator, ToggleBtn, SnapshotBtn, LineVis } from '@h5web/lib';
@@ -12,6 +11,7 @@ import "@fortawesome/fontawesome-svg-core/styles.css";
 
 function HeatmapUploader() {
   const [heatmapData, setHeatmapData] = useState(null);
+  const [lineData, setLineData] = useState(null); 
   const [error, setError] = useState(null);
   const [customDomain, setCustomDomain] = useState([null, null]);
   const [colorMap, setColorMap] = useState('Viridis');
@@ -20,44 +20,45 @@ function HeatmapUploader() {
   const [showGrid, setShowGrid] = useState(false);
   const [viewMode, setViewMode] = useState('heatmap');
 
+  
   const handleGCIMSDataUpload = (filename, buffer) => {
     try {
+      
       const h5File = new jsfive.File(buffer);
-      const driftTimeDataset = h5File.get('drift_time').value;
-      const retTimeDataset = h5File.get('ret_time').value;
-      const valuesDataset = h5File.get('values').value;
 
-      if (!Array.isArray(driftTimeDataset) || !Array.isArray(retTimeDataset) || !Array.isArray(valuesDataset)) {
-        throw new Error('One or more datasets are not arrays');
-      }
+      const driftTimeDataset = h5File.get('drift_time');
+      const retTimeDataset = h5File.get('ret_time');
+      const valuesDataset = h5File.get('values');
 
-      const driftTime = Array.from(driftTimeDataset);
-      const retTime = Array.from(retTimeDataset);
-      const values = Array.from(valuesDataset);
-
-      // console.log(driftTime)
-      // console.log(retTime)
-      // console.log(values)
-
-      const shape = [retTime.length, driftTime.length];
-      console.log(shape)
-      const flatValues = values.flat(Infinity);
       
-      const dataArray = ndarray(flatValues, shape);
+      
+      const dataArray = ndarray(valuesDataset.value, valuesDataset.shape);
+      const driftTimeArray = ndarray(driftTimeDataset.value, driftTimeDataset.shape);
+      const retTimeArray = ndarray(retTimeDataset.value, retTimeDataset.shape);
+      
+      // Get the domain (min and max values) of the data for scaling the heatmap
       const domain = getDomain(dataArray);
-
-      console.log(dataArray)
-      const firstRowOfValues = values.slice(0, driftTime.length);
-      console.log(firstRowOfValues)
       
+      // Store the data and domain in state
+      setHeatmapData({ dataArray, domain, driftTimeArray, retTimeArray });
 
-      setHeatmapData({ dataArray, domain, firstRowOfValues});
+      // Optionally, set default line data (e.g., first row of the heatmap)
+      const defaultLineData = dataArray.pick(0, null); 
+      setLineData(defaultLineData);
+
     } catch (err) {
-      console.error('Failed to process file:', err);
-      setError(err.message);
+      console.error("Error processing file:", err);
+      setError('Error processing file.');
     }
-    
   };
+
+  // // Function to handle line selection (for example, a row from the heatmap)
+  // const handleLineSelection = (index) => {
+  //   if (heatmapData) {
+  //     const selectedLineData = heatmapData.dataArray.pick(index, 550); // Pick the row at 'index'
+  //     setLineData(selectedLineData);
+  //   }
+  // };
 
   return (
     <div className={styles.container2}>
@@ -70,7 +71,6 @@ function HeatmapUploader() {
           marginTop: "50px",
           cursor: "pointer",
         }}
-        
       >
         {heatmapData && (
           <div>
@@ -109,53 +109,47 @@ function HeatmapUploader() {
               />
               <Separator />
             </Toolbar>
+
             <div style={{ display: 'flex', height: '30rem', width: '55rem', backgroundColor: "#084072" }}>
               {viewMode === 'heatmap' ? (
-                <HeatmapVis
-                  className={styles.container5}
-                  dataArray={heatmapData.dataArray}
-                  domain={ heatmapData.domain}
-                  aspect="auto"
-                  showGrid={showGrid}
-                  colorMap={colorMap}
+              <HeatmapVis
+                className={styles.container5}
+                dataArray={heatmapData.dataArray}
+                domain={customDomain[0] === null ? heatmapData.domain : customDomain}
+                aspect="auto"
+                showGrid={showGrid}
+                colorMap={colorMap}
+                scaleType={scaleType}
+                invertColorMap={invertColorMap}
+                interactions={{
+                  selectToZoom: {
+                    modifierKey: "Shift"
+                  },
+                  xAxisZoom: false,
+                  yAxisZoom: false
+                }}
+              />
+            ) : (viewMode === 'line' && lineData && (
+                <LineVis
+                  className={styles.container6}
+                  dataArray={lineData}
+                  domain={[0, 50]}
                   scaleType={scaleType}
-                  invertColorMap={invertColorMap}
-                  interactions={{
-                    selectToZoom: {
-                      modifierKey: "Shift"
-                    },
-                    xAxisZoom: false,
-                    yAxisZoom: false
+                  abscissaParams={{
+                    values: heatmapData.driftTimeArray,  // Use drift_time as x-axis for line plot
+                    label: 'Drift Time'
                   }}
                 />
-              ) : (viewMode === 'line'  &&  (
-                  <LineVis
-                    className={styles.container5}
-                    abscissaParams={{
-                      values: heatmapData.values,
-                      label: 'Drift Time',
-                    }}
-                    ordinatesParams={[
-                      {
-                        values: heatmapData.firstRowOfValues,
-                        label: 'Retention Time',
-                      }
-                    ]}
-                    dataArray={heatmapData.dataArray}
-                    domain={customDomain[0] === null ? heatmapData.domain : customDomain}
-                    scaleType={scaleType}
-                    curveType="OnlyLine"
-                    showErrors={false}
-                  />
-                )
-              )}
-            </div>
+            )
+            )}
           </div>
+        </div>
         )}
-        {error && <div className={styles.error}>Error: {error}</div>}
       </div>
     </div>
   );
 };
 
 export default HeatmapUploader;
+
+

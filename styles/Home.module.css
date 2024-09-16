@@ -240,3 +240,13 @@
   --h5w-colorBar-bounds--fontSize: 0.7em;
 }
 
+.container6{
+  --h5w-colorBar-ticks--color:white;
+  --h5w-tickLabels--color: white;
+  --h5w-ticks-color: white;
+  --h5w-tickLabels--color: #fcfcfc;
+  --h5w-axisLabels--color:#fcfcfc;
+  --h5w-grid--color: white;
+  --h5w-line--color:rgb(250, 11, 11);
+}
+
