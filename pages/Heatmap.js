@@ -19,6 +19,7 @@ function HeatmapUploader() {
   const [error, setError] = useState(null);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [customDomain, setCustomDomain] = useState([null, null]);
+  const [customDomain2, setCustomDomain2] = useState([null, null]);
   const [colorMap, setColorMap] = useState('Viridis');
   const [invertColorMap, setInvertColorMap] = useState(false);
   const [scaleType, setScaleType] = useState('linear');
@@ -27,69 +28,7 @@ function HeatmapUploader() {
   const [lineDomain, setLineDomain] = useState([null, null]);
 
   
-  // const handleGCIMSDataUpload = (filename, buffer) => {
-  //   try {
-  //     const h5File = new jsfive.File(buffer);
 
-  //     const driftTimeDataset = h5File.get('drift_time');
-  //     const retTimeDataset = h5File.get('ret_time');
-  //     const valuesDataset = h5File.get('values');
-      
-  //     const valArray = Array.from(valuesDataset.value)
-
-  //     // console.log(valuesDataset.shape)
-      
-    
-  //     const flatValues = valArray.flat(Infinity)
-
-  //     const dataArray = ndarray(flatValues, valuesDataset.shape);
-
-  //     // console.log( dataArray.step(549))
-      
-  //     // console.log(ndarray(valuesDataset.value))
-
-  //     const driftTimeArray = ndarray(driftTimeDataset.value, driftTimeDataset.shape);
-      
-  //     const retTimeArray = ndarray(retTimeDataset.value, retTimeDataset.shape);
-
-  //     const domain1 = getDomain(dataArray);
-
-  //     setHeatmapData({ dataArray, domain1, retTimeArray, driftTimeArray,valArray });
-  //     setLineData(dataArray.data.slice(selectedIndex, driftTimeArray.data.length));
-
-  //     console.log(ndarray(dataArray.data, [2822, 549]))
-
-  //     const initialLineData = dataArray.pick(selectedIndex, null);
-  //     console.log("asd:",initialLineData)
-  //     setLineData(initialLineData);
-      
-  //   } catch (err) {
-  //     console.error("Error processing file:", err);
-  //     setError('Error processing file.');
-  //   }
-
-    
-  // };
-
-  // const handleSliderChange = (event) => {
-  //   const newIndex = parseInt(event.target.value, 10);
-  //   console.log(newIndex)
-  //   setSelectedIndex(newIndex)
-  //   // const selectedRow = heatmapData.valArray.value[newIndex];
-  //   // console.log(selectedRow)
-  //   // const selectedDataArray = ndarray(selectedRow.slice(), [selectedRow.length])
-    
-  //   const selectedRowData = heatmapData.dataArray.value[newIndex].data.slice();
-  //   const selectedLineData = ndarray(selectedRowData, [selectedRowData.length]);
-
-  //   // const selectedLineData = heatmapData.dataArray.pick(newIndex, null);
-
-  //   setLineData(selectedLineData); 
-    
-  //   console.log(selectedLineData); 
-  //   console.log(selectedLineData.data); 
-    
-  // };
 
   const handleGCIMSDataUpload = (filename, buffer) => {
   try {
@@ -105,22 +44,25 @@ function HeatmapUploader() {
     // Extract other arrays (1D for drift time and retention time)
     const driftTimeArray = ndarray(driftTimeDataset.value, driftTimeDataset.shape);
     const retTimeArray = ndarray(retTimeDataset.value, retTimeDataset.shape);
+
+
+    const rowDataArray = Array.from(dataArray.data.slice(
+      selectedIndex * dataArray.shape[1],
+      (selectedIndex + 1) * dataArray.shape[1]
+    ));
+
+  
     
     // Set domain based on the overall data range in the 2D array
     const overallDomain = getDomain(dataArray);
     
     //todo fix set line domain
-    setLineDomain(overallDomain);
+    setLineDomain(getDomain(rowDataArray));
     setCustomDomain(overallDomain);
     
     // Set the 2D data array as heatmap data
-    setHeatmapData({
-      dataArray,
-      domain1: overallDomain,
-      retTimeArray,
-      driftTimeArray,
-    });
-    
+    setHeatmapData({dataArray,domain1: overallDomain,retTimeArray,driftTimeArray,});
+  
     // Initialize the lineData with the first row of the 2D table
     const initialLineData = dataArray.pick(selectedIndex, null);
     console.log("init:",initialLineData)
@@ -151,7 +93,7 @@ const handleSliderChange = (event) => {
   // (Optional) Adjust the domain if needed to fit the selected row's range:
   const rowDomain = getDomain(selectedLineData);
   setLineDomain(rowDomain);
-  setCustomDomain(rowDomain);
+  setCustomDomain2(rowDomain);
 
   console.log("Selected Row Data:", selectedLineData);
 };
@@ -215,9 +157,9 @@ const handleSliderChange = (event) => {
               <>
                 <Toolbar className={styles.container4}>
                   <DomainWidget
-                    customDomain={customDomain}
+                    customDomain={customDomain2}
                     dataDomain={heatmapData.domain1 }
-                    onCustomDomainChange={setCustomDomain}
+                    onCustomDomainChange={setCustomDomain2}
                     scaleType={scaleType}
                   />
                   <Separator />
@@ -270,3 +212,68 @@ const handleSliderChange = (event) => {
 }
 
 export default HeatmapUploader;
+
+
+  // const handleGCIMSDataUpload = (filename, buffer) => {
+  //   try {
+  //     const h5File = new jsfive.File(buffer);
+
+  //     const driftTimeDataset = h5File.get('drift_time');
+  //     const retTimeDataset = h5File.get('ret_time');
+  //     const valuesDataset = h5File.get('values');
+      
+  //     const valArray = Array.from(valuesDataset.value)
+
+  //     // console.log(valuesDataset.shape)
+      
+    
+  //     const flatValues = valArray.flat(Infinity)
+
+  //     const dataArray = ndarray(flatValues, valuesDataset.shape);
+
+  //     // console.log( dataArray.step(549))
+      
+  //     // console.log(ndarray(valuesDataset.value))
+
+  //     const driftTimeArray = ndarray(driftTimeDataset.value, driftTimeDataset.shape);
+      
+  //     const retTimeArray = ndarray(retTimeDataset.value, retTimeDataset.shape);
+
+  //     const domain1 = getDomain(dataArray);
+
+  //     setHeatmapData({ dataArray, domain1, retTimeArray, driftTimeArray,valArray });
+  //     setLineData(dataArray.data.slice(selectedIndex, driftTimeArray.data.length));
+
+  //     console.log(ndarray(dataArray.data, [2822, 549]))
+
+  //     const initialLineData = dataArray.pick(selectedIndex, null);
+  //     console.log("asd:",initialLineData)
+  //     setLineData(initialLineData);
+      
+  //   } catch (err) {
+  //     console.error("Error processing file:", err);
+  //     setError('Error processing file.');
+  //   }
+
+    
+  // };
+
+  // const handleSliderChange = (event) => {
+  //   const newIndex = parseInt(event.target.value, 10);
+  //   console.log(newIndex)
+  //   setSelectedIndex(newIndex)
+  //   // const selectedRow = heatmapData.valArray.value[newIndex];
+  //   // console.log(selectedRow)
+  //   // const selectedDataArray = ndarray(selectedRow.slice(), [selectedRow.length])
+    
+  //   const selectedRowData = heatmapData.dataArray.value[newIndex].data.slice();
+  //   const selectedLineData = ndarray(selectedRowData, [selectedRowData.length]);
+
+  //   // const selectedLineData = heatmapData.dataArray.pick(newIndex, null);
+
+  //   setLineData(selectedLineData); 
+    
+  //   console.log(selectedLineData); 
+  //   console.log(selectedLineData.data); 
+    
+  // };
