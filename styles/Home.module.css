@@ -55,10 +55,9 @@
 
 .card {
   align-items: center;
-  margin-left: "1470rem";
   margin-top: "50rem";
-  width: 1250rem;
-  height: 35rem;
+  width: "1650rem";
+  height: "35rem";
   flex-basis: 45%;
   padding: 1.5rem;
   text-align: left;
