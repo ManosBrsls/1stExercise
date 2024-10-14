@@ -223,6 +223,7 @@
 }
 
 .container5{
+  display: flex;
   --h5w-colorBar-ticks--color:white;
   --h5w-tickLabels--color: white;
   --h5w-ticks-color: white;
@@ -240,6 +241,7 @@
 }
 
 .container6{
+  display: flex;
   --h5w-colorBar-ticks--color:white;
   --h5w-tickLabels--color: white;
   --h5w-ticks-color: white;
