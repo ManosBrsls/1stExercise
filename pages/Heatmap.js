@@ -158,7 +158,7 @@ const handleSliderChange = (event) => {
                 <Toolbar className={styles.container4}>
                   <DomainWidget
                     customDomain={customDomain2}
-                    dataDomain={heatmapData.domain1 }
+                    dataDomain={lineDomain}
                     onCustomDomainChange={setCustomDomain2}
                     scaleType={scaleType}
                   />
