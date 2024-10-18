@@ -1,16 +1,14 @@
 "use client";
-import  { React, useState } from 'react';
-import ndarray from 'ndarray';
-import {
-  HeatmapVis, getDomain, Toolbar, DomainWidget, ColorMapSelector, ScaleSelector, Separator,
-  ToggleBtn, SnapshotBtn, LineVis
-} from '@h5web/lib';
-import * as jsfive from 'jsfive';
-import '@h5web/lib/dist/styles.css';
+import React, { useState, useRef } from "react";
+import ndarray from "ndarray";
+import {HeatmapVis, getDomain, Toolbar, DomainWidget, ColorMapSelector, ScaleSelector, Separator, ToggleBtn, LineVis,} from "@h5web/lib";
+import * as jsfive from "jsfive";
+import "@h5web/lib/dist/styles.css";
 import Sidebar from "./posts/Sidebar";
 import styles from "../styles/Home.module.css";
-import { FaTh, FaWaveSquare } from 'react-icons/fa';
+import { FaCamera, FaChartArea, FaDownload,  FaMap, FaTh } from "react-icons/fa";
 import "@fortawesome/fontawesome-svg-core/styles.css";
+import html2canvas from "html2canvas";
 
 
 function HeatmapUploader() {
@@ -20,124 +18,194 @@ function HeatmapUploader() {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [customDomain, setCustomDomain] = useState([null, null]);
   const [customDomain2, setCustomDomain2] = useState([null, null]);
-  const [colorMap, setColorMap] = useState('Viridis');
+  const [colorMap, setColorMap] = useState("Viridis");
   const [invertColorMap, setInvertColorMap] = useState(false);
-  const [scaleType, setScaleType] = useState('linear');
+  const [scaleType, setScaleType] = useState("linear");
   const [showGrid, setShowGrid] = useState(false);
-  const [viewMode, setViewMode] = useState('heatmap');
+  const [viewMode, setViewMode] = useState("heatmap");
   const [lineDomain, setLineDomain] = useState([null, null]);
 
-  
-
+  const heatmapRef = useRef(null);
+  const imsSpectra = useRef(null);
 
   const handleGCIMSDataUpload = (filename, buffer) => {
-  try {
-    const h5File = new jsfive.File(buffer);
+    try {
+      const h5File = new jsfive.File(buffer);
 
-    const driftTimeDataset = h5File.get('drift_time');
-    const retTimeDataset = h5File.get('ret_time');
-    const valuesDataset = h5File.get('values');
-    
-    // Convert valuesDataset to a 2D ndarray directly
-    const dataArray = ndarray(valuesDataset.value, valuesDataset.shape);
-    
-    // Extract other arrays (1D for drift time and retention time)
-    const driftTimeArray = ndarray(driftTimeDataset.value, driftTimeDataset.shape);
-    const retTimeArray = ndarray(retTimeDataset.value, retTimeDataset.shape);
+      const driftTimeDataset = h5File.get("drift_time");
+      const retTimeDataset = h5File.get("ret_time");
+      const valuesDataset = h5File.get("values");
 
+      const dataArray = ndarray(valuesDataset.value, valuesDataset.shape);
+      const driftTimeArray = ndarray(driftTimeDataset.value, driftTimeDataset.shape);
+      const retTimeArray = ndarray(retTimeDataset.value, retTimeDataset.shape);
 
-    const rowDataArray = Array.from(dataArray.data.slice(
-      selectedIndex * dataArray.shape[1],
-      (selectedIndex + 1) * dataArray.shape[1]
-    ));
+      const rowDataArray = Array.from(
+        dataArray.data.slice(
+          selectedIndex * dataArray.shape[1],
+          (selectedIndex + 1) * dataArray.shape[1]
+        )
+      );
 
-  
-    
-    // Set domain based on the overall data range in the 2D array
-    const overallDomain = getDomain(dataArray);
-    
-    //todo fix set line domain
-    setLineDomain(getDomain(rowDataArray));
-    setCustomDomain(overallDomain);
-    
-    // Set the 2D data array as heatmap data
-    setHeatmapData({dataArray,domain1: overallDomain,retTimeArray,driftTimeArray,});
-  
-    // Initialize the lineData with the first row of the 2D table
-    const initialLineData = dataArray.pick(selectedIndex, null);
-    console.log("init:",initialLineData)
-    setLineData(initialLineData);
+      const overallDomain = getDomain(dataArray);
+      setLineDomain(getDomain(rowDataArray));
+      setCustomDomain(overallDomain);
 
-  } catch (err) {
-    console.error("Error processing file:", err);
-    setError('Error processing file.');
-  }
+      setHeatmapData({dataArray, domain1: overallDomain, retTimeArray, driftTimeArray,});
+
+      const initialLineData = dataArray.pick(selectedIndex, null);
+      setLineData(initialLineData);
+    } catch (err) {
+      console.error("Error processing file:", err);
+      setError("Error processing file.");
+    }
   };
-  
-const handleSliderChange = (event) => {
-  const newIndex = parseInt(event.target.value, 10);
-  setSelectedIndex(newIndex);
 
-  // Extract the data for the selected row by slicing manually
-  const rowDataArray = Array.from(heatmapData.dataArray.data.slice(
-    newIndex * heatmapData.dataArray.shape[1],
-    (newIndex + 1) * heatmapData.dataArray.shape[1]
-  ));
+  const handleDownloadCSV = () => {
+    if (!lineData) {
+      return;
+    }
 
-  // Create a new ndarray for the selected row
-  const selectedLineData = ndarray(rowDataArray, [rowDataArray.length]);
+    // Create CSV data from lineData
+    let csvContent = "data:text/csv;charset=utf-8,";
 
-  // Update lineData with the newly created row-specific ndarray
-  setLineData(selectedLineData);
+    // Add header with drift times
+    csvContent += `Drift Time, Intensity Values\n`;
 
-  // (Optional) Adjust the domain if needed to fit the selected row's range:
-  const rowDomain = getDomain(selectedLineData);
-  setLineDomain(rowDomain);
-  setCustomDomain2(rowDomain);
+    // Add each data point in lineData
+    lineData.data.forEach((value, index) => {
+      const driftTime = heatmapData.driftTimeArray.get(index);
+      csvContent += `${driftTime}, ${value}\n`;
+    });
 
-  console.log("Selected Row Data:", selectedLineData);
-};
+    // Create a downloadable link
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "Ims Spectra.csv");
+
+    // Simulate click to start download
+    link.click();
+  };
+
+  const handleSnapshot = () => {
+    if (heatmapRef.current) {
+      const originalOverflow = heatmapRef.current.style.overflow;
+      heatmapRef.current.style.overflow = "visible";
+
+      html2canvas(heatmapRef.current, {
+        width: heatmapRef.current.scrollWidth,
+        height: heatmapRef.current.scrollHeight,
+        scale: 1,
+      }).then((canvas) => {
+        const link = document.createElement("a");
+        link.href = canvas.toDataURL("image/png");
+        link.download = "heatmap_screenshot.png";
+        link.click();
+
+        heatmapRef.current.style.overflow = originalOverflow;
+      });
+    }
+  };
+
+  const handleSnapshotIMS = () => {
+    if (imsSpectra.current) {
+      const originalOverflow = imsSpectra.current.style.overflow;
+      imsSpectra.current.style.overflow = "visible";
+
+      html2canvas(imsSpectra.current, {
+        width: imsSpectra.current.scrollWidth,
+        height: imsSpectra.current.scrollHeight,
+        scale: 1,
+      }).then((canvas) => {
+        const link = document.createElement("a");
+        link.href = canvas.toDataURL("image/png");
+        link.download = "Ims_Spectra_screenshot.png";
+        link.click();
+
+        imsSpectra.current.style.overflow = originalOverflow;
+      });
+    }
+  };
+
+  const handleSliderChange = (event) => {
+    const newIndex = parseInt(event.target.value, 10);
+    setSelectedIndex(newIndex);
+
+    const rowDataArray = Array.from(
+      heatmapData.dataArray.data.slice(
+        newIndex * heatmapData.dataArray.shape[1],
+        (newIndex + 1) * heatmapData.dataArray.shape[1]
+      )
+    );
+
+    const selectedLineData = ndarray(rowDataArray, [rowDataArray.length]);
+    setLineData(selectedLineData);
+
+    const rowDomain = getDomain(selectedLineData);
+    setLineDomain(rowDomain);
+    setCustomDomain2(rowDomain);
+  };
 
   return (
     <div className={styles.container2}>
       <Sidebar onGCIMSDataUpload={handleGCIMSDataUpload} />
-      <div className={styles.card} style={{ borderRadius: "40px", backgroundColor: "#084072", marginLeft: "350px", marginTop: "50px", cursor: "pointer" }}>
+      <div
+        className={styles.card}
+        style={{borderRadius: "40px", backgroundColor: "#084072", marginLeft: "200px", cursor: "pointer"}}
+      >
         {heatmapData && (
           <>
-            {viewMode === 'heatmap' ? (
+            {viewMode === "heatmap" ? (
               <>
-                {/* Heatmap Toolbar */}
                 <Toolbar className={styles.container4}>
                   <DomainWidget
+                    className={styles.container4}
                     customDomain={customDomain}
                     dataDomain={heatmapData.domain1}
                     onCustomDomainChange={setCustomDomain}
                     scaleType={scaleType}
                   />
                   <Separator />
-                  <SnapshotBtn />
-                  <Separator />
                   <ColorMapSelector
-                    onInversionChange={setInvertColorMap}
+                    className={styles.container4}
+                    onInversionChange={() => setInvertColorMap(!invertColorMap)}
                     onValueChange={setColorMap}
                     value={colorMap}
                   />
                   <Separator />
+                  <ToggleBtn
+                    icon={FaCamera}
+                    label="Snap Shot"
+                    onToggle={() => handleSnapshot()}
+                  >
+                  </ToggleBtn>
+                  <Separator />
                   <ScaleSelector
+                    className={styles.container4}
                     onScaleChange={setScaleType}
-                    options={['linear', 'log', 'symlog']}
+                    options={["linear", "log", "symlog"]}
                     value={scaleType}
                   />
                   <Separator />
-                  <ToggleBtn icon={FaTh} label="Grid" onToggle={() => setShowGrid(!showGrid)} />
+                  <ToggleBtn
+                    icon={FaTh}
+                    label="Grid"
+                    onToggle={() => setShowGrid(!showGrid)}
+                  />
                   <Separator />
-                  <ToggleBtn icon={FaWaveSquare} label="Toggle View" onToggle={() => setViewMode('line')} />
+                  <ToggleBtn
+                    icon={FaChartArea}
+                    label="IMS Spectra"
+                    onToggle={() => setViewMode("line")}
+                  />
                 </Toolbar>
-                <div style={{ display: 'flex', height: '30rem', width: '55rem', backgroundColor: "#084072" }}>
+                <div ref={heatmapRef} style={{display: "flex", height: "45rem", width: "80rem", backgroundColor: "#084072"}}>
                   <HeatmapVis
+                    ref={heatmapRef}
                     className={styles.container5}
                     dataArray={heatmapData.dataArray}
-                    domain={customDomain[0] === null ? heatmapData.domain1 : customDomain}
+                    domain={customDomain[0] === null  ? heatmapData.domain1 : customDomain}
                     aspect="auto"
                     showGrid={showGrid}
                     colorMap={colorMap}
@@ -148,8 +216,10 @@ const handleSliderChange = (event) => {
                     interactions={{
                       selectToZoom: { modifierKey: "Shift" },
                       xAxisZoom: false,
-                      yAxisZoom: false
+                      yAxisZoom: false,
                     }}
+                    abscissaParams={{label: 'Drift Time'}}
+                    ordinateParams={{label: 'Retention Time'}}
                   />
                 </div>
               </>
@@ -163,47 +233,72 @@ const handleSliderChange = (event) => {
                     scaleType={scaleType}
                   />
                   <Separator />
-                  <SnapshotBtn />
+                  <ToggleBtn
+                    icon={FaCamera}
+                    label="Snap Shot"
+                    onToggle={() => handleSnapshotIMS()}
+                  >
+                  </ToggleBtn>
                   <Separator />
-                  <ToggleBtn icon={FaTh} label="Grid" onToggle={() => setShowGrid(!showGrid)} />
-                  <Separator />
-                  <Separator />
-                  <ScaleSelector
-                    onScaleChange={setScaleType}
-                    options={['linear', 'log', 'symlog']}
-                    value={scaleType}
+                  <ToggleBtn
+                    icon={FaTh}
+                    label="Grid"
+                    onToggle={() => setShowGrid(!showGrid)}
                   />
                   <Separator />
-                  <ToggleBtn icon={FaWaveSquare} label="Heatmap View" onToggle={() => setViewMode('heatmap')} />
+                  <ToggleBtn
+                    icon={FaMap}
+                    label="Heatmap View"
+                    onToggle={() => setViewMode("heatmap")}
+                  />
+                  <Separator />
+                  <ToggleBtn
+                    icon={FaDownload}
+                    label="Download CSV"
+                    onToggle={() => handleDownloadCSV()}
+                  >          
+                  </ToggleBtn>
                 </Toolbar>
-                <div style={{ display: 'flex', height: '30rem', width: '55rem', backgroundColor: "#084072" }}>
+                <div
+                  ref={imsSpectra}
+                  style={{display: "flex", height: "45rem", width: "80rem", backgroundColor: "#084072",
+}}
+                >
                   <LineVis
-                    key={selectedIndex}
                     className={styles.container6}
                     dataArray={lineData}
                     domain={lineDomain}
-                    scaleType={'linear'}
-                    curveType='OnlyLine'
+                    scaleType={"linear"}
+                    curveType="OnlyLine"
                     showGrid={showGrid}
-                      abscissaParams={{
+                    abscissaParams={{
                       values: heatmapData.driftTimeArray,
-                      label: 'Drift Time'
+                      label: "Drift Time",
+                    }}
+                    ordinateParams={{
+                      values: heatmapData.dataArray,
+                      label: 'Intensity Values'
                     }}
                   />
                 </div>
+                <div style={{ marginTop: "8px" }}>
+                  <label htmlFor="row-slider" style={{ color: "#fff" }}>
+                    Select Retention time:
+                  </label>
+                  <input
+                    id="row-slider"
+                    type="range"
+                    min="0"
+                    max={heatmapData.dataArray.shape[0] - 1}
+                    value={selectedIndex}
+                    onChange={handleSliderChange}
+                  />
+                  <span style={{ color: "#fff", marginLeft: "10px" }}>
+                    {selectedIndex}
+                  </span>
+                </div>
               </>
             )}
-            <div style={{ marginTop: '20px' }}>
-              <label htmlFor="row-slider" style={{ color: "#fff" }}>Select Row:</label>
-              <input
-                id="row-slider"
-                type="range"
-                min="0"
-                max={heatmapData.dataArray.shape[0] - 1}
-                value={selectedIndex}
-                onChange={handleSliderChange}
-              />
-            </div>
           </>
         )}
       </div>
@@ -212,68 +307,3 @@ const handleSliderChange = (event) => {
 }
 
 export default HeatmapUploader;
-
-
-  // const handleGCIMSDataUpload = (filename, buffer) => {
-  //   try {
-  //     const h5File = new jsfive.File(buffer);
-
-  //     const driftTimeDataset = h5File.get('drift_time');
-  //     const retTimeDataset = h5File.get('ret_time');
-  //     const valuesDataset = h5File.get('values');
-      
-  //     const valArray = Array.from(valuesDataset.value)
-
-  //     // console.log(valuesDataset.shape)
-      
-    
-  //     const flatValues = valArray.flat(Infinity)
-
-  //     const dataArray = ndarray(flatValues, valuesDataset.shape);
-
-  //     // console.log( dataArray.step(549))
-      
-  //     // console.log(ndarray(valuesDataset.value))
-
-  //     const driftTimeArray = ndarray(driftTimeDataset.value, driftTimeDataset.shape);
-      
-  //     const retTimeArray = ndarray(retTimeDataset.value, retTimeDataset.shape);
-
-  //     const domain1 = getDomain(dataArray);
-
-  //     setHeatmapData({ dataArray, domain1, retTimeArray, driftTimeArray,valArray });
-  //     setLineData(dataArray.data.slice(selectedIndex, driftTimeArray.data.length));
-
-  //     console.log(ndarray(dataArray.data, [2822, 549]))
-
-  //     const initialLineData = dataArray.pick(selectedIndex, null);
-  //     console.log("asd:",initialLineData)
-  //     setLineData(initialLineData);
-      
-  //   } catch (err) {
-  //     console.error("Error processing file:", err);
-  //     setError('Error processing file.');
-  //   }
-
-    
-  // };
-
-  // const handleSliderChange = (event) => {
-  //   const newIndex = parseInt(event.target.value, 10);
-  //   console.log(newIndex)
-  //   setSelectedIndex(newIndex)
-  //   // const selectedRow = heatmapData.valArray.value[newIndex];
-  //   // console.log(selectedRow)
-  //   // const selectedDataArray = ndarray(selectedRow.slice(), [selectedRow.length])
-    
-  //   const selectedRowData = heatmapData.dataArray.value[newIndex].data.slice();
-  //   const selectedLineData = ndarray(selectedRowData, [selectedRowData.length]);
-
-  //   // const selectedLineData = heatmapData.dataArray.pick(newIndex, null);
-
-  //   setLineData(selectedLineData); 
-    
-  //   console.log(selectedLineData); 
-  //   console.log(selectedLineData.data); 
-    
-  // };

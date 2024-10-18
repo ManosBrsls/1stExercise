@@ -55,7 +55,7 @@
 
 .card {
   align-items: center;
-  margin-top: "50rem";
+  margin-top: "10rem";
   width: "1650rem";
   height: "35rem";
   flex-basis: 45%;
@@ -100,6 +100,7 @@
 }
 
 .container2{ 
+  overflow: visible;
 	display: flex; 
 	flex-direction: row; 
 	flex-wrap: wrap; 
@@ -110,11 +111,14 @@
 	display: flex; 
 	flex-direction: row; 
 	flex-wrap: wrap; 
-  margin-left: 1000px;
+  margin-left: 100px;
 }
 
 .container4{
   display: flex;
+  --h5w-toolbar--height: 13.5rem;
+  --h5w-btn--height: 2em;
+
 }
 
 .logoContainer {
@@ -223,6 +227,7 @@
 }
 
 .container5{
+  overflow: visible;
   display: flex;
   --h5w-colorBar-ticks--color:white;
   --h5w-tickLabels--color: white;
@@ -241,6 +246,7 @@
 }
 
 .container6{
+  overflow: visible;
   display: flex;
   --h5w-colorBar-ticks--color:white;
   --h5w-tickLabels--color: white;

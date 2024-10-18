@@ -37,6 +37,7 @@ const Sidebar = ({ onDataUpload, onSelectDataset, onGCIMSDataUpload }) => {
   };
 
   return (
+    
     <div style={sidebarStyle}>
       <h2 style={{ marginBottom: '1.5em', color: '#fff', textAlign: 'center' }}>TechBioT</h2>
       <ul style={{ listStyle: 'none', padding: 0 }}>
@@ -127,6 +128,7 @@ const linkStyle = {
 
 const iconStyle = {
   marginRight: '8px',
+  fontSize: "78px"
 };
 
 const dropdownTextStyle = {

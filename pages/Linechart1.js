@@ -255,10 +255,10 @@ return (
           style={{
             borderRadius: "40px",
             backgroundColor: "#084072",
-            // width: "1450px",
-            // height: "550px",
+            width: "1950px",
+            height: "800px",
             marginLeft: "350px",
-            marginTop: "50px",
+            marginTop: "10px",
             cursor: "pointer",
           }}
         >
