@@ -13,7 +13,9 @@ import html2canvas from "html2canvas";
 
 function HeatmapUploader() {
   const [heatmapData, setHeatmapData] = useState(null);
+  const [chromData, setChromData] = useState(null)
   const [lineData, setLineData] = useState(null);
+  const [chromDomain, setChromDomain] = useState(null);
   const [error, setError] = useState(null);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [customDomain, setCustomDomain] = useState([null, null]);
@@ -27,6 +29,7 @@ function HeatmapUploader() {
 
   const heatmapRef = useRef(null);
   const imsSpectra = useRef(null);
+  const chromGram = useRef(null)
 
   const handleGCIMSDataUpload = (filename, buffer) => {
     try {
@@ -35,6 +38,21 @@ function HeatmapUploader() {
       const driftTimeDataset = h5File.get("drift_time");
       const retTimeDataset = h5File.get("ret_time");
       const valuesDataset = h5File.get("values");
+
+
+      const newvalueDataset = Array.from(valuesDataset.value)
+      const dataArray2 = ndarray(newvalueDataset, newvalueDataset.shape);
+      setChromData(dataArray2)
+
+      const chromArray = [];
+
+      for (let i = 0; i < dataArray2.data.length; i += 549) {
+        console.log("Hi!!!!");
+        chromArray.push(dataArray2.data[i]);
+      }
+      
+      const finalChromArray = ndarray(chromArray, chromArray.shape)
+      const chromDomain = getDomain(finalChromArray)
 
       const dataArray = ndarray(valuesDataset.value, valuesDataset.shape);
       const driftTimeArray = ndarray(driftTimeDataset.value, driftTimeDataset.shape);
@@ -47,14 +65,18 @@ function HeatmapUploader() {
         )
       );
 
-      const overallDomain = getDomain(dataArray);
+      const heatMapDomain = getDomain(dataArray);
       setLineDomain(getDomain(rowDataArray));
-      setCustomDomain(overallDomain);
+      setCustomDomain(heatMapDomain);
 
-      setHeatmapData({dataArray, domain1: overallDomain, retTimeArray, driftTimeArray,});
+      setHeatmapData({dataArray, domain1: heatMapDomain, retTimeArray, driftTimeArray,});
 
       const initialLineData = dataArray.pick(selectedIndex, null);
       setLineData(initialLineData);
+      setChromData(finalChromArray)
+      setChromDomain(chromDomain)
+
+
     } catch (err) {
       console.error("Error processing file:", err);
       setError("Error processing file.");
@@ -223,7 +245,7 @@ function HeatmapUploader() {
                   />
                 </div>
               </>
-            ) : (
+            ) : viewMode === "imsSpectra" ? (
               <>
                 <Toolbar className={styles.container4}>
                   <DomainWidget
@@ -259,11 +281,7 @@ function HeatmapUploader() {
                   >          
                   </ToggleBtn>
                 </Toolbar>
-                <div
-                  ref={imsSpectra}
-                  style={{display: "flex", height: "45rem", width: "80rem", backgroundColor: "#084072",
-}}
-                >
+                <div ref={imsSpectra} style={{display: "flex", height: "45rem", width: "80rem", backgroundColor: "#084072"}}>
                   <LineVis
                     className={styles.container6}
                     dataArray={lineData}
@@ -281,6 +299,7 @@ function HeatmapUploader() {
                     }}
                   />
                 </div>
+
                 <div style={{ marginTop: "8px" }}>
                   <label htmlFor="row-slider" style={{ color: "#fff" }}>
                     Select Retention time:
@@ -298,8 +317,63 @@ function HeatmapUploader() {
                   </span>
                 </div>
               </>
-            )}
-          </>
+            ) : (
+              <>
+              <Toolbar className={styles.container4}>
+                  <DomainWidget
+                    customDomain={customDomain2}
+                    dataDomain={lineDomain}
+                    onCustomDomainChange={setCustomDomain2}
+                    scaleType={scaleType}
+                  />
+                  <Separator />
+                  <ToggleBtn
+                    icon={FaCamera}
+                    label="Snap Shot"
+                    onToggle={() => handleSnapshotIMS()}
+                  >
+                  </ToggleBtn>
+                  <Separator />
+                  <ToggleBtn
+                    icon={FaTh}
+                    label="Grid"
+                    onToggle={() => setShowGrid(!showGrid)}
+                  />
+                  <Separator />
+                  <ToggleBtn
+                    icon={FaMap}
+                    label="Heatmap View"
+                    onToggle={() => setViewMode("heatmap")}
+                  />
+                  <Separator />
+                  <ToggleBtn
+                    icon={FaDownload}
+                    label="Download CSV"
+                    onToggle={() => handleDownloadCSV()}
+                  >          
+                  </ToggleBtn>
+                </Toolbar>
+                <div ref={chromGram} style={{display: "flex", height: "45rem", width: "80rem", backgroundColor: "#084072"}}>
+                  <LineVis
+                    className={styles.container6}
+                    dataArray={chromData}
+                    domain={chromDomain}
+                    scaleType={"linear"}
+                    curveType="OnlyLine"
+                    showGrid={showGrid}
+                    abscissaParams={{
+                      values: heatmapData.driftTimeArray,
+                      label: "Drift Time",
+                    }}
+                    ordinateParams={{
+                      values: heatmapData.dataArray,
+                      label: 'Intensity Values'
+                    }}
+                  />
+                </div>
+              </>
+            )          
+        }</>
         )}
       </div>
     </div>
