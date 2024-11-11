@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import React, { useState } from 'react';
 import Link from 'next/link';
@@ -7,8 +7,6 @@ import { faHome, faChartLine } from '@fortawesome/free-solid-svg-icons';
 import UploadButton from '../UploadButton';
 import styles from "../../styles/Home.module.css";
 import GCIMSUploadButton from '../GcImsUploadButton';
-
-
 
 const Sidebar = ({ onDataUpload, onSelectDataset, onGCIMSDataUpload }) => {
   const [datasets, setDatasets] = useState({});
@@ -23,7 +21,6 @@ const Sidebar = ({ onDataUpload, onSelectDataset, onGCIMSDataUpload }) => {
     onDataUpload(Object.keys(datasets));
   };
 
-
   const handleIMSClick = () => {
     setIMSVisible(!isIMSVisible);
   };
@@ -32,12 +29,13 @@ const Sidebar = ({ onDataUpload, onSelectDataset, onGCIMSDataUpload }) => {
     setGCIMSVisible(!isGCIMSVisible);
   };
 
-  const handleIMSDatasetClick = (filename) => {
-    onSelectDataset(datasets[filename].timeData, datasets[filename].valueData);
+  // Modified function to select datasets for either chart 1 or chart 2
+  const handleIMSDatasetClick = (filename, chartNumber) => {
+    const { timeData, valueData } = datasets[filename];
+    onSelectDataset(timeData, valueData, chartNumber);
   };
 
   return (
-    
     <div style={sidebarStyle}>
       <h2 style={{ marginBottom: '1.5em', color: '#fff', textAlign: 'center' }}>TechBioT</h2>
       <ul style={{ listStyle: 'none', padding: 0 }}>
@@ -67,13 +65,20 @@ const Sidebar = ({ onDataUpload, onSelectDataset, onGCIMSDataUpload }) => {
                 <UploadButton onUpload={handleUpload} />
               </a>
               {Object.keys(datasets).map((filename) => (
-                <a
-                  key={filename}
-                  className={styles.dropdownItem}
-                  onClick={() => handleIMSDatasetClick(filename)}
-                >
-                  <span style={dropdownTextStyle}>{filename}</span>
-                </a>
+                <div key={filename}>
+                  <a
+                    className={styles.dropdownItem}
+                    onClick={() => handleIMSDatasetClick(filename, 1)} // Select for Chart 1
+                  >
+                    <span style={dropdownTextStyle}>{filename} - Chart 1</span>
+                  </a>
+                  <a
+                    className={styles.dropdownItem}
+                    onClick={() => handleIMSDatasetClick(filename, 2)} // Select for Chart 2
+                  >
+                    <span style={dropdownTextStyle}>{filename} - Chart 2</span>
+                  </a>
+                </div>
               ))}
             </div>
           )}
