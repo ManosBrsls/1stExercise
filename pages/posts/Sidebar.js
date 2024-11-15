@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faHome, faChartLine } from '@fortawesome/free-solid-svg-icons';
@@ -12,6 +12,20 @@ const Sidebar = ({ onDataUpload, onSelectDataset, onGCIMSDataUpload }) => {
   const [datasets, setDatasets] = useState({});
   const [isIMSVisible, setIMSVisible] = useState(false);
   const [isGCIMSVisible, setGCIMSVisible] = useState(false);
+  const [sidebarWidth, setSidebarWidth] = useState('auto');
+
+  // Ref to measure the dropdown content width
+  const gcImsDropdownRef = useRef(null);
+
+  useEffect(() => {
+    // Adjust sidebar width based on content when GC IMS dropdown is visible
+    if (isGCIMSVisible && gcImsDropdownRef.current) {
+      const dropdownWidth = gcImsDropdownRef.current.scrollWidth;
+      setSidebarWidth(Math.max(150, dropdownWidth + 20) + 'px'); // Ensure min width of 150px
+    } else {
+      setSidebarWidth('auto'); // Reset to auto when dropdown is closed
+    }
+  }, [isGCIMSVisible, datasets]);
 
   const handleUpload = (filename, timeData, valueData) => {
     setDatasets((prevDatasets) => ({
@@ -29,14 +43,13 @@ const Sidebar = ({ onDataUpload, onSelectDataset, onGCIMSDataUpload }) => {
     setGCIMSVisible(!isGCIMSVisible);
   };
 
-  // Modified function to select datasets for either chart 1 or chart 2
   const handleIMSDatasetClick = (filename, chartNumber) => {
     const { timeData, valueData } = datasets[filename];
     onSelectDataset(timeData, valueData, chartNumber);
   };
 
   return (
-    <div style={sidebarStyle}>
+    <div style={{ ...sidebarStyle, width: sidebarWidth }}>
       <h2 style={{ marginBottom: '1.5em', color: '#fff', textAlign: 'center' }}>TechBioT</h2>
       <ul style={{ listStyle: 'none', padding: 0 }}>
         <li className={styles.menuItemStyle}>
@@ -68,13 +81,13 @@ const Sidebar = ({ onDataUpload, onSelectDataset, onGCIMSDataUpload }) => {
                 <div key={filename}>
                   <a
                     className={styles.dropdownItem}
-                    onClick={() => handleIMSDatasetClick(filename, 1)} // Select for Chart 1
+                    onClick={() => handleIMSDatasetClick(filename, 1)}
                   >
                     <span style={dropdownTextStyle}>{filename} - Chart 1</span>
                   </a>
                   <a
                     className={styles.dropdownItem}
-                    onClick={() => handleIMSDatasetClick(filename, 2)} // Select for Chart 2
+                    onClick={() => handleIMSDatasetClick(filename, 2)}
                   >
                     <span style={dropdownTextStyle}>{filename} - Chart 2</span>
                   </a>
@@ -89,7 +102,7 @@ const Sidebar = ({ onDataUpload, onSelectDataset, onGCIMSDataUpload }) => {
             GC IMS
           </a>
           {isGCIMSVisible && (
-            <div className={styles.dropdownMenu}>
+            <div className={styles.dropdownMenu} ref={gcImsDropdownRef}>
               <Link legacyBehavior href="/Heatmap">
                 <a className={styles.dropdownItem}>
                   <span style={dropdownTextStyle}>GC IMS Graph</span>
@@ -109,14 +122,16 @@ const Sidebar = ({ onDataUpload, onSelectDataset, onGCIMSDataUpload }) => {
 };
 
 const sidebarStyle = {
-  width: '150px',
-  height: '800px',
+  minWidth: '150px',
+  maxWidth: '300px',
+  height: '100vh',
   background: 'linear-gradient(135deg, #4c4c4c, #111)',
   padding: '5px',
   borderRadius: '10px',
   borderRight: '10px solid #333',
   boxShadow: '5px 0px 15px rgba(0, 0, 0, 0.3)',
-  transition: 'width 0.9s ease',
+  overflowY: 'auto',
+  position: 'relative',
 };
 
 const linkStyle = {

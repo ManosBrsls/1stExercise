@@ -1,15 +1,11 @@
 "use client";
 
-
-
 import { Line } from "react-chartjs-2";
-import styles from "../styles/Home.module.css"
-import React, { useEffect, useReducer, useState } from "react";
+import styles from "../styles/Home.module.css";
+import React, { useEffect, useReducer, useState, useRef } from "react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import "@fortawesome/fontawesome-svg-core/styles.css";  
-import { faBorderAll, faCamera, faDownload, faHome, faRefresh } from '@fortawesome/free-solid-svg-icons';
-
-
+import { faBorderAll, faCamera, faDownload, faHome, faRefresh, faCircleDot } from '@fortawesome/free-solid-svg-icons';
 
 import {
   Chart as ChartJS,
@@ -24,11 +20,10 @@ import {
   Title,
 } from "chart.js";
 
-
 import zoomPlugin from 'chartjs-plugin-zoom';
 
 import Sidebar from "./posts/Sidebar";
-import { faCircleDot } from "@fortawesome/free-solid-svg-icons/faCircleDot";
+import { faCircleDot as faCircleDotSolid } from "@fortawesome/free-solid-svg-icons/faCircleDot";
 
 ChartJS.register(
   LineElement,
@@ -43,68 +38,86 @@ ChartJS.register(
 );
 
 function LineChart1() {
-
-
-  // //updating data in the graph
+  // State for datasets
   const [timeData, setTimeData] = useState([]);
   const [valueData, setValueData] = useState([]);
-  //showing Grid and Points in the graph
-  const [showGrid, setGrid] = useState(true);
-  const [showPoints, setShowPoints] = useState(true); 
-  const chartRef = React.useRef(null);
+  const [secondTimeData, setSecondTimeData] = useState([]);
+  const [secondValueData, setSecondValueData] = useState([]);
+  
+  // State for grid and points visibility
+  const [showGrid1, setGrid1] = useState(true);
+  const [showPoints1, setShowPoints1] = useState(true); 
+  const [showGrid2, setGrid2] = useState(true);
+  const [showPoints2, setShowPoints2] = useState(true); 
 
+  // Refs for charts
+  const chartRef = useRef(null);
+  const chartRef1 = useRef(null)
 
-  const handleResetZoom = () => {
+  // Handlers for zoom reset
+  const handleResetZoom1 = () => {
     if (chartRef && chartRef.current) {
       chartRef.current.resetZoom()
-      
+    }
+  };
+  
+  const handleResetZoom2 = () => {
+    if (chartRef1 && chartRef1.current) {
+      chartRef1.current.resetZoom()
     }
   };
 
-  // Function to handle the download button click
-  const handleDownload = () =>{
-     // Get the base64 image data from the chart
-    const image = chartRef.current.toBase64Image('image/png');
+  // Handler for download button
+  const handleDownload = (chartRef, filename) => {
+    if (chartRef.current) {
+      const image = chartRef.current.toBase64Image('image/png');
+      const link = document.createElement('a');
+      link.href = image;
+      link.download = filename;
+      link.click();
+    }
+  };
 
-    const link = document.createElement('a');
-    link.href = image;
-    link.download = 'my_chart.png';
-
-    //Trigger the download
-    link.click();
-
-  }
-
+  // Handler to select dataset
+  const handleSelectDataset = (newTimeData, newValueData, chartNumber) => {
+    if (chartNumber === 1) {
+      setTimeData(newTimeData);
+      setValueData(newValueData);
+    } else if (chartNumber === 2) {
+      setSecondTimeData(newTimeData);
+      setSecondValueData(newValueData);
+    }
+  };
   
-  const data = {
+  // Chart data and options templates
+  const dataTemplate = (timeData, valueData, showPoints) => ({
     labels: timeData,
     datasets: [
       {
         pointStyle: "crossRot",
-        pointRadius: showPoints ? 0 : 1.3,
+        pointRadius: showPoints ? 3 : 0, // Toggle point radius
         label: "Dataset",
         data: valueData,
         borderColor: "#1d950f",
         borderWidth: 3,
         pointBorderColor: "#F8001f",
-        pointBorderWidth: 13,
+        pointBorderWidth: 2,
         tension: 0.6,
         fill: true,
         backgroundColor: (context) => {
           const ctx = context.chart.ctx;
-          const gradient = ctx.createLinearGradient(0, 0, 0, 1050);
+          const gradient = ctx.createLinearGradient(0, 0, 0, context.chart.height);
           gradient.addColorStop(0, "#34d923");
           gradient.addColorStop(1, "white");
           return gradient;
         },
       },
     ],
-  };
+  });
 
-  
-  const options = {
+  const optionsTemplate = (showGrid, showPoints) => ({
     plugins: {
-      chartAreaBorder:{
+      chartAreaBorder: {
         borderColor: 'white',
         borderWidth: 4
       },
@@ -134,7 +147,7 @@ function LineChart1() {
         }
       },
       title: {
-        display: "enable",
+        display: true,
         text: "Whole Dataset",
         color: "white",
         font:{
@@ -148,22 +161,14 @@ function LineChart1() {
         },
       },
     },
-
     responsive: true,
+    maintainAspectRatio: false, // Allow height to be controlled by container
     scales: {
       y: {
-        border:{
-          color: 'white',
-          borderWidth: 3
-        },
-        grid:{
-          display: showGrid ? true : false,
+        grid: {
+          display: showGrid,
           color: "magenta",
         },
-        border:{
-          dash: [8, 4]
-        },
-        
         ticks: {
           callback: function(value, index, values) {
             if (value === 0) return 0;
@@ -177,7 +182,6 @@ function LineChart1() {
           },
           maxTicksLimit: 8,
           color: "white"
-
         },
         title: {
           color:'white',
@@ -198,15 +202,9 @@ function LineChart1() {
         min: 200000,
       },
       x: {
-        border:{
-          color: 'white',
-        },
         grid: {
-          display: showGrid ? true : false,
+          display: showGrid,
           color: "magenta"
-        },
-        border:{
-          dash: [8, 4]
         },
         ticks:{
           font: {
@@ -235,44 +233,88 @@ function LineChart1() {
         },
       },
     },   
-  };
+  });
+
+  const data1 = dataTemplate(timeData, valueData, showPoints1);
+  const data2 = dataTemplate(secondTimeData, secondValueData, showPoints2);
+  const options1 = optionsTemplate(showGrid1, showPoints1);
+  const options2 = optionsTemplate(showGrid2, showPoints2);
 
   const handleDataUpload = (filenames) => {
-    // Nothing to do here in this version
+    // Handle data upload if needed
   };
 
-  const handleSelectDataset = (newTimeData, newValueData) => {
-    setTimeData(newTimeData);
-    setValueData(newValueData);
-  };
-  
-
-
-return (
+  return (
     <div className={styles.container2}>
-      <Sidebar onDataUpload={handleDataUpload} onSelectDataset={handleSelectDataset}/>
-      <div className={styles.card}
-          style={{
-            borderRadius: "40px",
-            backgroundColor: "#084072",
-            width: "1950px",
-            height: "800px",
-            marginLeft: "350px",
-            marginTop: "10px",
-            cursor: "pointer",
-          }}
-        >
-          <div >
-            <button style={{ backgroundColor: "#e7e7e7", borderRadius: 15, padding: 6, textAlign: "center", marginLeft: "10px" }} onClick={handleDownload}><FontAwesomeIcon icon={faCamera} size="lg" className={styles.iconsmall}/>Snap Shot</button>
-            <Line ref={chartRef} data={data} options={options}></Line>
-            <button style={{backgroundColor: "#e7e7e7",  borderRadius: 15, padding: 6, textAlign: "center"}} onClick={handleResetZoom}><FontAwesomeIcon icon={faRefresh} size="lg" />Reset Zoom</button>
-            <button style={{backgroundColor: "#e7e7e7",  borderRadius: 15, padding: 6, textAlign: "center", marginLeft:"10px"}} onClick={() => setShowPoints(!showPoints)}><FontAwesomeIcon icon={faCircleDot} size="lg" />Show/Hide Points</button>
-            <button style={{backgroundColor: "#e7e7e7",  borderRadius: 15, padding: 6, textAlign: "center", marginLeft:"10px"}} onClick={() => setGrid(!showGrid)}><FontAwesomeIcon icon={faBorderAll} size="lg" />Show/Hide Grid</button>
+      <Sidebar onDataUpload={handleDataUpload} onSelectDataset={handleSelectDataset} />
+      
+      <div className={styles.chartWrapper}>
+        <div className={styles.card1}>
+          <div className={styles.buttonGroup}>
+            <button 
+              className={styles.button} 
+              onClick={() => handleDownload(chartRef, 'chart1.png')}
+            >
+              <FontAwesomeIcon icon={faCamera} size="lg" className={styles.iconsmall}/>Snap Shot
+            </button>
+            <button 
+              className={styles.button} 
+              onClick={handleResetZoom1}
+            >
+              <FontAwesomeIcon icon={faRefresh} size="lg" />Reset Zoom
+            </button>
+            <button 
+              className={styles.button} 
+              onClick={() => setShowPoints1(!showPoints1)}
+            >
+              <FontAwesomeIcon icon={faCircleDotSolid} size="lg" />Show/Hide Points
+            </button>
+            <button 
+              className={styles.button} 
+              onClick={() => setGrid1(!showGrid1)}
+            >
+              <FontAwesomeIcon icon={faBorderAll} size="lg" />Show/Hide Grid
+            </button>
+          </div>
+          <div className={styles.chartContainer}>
+            <Line ref={chartRef} data={data1} options={options1}></Line>
+          </div>
         </div>
-      </div> 
+        
+        <div className={styles.card1}>
+          <div className={styles.buttonGroup}>
+            <button 
+              className={styles.button} 
+              onClick={() => handleDownload(chartRef1, 'chart2.png')}
+            >
+              <FontAwesomeIcon icon={faCamera} size="lg" className={styles.iconsmall}/>Snap Shot
+            </button>
+            <button 
+              className={styles.button} 
+              onClick={handleResetZoom2}
+            >
+              <FontAwesomeIcon icon={faRefresh} size="lg" />Reset Zoom
+            </button>
+            <button 
+              className={styles.button} 
+              onClick={() => setShowPoints2(!showPoints2)}
+            >
+              <FontAwesomeIcon icon={faCircleDotSolid} size="lg" />Show/Hide Points
+            </button>
+            <button 
+              className={styles.button} 
+              onClick={() => setGrid2(!showGrid2)}
+            >
+              <FontAwesomeIcon icon={faBorderAll} size="lg" />Show/Hide Grid
+            </button>
+          </div>
+          <div className={styles.chartContainer}>
+            <Line ref={chartRef1} data={data2} options={options2}></Line>
+          </div>
+        </div>
+      </div>
     </div>
-);
+  );
 }
-
 
 export default LineChart1;
