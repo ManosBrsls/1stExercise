@@ -43,6 +43,8 @@ function LineChart1() {
   const [valueData, setValueData] = useState([]);
   const [secondTimeData, setSecondTimeData] = useState([]);
   const [secondValueData, setSecondValueData] = useState([]);
+  const [title, setTitle] = useState("")
+  const [title2, setTitle2] = useState("")
   
   // State for grid and points visibility
   const [showGrid1, setGrid1] = useState(true);
@@ -79,13 +81,15 @@ function LineChart1() {
   };
 
   // Handler to select dataset
-  const handleSelectDataset = (newTimeData, newValueData, chartNumber) => {
+  const handleSelectDataset = (newTimeData, newValueData, chartNumber, filename) => {
     if (chartNumber === 1) {
       setTimeData(newTimeData);
       setValueData(newValueData);
+      setTitle(filename)
     } else if (chartNumber === 2) {
       setSecondTimeData(newTimeData);
       setSecondValueData(newValueData);
+      setTitle2(filename)
     }
   };
   
@@ -115,7 +119,7 @@ function LineChart1() {
     ],
   });
 
-  const optionsTemplate = (showGrid, showPoints) => ({
+  const optionsTemplate = (showGrid, showPoints, title, title2) => ({
     plugins: {
       chartAreaBorder: {
         borderColor: 'white',
@@ -148,7 +152,7 @@ function LineChart1() {
       },
       title: {
         display: true,
-        text: "Whole Dataset",
+        text: title,
         color: "white",
         font:{
           size: 28,
@@ -186,7 +190,7 @@ function LineChart1() {
         title: {
           color:'white',
           display: true,
-          text: "Value",
+          text: "Value (counts)",
           padding: {
             bottom: 10,
             right: 20,
@@ -218,7 +222,7 @@ function LineChart1() {
         title: {
           color: 'white',
           display: true,
-          text: "Time",
+          text: "Time (min)",
           padding: {
             top: 25,
             bottom:20,
@@ -237,8 +241,8 @@ function LineChart1() {
 
   const data1 = dataTemplate(timeData, valueData, showPoints1);
   const data2 = dataTemplate(secondTimeData, secondValueData, showPoints2);
-  const options1 = optionsTemplate(showGrid1, showPoints1);
-  const options2 = optionsTemplate(showGrid2, showPoints2);
+  const options1 = optionsTemplate(showGrid1, showPoints1, title);
+  const options2 = optionsTemplate(showGrid2, showPoints2, title2);
 
   const handleDataUpload = (filenames) => {
     // Handle data upload if needed

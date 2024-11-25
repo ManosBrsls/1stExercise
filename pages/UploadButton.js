@@ -20,7 +20,7 @@ const UploadButton = ({ onUpload }) => {
               newTimeData.push(trimmedTime);
               newValueData.push(results.data[i][2]);
             }
-            onUpload(file.name, newTimeData, newValueData);
+            onUpload(file.name.replace(/\.[^/.]+$/, ""), newTimeData, newValueData);
           },
         });
       });

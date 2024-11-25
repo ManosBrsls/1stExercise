@@ -45,7 +45,7 @@ const Sidebar = ({ onDataUpload, onSelectDataset, onGCIMSDataUpload }) => {
 
   const handleIMSDatasetClick = (filename, chartNumber) => {
     const { timeData, valueData } = datasets[filename];
-    onSelectDataset(timeData, valueData, chartNumber);
+    onSelectDataset(timeData, valueData, chartNumber, filename);
   };
 
   return (
