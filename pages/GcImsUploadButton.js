@@ -25,7 +25,7 @@ const GCIMSUploadButton = ({ onUpload }) => {
         style={{ display: 'none' }}
         type="file"
         id="gcims-uploadfile"
-        accept=".hdf5"
+        accept=".hdf5, .h5"
         multiple
         onChange={handleUpload}
       />

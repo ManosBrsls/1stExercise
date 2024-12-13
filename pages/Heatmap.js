@@ -300,7 +300,7 @@ function HeatmapUploader() {
                     onToggle={() => setViewMode("chromSpectra")}
                   />
                 </Toolbar>
-                <div ref={heatmapRef} style={{display: "flex", height: "40rem", width: "75rem", backgroundColor: "#084072"}}>
+                <div ref={heatmapRef} style={{display: "flex", height: "40rem", width: "75rem", backgroundColor: "#084072", fontSize: 19}}>
                   <HeatmapVis
                     ref={heatmapRef}
                     className={styles.container5}
@@ -318,8 +318,8 @@ function HeatmapUploader() {
                       xAxisZoom: false,
                       yAxisZoom: false,
                     }}
-                    abscissaParams={{label: 'Drift Time'}}
-                    ordinateParams={{label: 'Retention Time'}}
+                    abscissaParams={{label: 'Drift Time (msec)'}}
+                    ordinateParams={{label: 'Retention Time (sec)'}}
                   />
                 </div>
               </>
@@ -365,7 +365,7 @@ function HeatmapUploader() {
                   >          
                   </ToggleBtn>
                 </Toolbar>
-                <div ref={imsSpectra} style={{display: "flex", height: "40rem", width: "75rem", backgroundColor: "#084072"}}>
+                <div ref={imsSpectra} style={{display: "flex", height: "40rem", width: "75rem", backgroundColor: "#084072", fontSize: 19}}>
                   <LineVis
                     className={styles.container6}
                     dataArray={lineData}
@@ -374,13 +374,13 @@ function HeatmapUploader() {
                     curveType="OnlyLine"
                     showGrid={showGrid}
                     title="Ims Spectra Graph"
-                    abscissaParams={{label: "Drift Time"}}
-                    ordinateLabel="Intensity Values"
+                    abscissaParams={{label: "Drift Time (msec)"}}
+                    ordinateLabel="Intensity Values (counts)"
                   />
                 </div>
 
                 <div style={{ marginTop: "8px" }}>
-                  <label htmlFor="row-slider" style={{ color: "#fff" }}>
+                  <label htmlFor="row-slider" style={{ color: "#fff", fontSize: 18 }}>
                     Select Retention time:
                   </label>
                   <input
@@ -391,7 +391,7 @@ function HeatmapUploader() {
                     value={selectedIndex}
                     onChange={handleImsSliderChange}
                   />
-                  <span style={{ color: "#fff", marginLeft: "10px" }}>
+                  <span style={{ color: "#fff", marginLeft: "10px" , fontSize: 20}}>
                     {selectedIndex}
                   </span>
                 </div>
@@ -438,7 +438,7 @@ function HeatmapUploader() {
                   >          
                   </ToggleBtn>
                 </Toolbar>
-                <div ref={chromGram} style={{display: "flex", height: "40rem", width: "76rem", backgroundColor: "#084072"}}>
+                <div ref={chromGram} style={{display: "flex", height: "40rem", width: "76rem", backgroundColor: "#084072", fontSize: 19}}>
                   <LineVis
                     className={styles.container6}
                     dataArray={chromData}
@@ -446,13 +446,14 @@ function HeatmapUploader() {
                     scaleType={"linear"}
                     curveType="OnlyLine"
                     showGrid={showGrid}
+                    
                     title="Gc Chromatogram Graph"
-                    abscissaParams={{label: "Retention Time"}}
-                    ordinateLabel="Intensity Values"
+                    abscissaParams={{label: "Retention Time (sec)"}}
+                    ordinateLabel="Intensity Values (counts)"
                   />
                 </div>
                 <div style={{ marginTop: "8px" }}>
-                  <label htmlFor="column-slider" style={{ color: "#fff" }}>
+                  <label htmlFor="column-slider" style={{ color: "#fff" , fontSize: 18}}>
                     Select Drift time:
                   </label>
                   <input
@@ -463,7 +464,7 @@ function HeatmapUploader() {
                     value={selectedIndex2}
                     onChange={handleGcSliderChange}
                   />
-                  <span style={{ color: "#fff", marginLeft: "10px" }}>
+                  <span style={{ color: "#fff", marginLeft: "10px", fontSize: 20 }}>
                     {selectedIndex2}
                   </span>
                 </div>

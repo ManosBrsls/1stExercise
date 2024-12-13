@@ -1,315 +1,160 @@
 "use client";
-
-
-
-import { Line } from "react-chartjs-2";
-import styles from "../styles/Home.module.css"
-import React, { useEffect, useReducer, useState, useRef } from "react";
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import "@fortawesome/fontawesome-svg-core/styles.css";  
-import { faBorderAll, faCamera, faDownload, faHome, faRefresh } from '@fortawesome/free-solid-svg-icons';
-
-
-
-import {
-  Chart as ChartJS,
-  LineElement,
-  registerables,
-  CategoryScale, // x axis
-  LinearScale, // y axis
-  PointElement,
-  Legend,
-  Tooltip,
-  Filler,
-  Title,
-} from "chart.js";
-
-
-import zoomPlugin from 'chartjs-plugin-zoom';
-
+import React, { useState, useRef } from "react";
+import ndarray from "ndarray";
+import {HeatmapVis, getDomain, Toolbar, DomainWidget, ColorMapSelector, ScaleSelector, Separator, ToggleBtn, LineVis,} from "@h5web/lib";
+import * as jsfive from "jsfive";
+import "@h5web/lib/dist/styles.css";
 import Sidebar from "./posts/Sidebar";
-import { faCircleDot } from "@fortawesome/free-solid-svg-icons/faCircleDot";
-
-ChartJS.register(
-  LineElement,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  Title,
-  zoomPlugin,
-  Legend,
-  Tooltip,
-  Filler,
-);
-
-function LineChart1() {
+import styles from "../styles/Home.module.css";
+import { FaCamera, FaChartArea, FaDownload,  FaMap, FaTh, FaChartLine } from "react-icons/fa";
+import "@fortawesome/fontawesome-svg-core/styles.css";
+import html2canvas from "html2canvas";
 
 
-  // //updating data in the graph
-  const [timeData, setTimeData] = useState([]);
-  const [valueData, setValueData] = useState([]);
 
-  const [secondTimeData, setSecondTimeData] = useState([]);
-  const [secondValueData, setSecondValueData] = useState([]);
-  //showing Grid and Points in the graph
-  const [showGrid, setGrid] = useState(true);
-  const [showPoints, setShowPoints] = useState(true); 
-  const chartRef = React.useRef(null);
-  const chartRef1 = useRef(null)
-  const [title, setTitle] = useState("")
-  const [title2, setTitle2] = useState("")
+function HeatmapUploader() {
+  const [heatmapData, setHeatmapData] = useState(null);
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const [customDomain, setCustomDomain] = useState([null, null]);
+  const [error, setError] = useState(null);
+  const [colorMap, setColorMap] = useState("Viridis");
+  const [invertColorMap, setInvertColorMap] = useState(false);
+  const [scaleType, setScaleType] = useState("linear");
+  const [showGrid, setShowGrid] = useState(false);
+  const [viewMode, setViewMode] = useState("heatmap");
+  const heatmapRef = useRef(null);
+
+  const handleGCIMSDataUpload = (filename, buffer) => {
+
+    try {
+      const h5File = new jsfive.File(buffer);
+
+      // const driftTimeDataset = h5File.get("drift_time");
+      // const retTimeDataset = h5File.get("ret_time");
+      const valuesDataset = h5File.get("spectrumPoints");
+
+      console.log(valuesDataset)
 
 
-  const handleSelectDataset = (newTimeData, newValueData, chartNumber, filename) => {
-    if (chartNumber === 1) {
-      setTimeData(newTimeData);
-      setValueData(newValueData);
-      setTitle(filename)
-    } else if (chartNumber === 2) {
-      setSecondTimeData(newTimeData);
-      setSecondValueData(newValueData);
-      setTitle2(filename)
+      const newvalueDataset = Array.from(valuesDataset.value)
+      console.log(newvalueDataset)
+  
+      const dataArray = ndarray(valuesDataset.value, valuesDataset.shape);
+      // const driftTimeArray = ndarray(driftTimeDataset.value, driftTimeDataset.shape);
+      // const retTimeArray = ndarray(retTimeDataset.value, retTimeDataset.shape);
+
+      const rowDataArray = Array.from(
+        dataArray.data.slice(
+          selectedIndex * dataArray.shape[1],
+          (selectedIndex + 1) * dataArray.shape[1]
+        )
+      );
+
+      const heatMapDomain = getDomain(dataArray);
+      
+      setCustomDomain(heatMapDomain);
+
+      setHeatmapData({dataArray, domain1: heatMapDomain});
+
+
+     
+
+
+    } catch (err) {
+      console.error("Error processing file:", err);
+      setError("Error processing file.");
     }
   };
 
+  
 
-  const handleResetZoom = () => {
-    if (chartRef && chartRef.current) {
-      chartRef.current.resetZoom()
-
-    }
-  };
-
-  // Function to handle the download button click
-  const handleDownload = () =>{
-     // Get the base64 image data from the chart
-    const image = chartRef.current.toBase64Image('image/png');
-
-    const link = document.createElement('a');
-    link.href = image;
-    link.download = 'my_chart.png';
-
-    //Trigger the download
-    link.click();
-
-  }
-
-
-  const data = {
-    labels: timeData,
-    datasets: [
-      {
-        pointStyle: "crossRot",
-        pointRadius: showPoints ? 0 : 1.3,
-        label: title,
-        data: valueData,
-        borderColor: "#7efa02",
-        borderWidth: 3,
-        pointBorderColor: "#F8001f",
-        pointBorderWidth: 13,
-        tension: 0.6,
-        fill: false,
-        backgroundColor: (context) => {
-          const ctx = context.chart.ctx;
-          const gradient = ctx.createLinearGradient(0, 0, 0, 1050);
-          gradient.addColorStop(0, "#4b8c0a");
-          gradient.addColorStop(1, "white");
-          return gradient;
-        },
-      },
-      {
-        pointStyle: "crossRot",
-        pointRadius: showPoints ? 0 : 1.3,
-        label: title2,
-        data: secondValueData,
-        borderColor: "#ffc833",
-        borderWidth: 3,
-        pointBorderColor: "#fc9105",
-        pointBorderWidth: 13,
-        tension: 0.6,
-        fill: false,
-        backgroundColor: (context) => {
-          const ctx = context.chart.ctx;
-          const gradient = ctx.createLinearGradient(0, 0, 0, 1050);
-          gradient.addColorStop(0, "#bf8e08");
-          gradient.addColorStop(1, "white");
-          return gradient;
-        },
-      },
-    ],
-
-
-  };
-
-
-  const options = {
-    plugins: {
-      chartAreaBorder:{
-        borderColor: 'white',
-        borderWidth: 4
-      },
-      zoom: {
-        zoom: {
-          pinch: {
-            enabled: true
-          },
-          wheel: {
-            enabled: true
-          },
-          drag:{
-            enabled: true,
-            borderColor: 'rgb(54, 162, 235)',
-            borderWidth: 1,
-            backgroundColor: 'rgba(54, 162, 235, 0.3)'
-          },
-          mode: 'x',
-        }
-      },
-      legend: {
-        labels:{
-          color: 'white',
-          font: {
-            size: 16
-          }
-        }
-      },
-      title: {
-        display: "enable",
-        text: "Ims Linechart",
-        color: "white",
-        font:{
-          size: 28,
-          weight: "bold",
-          family: "Arial"
-        },
-        padding: {
-          top: 10,
-          bottom: 30,
-        },
-      },
-    },
-
-    responsive: true,
-    scales: {
-      y: {
-        border:{
-          color: 'white',
-          borderWidth: 3
-        },
-        grid:{
-          display: showGrid ? true : false,
-          color: "magenta",
-        },
-        border:{
-          dash: [8, 4]
-        },
-
-        ticks: {
-          callback: function(value, index, values) {
-            if (value === 0) return 0;
-            const exponent = Math.floor(Math.log10(value));
-            const mantissa = value / Math.pow(10, exponent);
-            return mantissa.toPrecision(3) + "e" + exponent;
-          },
-          font: {
-            size: 18,
-            weight: "bold",
-          },
-          maxTicksLimit: 8,
-          color: "white"
-
-        },
-        title: {
-          color:'white',
-          display: true,
-          text: "Value (counts)",
-          padding: {
-            bottom: 10,
-            right: 20,
-            left: 50,
-            top: 15
-          },
-          font: {
-            size: 34,
-            style: "italic",
-            family: "Helvetica Neue",
-          },
-        },
-        min: 200000,
-      },
-      x: {
-        border:{
-          color: 'white',
-        },
-        grid: {
-          display: showGrid ? true : false,
-          color: "magenta"
-        },
-        border:{
-          dash: [8, 4]
-        },
-        ticks:{
-          font: {
-            size: 18,
-            weight: "semi bold",
-          },
-          maxTicksLimit: 10,
-          minTicksLimit: 8,
-          color: "white"
-        },
-        title: {
-          color: 'white',
-          display: true,
-          text: "Time (min)",
-          padding: {
-            top: 25,
-            bottom:20,
-            left: 30,
-            right: 30,
-          },
-          font: {
-            size: 34,
-            style: "italic",
-            family: "Helvetica Neue",
-          },
-        },
-      },
-    },   
-  };
-
-
-const handleDataUpload = (filenames) => {
-  // Nothing to do here in this version
-};
-
-
-
-return (
-  <div className={styles.container2}>
-
-
-<Sidebar onDataUpload={handleDataUpload} onSelectDataset={handleSelectDataset}/>
-<div className={styles.card}
-          style={{
-            borderRadius: "40px",
-            backgroundColor: "#084072",
-            // width: "1450px",
-            // height: "550px",
-            marginLeft: "350px",
-            marginTop: "50px",
-            cursor: "pointer",
-          }}
-        >
-          <div >
-            <button style={{ backgroundColor: "#e7e7e7", borderRadius: 15, padding: 6, textAlign: "center", marginLeft: "10px" }} onClick={handleDownload}><FontAwesomeIcon icon={faCamera} size="lg" className={styles.iconsmall}/>Snap Shot</button>
-            <Line ref={chartRef} data={data} options={options}></Line>
-            <button style={{backgroundColor: "#e7e7e7",  borderRadius: 15, padding: 6, textAlign: "center"}} onClick={handleResetZoom}><FontAwesomeIcon icon={faRefresh} size="lg" />Reset Zoom</button>
-            <button style={{backgroundColor: "#e7e7e7",  borderRadius: 15, padding: 6, textAlign: "center", marginLeft:"10px"}} onClick={() => setShowPoints(!showPoints)}><FontAwesomeIcon icon={faCircleDot} size="lg" />Show/Hide Points</button>
-            <button style={{backgroundColor: "#e7e7e7",  borderRadius: 15, padding: 6, textAlign: "center", marginLeft:"10px"}} onClick={() => setGrid(!showGrid)}><FontAwesomeIcon icon={faBorderAll} size="lg" />Show/Hide Grid</button>
-        </div>
-      </div> 
+  return (
+    <div className={styles.container2}>
+      <Sidebar onGCIMSDataUpload={handleGCIMSDataUpload} />
+      <div
+        className={styles.card}
+        style={{borderRadius: "40px", backgroundColor: "#084072", marginLeft: "200px", cursor: "pointer"}}
+      >
+        {heatmapData && (
+          <>
+            {viewMode === "heatmap" ? (
+              <>
+                <Toolbar className={styles.container4}>
+                  <DomainWidget
+                    className={styles.container4}
+                    customDomain={customDomain}
+                    dataDomain={heatmapData.domain1}
+                    onCustomDomainChange={setCustomDomain}
+                    scaleType={scaleType}
+                  />
+                  <Separator />
+                  <ColorMapSelector
+                    className={styles.container4}
+                    onInversionChange={() => setInvertColorMap(!invertColorMap)}
+                    onValueChange={setColorMap}
+                    value={colorMap}
+                  />
+                  <Separator />
+                  <ToggleBtn
+                    icon={FaCamera}
+                    label="Snap Shot"
+                    onToggle={() => handleSnapshot()}
+                  >
+                  </ToggleBtn>
+                  <Separator />
+                  <ScaleSelector
+                    className={styles.container4}
+                    onScaleChange={setScaleType}
+                    options={["linear", "log", "symlog"]}
+                    value={scaleType}
+                  />
+                  <Separator />
+                  <ToggleBtn
+                    icon={FaTh}
+                    label="Grid"
+                    onToggle={() => setShowGrid(!showGrid)}
+                  />
+                  <Separator />
+                  <ToggleBtn
+                    icon={FaChartArea}
+                    label="IMS Spectra"
+                    onToggle={() => setViewMode("imsSpectra")}
+                  />
+                  <Separator />
+                  <ToggleBtn
+                    icon={FaChartLine}
+                    label="Chrom Spectra"
+                    onToggle={() => setViewMode("chromSpectra")}
+                  />
+                </Toolbar>
+                <div ref={heatmapRef} style={{display: "flex", height: "40rem", width: "75rem", backgroundColor: "#084072", fontSize: 19}}>
+                  <HeatmapVis
+                    ref={heatmapRef}
+                    className={styles.container5}
+                    dataArray={heatmapData.dataArray}
+                    domain={customDomain[0] === null  ? heatmapData.domain1 : customDomain}
+                    aspect="auto"
+                    showGrid={showGrid}
+                    colorMap={colorMap}
+                    scaleType={scaleType}
+                    invertColorMap={invertColorMap}
+                    interactions={{
+                      selectToZoom: { modifierKey: "Shift" },
+                      xAxisZoom: false,
+                      yAxisZoom: false,
+                    }}
+                    abscissaParams={{label: 'Drift Time (msec)'}}
+                    ordinateParams={{label: 'Retention Time (sec)'}}
+                  />
+                </div>
+              </>
+            ) :  viewMode === "null" ()}</>
+        )}
+      </div>
     </div>
-);
+  );
 }
 
-export default LineChart1;
+
+export default HeatmapUploader;
+
