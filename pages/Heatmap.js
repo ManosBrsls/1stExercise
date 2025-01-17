@@ -31,7 +31,7 @@ function HeatmapUploader() {
 
   const heatmapRef = useRef(null);
   const imsSpectra = useRef(null);
-  const chromGram = useRef(null)
+  const chromGram = useRef(null);
 
   const handleGCIMSDataUpload = (filename, buffer) => {
     try {
@@ -393,7 +393,7 @@ function HeatmapUploader() {
                   />
                   <span style={{ color: "#fff", marginLeft: "10px" , fontSize: 20}}>
                     {selectedIndex}
-                  </span>
+                  </span> 
                 </div>
               </>
             ) : viewMode === "chromSpectra" ? (
