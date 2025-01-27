@@ -34,6 +34,17 @@ function HeatmapUploader() {
   const imsSpectra = useRef(null);
   const chromGram = useRef(null);
 
+
+  const [username, setUsername] = useState("");
+  const [passwordEntered, setPasswordEntered] = useState(false);
+  const [authError, setAuthError] = useState(null);
+
+
+  const correctCredentials = {
+    username: "expertUser", // Replace with your desired username
+    password: "123", // Replace with your desired password
+  };
+
   const handleGCIMSDataUpload = (filename, buffer) => {
 
     try {
@@ -229,6 +240,27 @@ function HeatmapUploader() {
       link.click();
     };
 
+
+    const handleViewChange = (newView) => {
+      if (!passwordEntered) {
+        const enteredUsername = prompt("Enter your username:");
+        const enteredPassword = prompt("Enter your password:");
+  
+        if (
+          enteredUsername === correctCredentials.username &&
+          enteredPassword === correctCredentials.password
+        ) {
+          setPasswordEntered(true);
+          setViewMode(newView);
+          setAuthError(null);
+        } else {
+          setAuthError("Incorrect username or password. Access denied.");
+        }
+      } else {
+        setViewMode(newView);
+      }
+    };
+
   
 
   return (
@@ -281,15 +313,16 @@ function HeatmapUploader() {
                   <ToggleBtn
                     icon={FaChartArea}
                     label="IMS Spectra"
-                    onToggle={() => setViewMode("imsSpectra")}
+                    onToggle={() => handleViewChange("imsSpectra")}
                   />
                   <Separator />
                   <ToggleBtn
                     icon={FaChartLine}
                     label="Chrom Spectra"
-                    onToggle={() => setViewMode("chromSpectra")}
+                    onToggle={() => handleViewChange("chromSpectra")}
                   />
                 </Toolbar>
+                {authError && <p style={{ color: "red" }}>{authError}</p>}
                 <div ref={heatmapRef} style={{display: "flex", height: "40rem", width: "75rem", backgroundColor: "#084072", fontSize: 19}}>
                   <HeatmapVis
                     ref={heatmapRef}
