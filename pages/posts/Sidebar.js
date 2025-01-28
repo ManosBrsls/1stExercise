@@ -103,7 +103,7 @@ const Sidebar = ({ onDataUpload, onSelectDataset, onGCIMSDataUpload }) => {
           </a>
           {isGCIMSVisible && (
             <div className={styles.dropdownMenu} ref={gcImsDropdownRef}>
-              <Link legacyBehavior href="/LineVis">
+              <Link legacyBehavior href="/Heatmap">
                 <a className={styles.dropdownItem}>
                   <span style={dropdownTextStyle}>GC IMS Graph</span>
                   <FontAwesomeIcon icon={faChartLine} style={{ ...dropdownIconStyle, fontSize: '20px', width: '20px', height: '20px' }} />

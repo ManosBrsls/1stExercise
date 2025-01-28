@@ -33,32 +33,44 @@ function HeatmapUploader() {
   const imsSpectra = useRef(null);
   const chromGram = useRef(null);
 
+  const [username, setUsername] = useState("");
+  const [passwordEntered, setPasswordEntered] = useState(false);
+  const [authError, setAuthError] = useState(null);
+
+
+  const correctCredentials = {
+    username: "expertUser", // Replace with your desired username
+    password: "123", // Replace with your desired password
+  };
+
+
+
   const handleGCIMSDataUpload = (filename, buffer) => {
+
     try {
       const h5File = new jsfive.File(buffer);
 
-      const driftTimeDataset = h5File.get("drift_time");
-      const retTimeDataset = h5File.get("ret_time");
-      const valuesDataset = h5File.get("values");
+      const valuesDataset = h5File.get("spectrumPoints");
+      const dataArray = ndarray(valuesDataset.value, valuesDataset.shape);
 
+      
 
-      const newvalueDataset = Array.from(valuesDataset.value)
-      const dataArray2 = ndarray(newvalueDataset, newvalueDataset.shape);
-      setChromData(dataArray2)
+      setChromData(dataArray)
+
 
       const chromArray = [];
 
-      for (let i = 0; i < dataArray2.data.length; i += 549) {
+      console.log(dataArray.shape[1])
+
+      for (let i = 0; i < dataArray.data.length; i += dataArray.shape[1] ) {
         
-        chromArray.push(dataArray2.data[i]);
+        chromArray.push(dataArray.data[i]);
       }
-      
+
+      console.log(chromArray) 
+
       const finalChromArray = ndarray(chromArray, chromArray.shape)
       const chromDomain = getDomain(finalChromArray)
-
-      const dataArray = ndarray(valuesDataset.value, valuesDataset.shape);
-      const driftTimeArray = ndarray(driftTimeDataset.value, driftTimeDataset.shape);
-      const retTimeArray = ndarray(retTimeDataset.value, retTimeDataset.shape);
 
       const rowDataArray = Array.from(
         dataArray.data.slice(
@@ -69,47 +81,52 @@ function HeatmapUploader() {
 
       const heatMapDomain = getDomain(dataArray);
       setLineDomain(getDomain(rowDataArray));
-      setCustomDomain(heatMapDomain);
-
-      setHeatmapData({dataArray, domain1: heatMapDomain, retTimeArray, driftTimeArray, dataArray2});
 
       const initialLineData = dataArray.pick(selectedIndex, null);
       setLineData(initialLineData);
+      
+      setCustomDomain(heatMapDomain);
+
+      setHeatmapData({dataArray, domain1: heatMapDomain});
+
       setChromData(finalChromArray)
       setChromDomain(chromDomain)
-
 
     } catch (err) {
       console.error("Error processing file:", err);
       setError("Error processing file.");
     }
+   
   };
 
+
   const handleDownloadImsCSV = () => {
-    if (!lineData) {
+    if (!lineData || !heatmapData) {
       return;
     }
-
-    // Create CSV data from lineData
+  
+    const { dataArray } = heatmapData;
+  
+    // Assuming `dataArray` contains drift time values in its second dimension (or another mapping).
+    // Replace this logic with the actual way you derive drift times.
+    const driftTimeArray = Array.from({ length: dataArray.shape[1] }, (_, index) => index); // Replace with actual drift time calculation.
+  
     let csvContent = "data:text/csv;charset=utf-8,";
-
-    // Add header with drift times
-    csvContent += `Drift Time, Intensity Values\n`;
-
-    // Add each data point in lineData
-    lineData.data.forEach((value, index) => {
-      const driftTime = heatmapData.driftTimeArray.get(index);
-      csvContent += `${driftTime}, ${value}\n`;
+    csvContent += "Drift Time (msec),Intensity Values (counts)\n";
+  
+    lineData.data.forEach((yValue, index) => {
+      const xValue = driftTimeArray[index]; // Use the actual drift time values here.
+      csvContent += `${xValue},${yValue}\n`;
     });
-
-    // Create a downloadable link
+  
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "Ims Spectra.csv");
-
-    // Simulate click to start download
+    link.setAttribute("download", "Ims_Spectra.csv");
+  
+    document.body.appendChild(link);
     link.click();
+    document.body.removeChild(link);
   };
 
   const handleSnapshot = () => {
@@ -173,44 +190,44 @@ function HeatmapUploader() {
     }
   };
 
-  const handleImsSliderChange = (event) => {
-    const newIndex = parseInt(event.target.value, 10);
-    setSelectedIndex(newIndex);
+    const handleImsSliderChange = (event) => {
+      const newIndex = parseInt(event.target.value, 10);
+      setSelectedIndex(newIndex);
+      console.log(heatmapData.dataArray.shape[0])
+      const rowDataArray = Array.from(
+        heatmapData.dataArray.data.slice(
+          newIndex * heatmapData.dataArray.shape[1],
+          (newIndex + 1) * heatmapData.dataArray.shape[1]
+        )
+      );
+      // console.log(rowDataArray)
+      const selectedLineData = ndarray(rowDataArray, [rowDataArray.length]);
+      console.log(selectedLineData)
+      setLineData(selectedLineData);
+  
+      const rowDomain = getDomain(selectedLineData);
+      setLineDomain(rowDomain);
+      setCustomDomain2(rowDomain);
+    };
 
-    const rowDataArray = Array.from(
-      heatmapData.dataArray.data.slice(
-        newIndex * heatmapData.dataArray.shape[1],
-        (newIndex + 1) * heatmapData.dataArray.shape[1]
-      )
-    );
-
-    const selectedLineData = ndarray(rowDataArray, [rowDataArray.length]);
-    setLineData(selectedLineData);
-
-    const rowDomain = getDomain(selectedLineData);
-    setLineDomain(rowDomain);
-    setCustomDomain2(rowDomain);
-  };
-
-
-  const handleGcSliderChange = (event) => {
-    const newArray = []
-    const newIndex2 = parseInt(event.target.value, 10);
-    setSelectedIndex2(newIndex2);
-
-    for (let i = newIndex2; i < heatmapData.dataArray2.data.length; i += 549) {
-        
-      newArray.push(heatmapData.dataArray2.data[i]);
-    }
-
-    const selectedColumnData = ndarray(newArray, newArray.shape);
-    setChromData(selectedColumnData);
-
-    const columnDomain = getDomain(selectedColumnData);
-    setChromDomain(columnDomain)
-    setCustomDomain3(columnDomain)
-
-  };
+      const handleGcSliderChange = (event) => {
+        const newArray = []
+        const newIndex2 = parseInt(event.target.value, 10);
+        setSelectedIndex2(newIndex2);
+    
+        for (let i = newIndex2; i < heatmapData.dataArray.data.length; i += heatmapData.dataArray.shape[1]) {
+            
+          newArray.push(heatmapData.dataArray.data[i]);
+        }
+    
+        const selectedColumnData = ndarray(newArray, newArray.shape);
+        setChromData(selectedColumnData);
+    
+        const columnDomain = getDomain(selectedColumnData);
+        setChromDomain(columnDomain)
+        setCustomDomain3(columnDomain)
+    
+      };
 
 
   const handleDownloadChromCSV = () => {
@@ -239,6 +256,29 @@ function HeatmapUploader() {
     // Simulate click to start download
     link.click();
   };
+
+
+
+  const handleViewChange = (newView) => {
+    if (!passwordEntered) {
+      const enteredUsername = prompt("Enter your username:");
+      const enteredPassword = prompt("Enter your password:");
+
+      if (
+        enteredUsername === correctCredentials.username &&
+        enteredPassword === correctCredentials.password
+      ) {
+        setPasswordEntered(true);
+        setViewMode(newView);
+        setAuthError(null);
+      } else {
+        setAuthError("Incorrect username or password. Access denied.");
+      }
+    } else {
+      setViewMode(newView);
+    }
+  };
+
 
 
   return (
@@ -291,15 +331,16 @@ function HeatmapUploader() {
                   <ToggleBtn
                     icon={FaChartArea}
                     label="IMS Spectra"
-                    onToggle={() => setViewMode("imsSpectra")}
+                    onToggle={() => handleViewChange("imsSpectra")}
                   />
                   <Separator />
                   <ToggleBtn
                     icon={FaChartLine}
                     label="Chrom Spectra"
-                    onToggle={() => setViewMode("chromSpectra")}
+                    onToggle={() => handleViewChange("chromSpectra")}
                   />
                 </Toolbar>
+                {authError && <p style={{ color: "red" }}>{authError}</p>}
                 <div ref={heatmapRef} style={{display: "flex", height: "40rem", width: "75rem", backgroundColor: "#084072", fontSize: 19}}>
                   <HeatmapVis
                     ref={heatmapRef}
