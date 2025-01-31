@@ -414,7 +414,7 @@ function HeatmapUploader() {
                     scaleType={"linear"}
                     curveType="OnlyLine"
                     showGrid={showGrid}
-                    title="Ims Spectra Graph"
+                    title="IMS Spectra Graph"
                     abscissaParams={{label: "Drift Time (msec)"}}
                     ordinateLabel="Intensity Values (counts)"
                   />

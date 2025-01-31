@@ -170,7 +170,7 @@ function LineChart1() {
       },
       title: {
         display: "enable",
-        text: "Ims Linechart",
+        text: "IMS Linechart",
         color: "white",
         font:{
           size: 28,
