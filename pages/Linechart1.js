@@ -89,7 +89,7 @@ function LineChart1() {
 
   }
 
-
+console.log("timeData", timeData)
   const data = {
     labels: timeData,
     datasets: [

@@ -8,8 +8,9 @@ import UploadButton from '../UploadButton';
 import styles from "../../styles/Home.module.css";
 import GCIMSUploadButton from '../GcImsUploadButton';
 
-const Sidebar = ({ onDataUpload, onSelectDataset, onGCIMSDataUpload }) => {
+const Sidebar = ({ onDataUpload, onSelectDataset, onGCIMSDataSelect }) => {
   const [datasets, setDatasets] = useState({});
+  const [gcimsDatasets, setGcimsDatasets] = useState({});
   const [isIMSVisible, setIMSVisible] = useState(false);
   const [isGCIMSVisible, setGCIMSVisible] = useState(false);
   const [sidebarWidth, setSidebarWidth] = useState('auto');
@@ -25,8 +26,9 @@ const Sidebar = ({ onDataUpload, onSelectDataset, onGCIMSDataUpload }) => {
     } else {
       setSidebarWidth('auto'); // Reset to auto when dropdown is closed
     }
-  }, [isGCIMSVisible, datasets]);
+  }, [isGCIMSVisible, datasets, gcimsDatasets]);
 
+  // Handler for IMS file uploads
   const handleUpload = (filename, timeData, valueData) => {
     setDatasets((prevDatasets) => ({
       ...prevDatasets,
@@ -35,17 +37,36 @@ const Sidebar = ({ onDataUpload, onSelectDataset, onGCIMSDataUpload }) => {
     onDataUpload(Object.keys(datasets));
   };
 
+  // New handler for GC IMS uploads
+  const handleGCIMSUpload = (filename, buffer) => {
+    setGcimsDatasets((prev) => ({
+      ...prev,
+      [filename]: buffer,
+    }));
+    // Optionally, pass the updated file list to a parent component
+    // onGCIMSDataSelect(Object.keys(gcimsDatasets)); // if needed
+  };
+
+  // Handler when a user clicks on an IMS dataset (for example, different chart types)
+  const handleIMSDatasetClick = (filename, chartNumber) => {
+    const { timeData, valueData } = datasets[filename];
+    onSelectDataset(timeData, valueData, chartNumber, filename);
+  };
+
+  // Handler when a user selects a GC IMS dataset to visualize
+  const handleGCIMSDatasetClick = (filename, chartNumber) => {
+    const buffer = gcimsDatasets[filename];
+    // Call the parent's GC IMS selection handler.
+    // You might want to pass additional info such as the chart number.
+    onGCIMSDataSelect(buffer, chartNumber, filename);
+  };
+
   const handleIMSClick = () => {
     setIMSVisible(!isIMSVisible);
   };
 
   const handleGCIMSClick = () => {
     setGCIMSVisible(!isGCIMSVisible);
-  };
-
-  const handleIMSDatasetClick = (filename, chartNumber) => {
-    const { timeData, valueData } = datasets[filename];
-    onSelectDataset(timeData, valueData, chartNumber, filename);
   };
 
   return (
@@ -103,7 +124,7 @@ const Sidebar = ({ onDataUpload, onSelectDataset, onGCIMSDataUpload }) => {
           </a>
           {isGCIMSVisible && (
             <div className={styles.dropdownMenu} ref={gcImsDropdownRef}>
-              <Link legacyBehavior href="/Heatmap">
+              <Link legacyBehavior href="/LineVis">
                 <a className={styles.dropdownItem}>
                   <span style={dropdownTextStyle}>GC IMS Graph</span>
                   <FontAwesomeIcon icon={faChartLine} style={{ ...dropdownIconStyle, fontSize: '20px', width: '20px', height: '20px' }} />
@@ -111,8 +132,25 @@ const Sidebar = ({ onDataUpload, onSelectDataset, onGCIMSDataUpload }) => {
               </Link>
               <a className={styles.dropdownItem} onClick={(e) => e.stopPropagation()}>
                 <span style={dropdownTextStyle}>Upload File</span>
-                <GCIMSUploadButton onUpload={onGCIMSDataUpload} />
+                <GCIMSUploadButton onUpload={handleGCIMSUpload} />
               </a>
+              {/* List uploaded GC IMS files for selection */}
+              {Object.keys(gcimsDatasets).map((filename) => (
+                <div key={filename}>
+                  <a
+                    className={styles.dropdownItem}
+                    onClick={() => handleGCIMSDatasetClick(filename, 1)}
+                  >
+                    <span style={dropdownTextStyle}>{filename} - Chart 1</span>
+                  </a>
+                  <a
+                    className={styles.dropdownItem}
+                    onClick={() => handleGCIMSDatasetClick(filename, 2)}
+                  >
+                    <span style={dropdownTextStyle}>{filename} - Chart 2</span>
+                  </a>
+                </div>
+              ))}
             </div>
           )}
         </li>
