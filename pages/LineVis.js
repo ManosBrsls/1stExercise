@@ -14,19 +14,24 @@ import html2canvas from "html2canvas";
 
 function HeatmapUploader() {
   const [heatmapData, setHeatmapData] = useState(null);
+  const [heatmapData2, setHeatmapData2] = useState(null);
+
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [selectedIndex2, setSelectedIndex2] = useState(0);
+
   const [customDomain, setCustomDomain] = useState([null, null]);
-  const [chromDomain, setChromDomain] = useState(null);
   const [customDomain2, setCustomDomain2] = useState([null, null]);
 
   const [error, setError] = useState(null);
   const [scaleType, setScaleType] = useState("linear");
   const [showGrid, setShowGrid] = useState(false);
-  const [viewMode, setViewMode] = useState("imsSpectra");
+
+
   const [lineDomain, setLineDomain] = useState([null, null]);
   const [lineData, setLineData] = useState(null);
-  const [chromData, setChromData] = useState(null)
+  const [lineDomain2, setLineDomain2] = useState([null, null]);
+  const [lineData2, setLineData2] = useState(null);
+  
   
 
   const imsSpectra = useRef(null);
@@ -34,13 +39,56 @@ function HeatmapUploader() {
 
   const handleGCIMSDataUpload = (filename, buffer) => {
 
+    // try {
+    //   const h5File = new jsfive.File(buffer);
+
+    //   const valuesDataset = h5File.get("spectrumPoints");
+    //   const dataArray = ndarray(valuesDataset.value, valuesDataset.shape);
+
+
+    //   const rowDataArray = Array.from(
+    //     dataArray.data.slice(
+    //       selectedIndex * dataArray.shape[1],
+    //       (selectedIndex + 1) * dataArray.shape[1]
+    //     )
+    //   );
+
+    //   const heatMapDomain = getDomain(dataArray);
+    //   setLineDomain(getDomain(rowDataArray));
+
+    //   const initialLineData = dataArray.pick(selectedIndex, null);
+    //   setLineData(initialLineData);
+      
+    //   setCustomDomain(heatMapDomain);
+
+    //   setHeatmapData({dataArray, domain1: heatMapDomain});
+
+    //   setChromData(finalChromArray)
+    //   setChromDomain(chromDomain)
+
+    // } catch (err) {
+    //   console.error("Error processing file:", err);
+    //   setError("Error processing file.");
+    // }
+   
+  };
+
+  const handleGCIMSDataSelect = (buffer, chartNumber, filename) => {
     try {
+      console.log(filename)
       const h5File = new jsfive.File(buffer);
 
       const valuesDataset = h5File.get("spectrumPoints");
+
+      
+
+      if (chartNumber === 1) {
       const dataArray = ndarray(valuesDataset.value, valuesDataset.shape);
+      
+      const dataArray2 = ndarray(valuesDataset.value, valuesDataset.shape);
+        
 
-
+      
       const rowDataArray = Array.from(
         dataArray.data.slice(
           selectedIndex * dataArray.shape[1],
@@ -56,16 +104,37 @@ function HeatmapUploader() {
       
       setCustomDomain(heatMapDomain);
 
-      setHeatmapData({dataArray, domain1: heatMapDomain});
+      setHeatmapData({dataArray, dataArray2, domain1: heatMapDomain});
 
-      setChromData(finalChromArray)
-      setChromDomain(chromDomain)
+
+    }else if (chartNumber === 2) {
+      const dataArray = ndarray(valuesDataset.value, valuesDataset.shape);
+      const dataArray2 = ndarray(valuesDataset.value, valuesDataset.shape);
+
+      
+      const rowDataArray2 = Array.from(
+        dataArray2.data.slice(
+          selectedIndex2 * dataArray2.shape[1],
+          (selectedIndex2 + 1) * dataArray2.shape[1]
+        )
+      );
+
+      const heatMapDomain2 = getDomain(dataArray2);
+      setLineDomain2(getDomain(rowDataArray2));
+
+      const initialLineData2 = dataArray2.pick(selectedIndex2, null);
+      setLineData2(initialLineData2);
+      
+      setCustomDomain(heatMapDomain2);
+
+      setHeatmapData2({dataArray, dataArray2, domain1: heatMapDomain2})
+      
+    }
 
     } catch (err) {
       console.error("Error processing file:", err);
       setError("Error processing file.");
     }
-   
   };
 
 
@@ -86,6 +155,26 @@ function HeatmapUploader() {
   
       const rowDomain = getDomain(selectedLineData);
       setLineDomain(rowDomain);
+      setCustomDomain2(rowDomain);
+    };
+
+    const handleImsSliderChange2 = (event) => {
+      const newIndex2 = parseInt(event.target.value, 10);
+      setSelectedIndex2(newIndex2);
+      console.log(heatmapData2.dataArray2.shape[0])
+      const rowDataArray2 = Array.from(
+        heatmapData2.dataArray2.data.slice(
+          newIndex2 * heatmapData2.dataArray2.shape[1],
+          (newIndex2 + 1) * heatmapData2.dataArray2.shape[1]
+        )
+      );
+      // console.log(rowDataArray)
+      const selectedLineData2 = ndarray(rowDataArray2, [rowDataArray2.length]);
+      console.log(selectedLineData2)
+      setLineData2(selectedLineData2);
+  
+      const rowDomain = getDomain(selectedLineData2);
+      setLineDomain2(rowDomain);
       setCustomDomain2(rowDomain);
     };
 
@@ -143,133 +232,107 @@ function HeatmapUploader() {
     };
 
 
-    const handleGCIMSDataSelect = (buffer, chartNumber, filename) => {
-      try {
-        const h5File = new jsfive.File(buffer);
-  
-        const valuesDataset = h5File.get("spectrumPoints");
-        const dataArray = ndarray(valuesDataset.value, valuesDataset.shape);
-  
-  
-        const rowDataArray = Array.from(
-          dataArray.data.slice(
-            selectedIndex * dataArray.shape[1],
-            (selectedIndex + 1) * dataArray.shape[1]
-          )
-        );
-  
-        const heatMapDomain = getDomain(dataArray);
-        setLineDomain(getDomain(rowDataArray));
-  
-        const initialLineData = dataArray.pick(selectedIndex, null);
-        setLineData(initialLineData);
-        
-        setCustomDomain(heatMapDomain);
-  
-        setHeatmapData({dataArray, domain1: heatMapDomain});
-  
-        setChromData(finalChromArray)
-        setChromDomain(chromDomain)
-  
-      } catch (err) {
-        console.error("Error processing file:", err);
-        setError("Error processing file.");
-      }
-    };
-    
 
-  
+    return (
+      <div className={styles.container2}>
+        <Sidebar onGCIMSDataUpload={handleGCIMSDataUpload} onGCIMSDataSelect={handleGCIMSDataSelect}/>
+        <div className={styles.card} style={{borderRadius: "40px", backgroundColor: "#084072", marginLeft: "350px", cursor: "pointer"}}>
+          {heatmapData2 &&  (
+            <>
+              <Toolbar className={styles.container4}>
+                    <DomainWidget
+                      customDomain={customDomain2}
+                      dataDomain={lineDomain}
+                      onCustomDomainChange={setCustomDomain2}
+                      scaleType={scaleType}
+                    />
+                    <Separator />
+                    <ToggleBtn
+                      icon={FaCamera}
+                      label="Snap Shot"
+                      onToggle={() => handleSnapshotIMS()}
+                    >
+                    </ToggleBtn>
+                    <Separator />
+                    <ToggleBtn
+                      icon={FaTh}
+                      label="Grid"
+                      onToggle={() => setShowGrid(!showGrid)}
+                    />
+                    <Separator />
+                    <ToggleBtn
+                      icon={FaDownload}
+                      label="Download CSV"
+                      onToggle={() => handleDownloadImsCSV()}
+                    >          
+                    </ToggleBtn>
+              </Toolbar>
+              <div ref={imsSpectra} style={{display:"flex", position: "relative", height: "40rem", width: "75rem", backgroundColor: "#084072", fontSize: 19}}>
+                  <LineVis
+                    className={styles.container6}
+                    dataArray={lineData}
+                    domain={lineDomain}
+                    aspect="auto"
+                    scaleType="linear"
+                    curveType="OnlyLine"
+                    showGrid={showGrid}
+                    title="IMS Spectra Graph 1"
+                    abscissaParams={{ label: "Drift Time (msec)" }}
+                    ordinateLabel="Intensity Values (counts)"
 
-  return (
-    <div className={styles.container2}>
-      <Sidebar  onGCIMSDataUpload={handleGCIMSDataUpload} onGCIMSDataSelect={handleGCIMSDataSelect} />
-      <div
-        className={styles.card}
-        style={{borderRadius: "40px", backgroundColor: "#084072", marginLeft: "200px", cursor: "pointer"}}
-      >
-        {heatmapData && (
-          <>
-        { viewMode === "imsSpectra" ?(
-            <> 
-                <Toolbar className={styles.container4}>
-                  <DomainWidget
-                    customDomain={customDomain2}
-                    dataDomain={lineDomain}
-                    onCustomDomainChange={setCustomDomain2}
-                    scaleType={scaleType}
                   />
-                  <Separator />
-                  <ToggleBtn
-                    icon={FaCamera}
-                    label="Snap Shot"
-                    onToggle={() => handleSnapshotIMS()}
-                  >
-                  </ToggleBtn>
-                  <Separator />
-                  <ToggleBtn
-                    icon={FaTh}
-                    label="Grid"
-                    onToggle={() => setShowGrid(!showGrid)}
+                  <LineVis
+                    className={styles.container7}
+                    dataArray={lineData2}
+                    domain={lineDomain2}
+                    aspect="auto"
+                    scaleType="linear"
+                    curveType="OnlyLine"
+                    showGrid={showGrid} // avoid duplicate grid lines
+                    title="IMS Spectra Graph 2" // you may leave title empty to avoid overlapping titles
+                    abscissaParams={{ label: "Drift Time (msec)" }}
+                    ordinateLabel="Intensity Values (counts)"
+
                   />
-                  <Separator />
-                  <ToggleBtn
-                    icon={FaMap}
-                    label="Heatmap View"
-                    onToggle={() => setViewMode("heatmap")}
-                  />
-                  <Separator />
-                  <ToggleBtn
-                    icon={FaChartLine}
-                    label="Chrom Spectra"
-                    onToggle={() => setViewMode("chromSpectra")}
-                  />
-                  <Separator />
-                  <ToggleBtn
-                    icon={FaDownload}
-                    label="Download CSV"
-                    onToggle={() => handleDownloadImsCSV()}
-                  >          
-                  </ToggleBtn>
-                </Toolbar>
-                <div ref={imsSpectra} style={{display: "flex", height: "40rem", width: "75rem", backgroundColor: "#084072", fontSize: 19}}>
-                <LineVis
-                  className={styles.container6}
-                  dataArray={lineData}
-                  domain={lineDomain}
-                  aspect="auto"
-                  scaleType={"linear"}
-                  curveType="OnlyLine"
-                  showGrid={showGrid}
-                  title="Ims Spectra Graph"
-                  abscissaParams={{label: "Drift Time (msec)"}}
-                  ordinateLabel="Intensity Values (counts)"
-                />
               </div>
-              <div style={{ marginTop: "8px" }}>
-                  <label htmlFor="column-slider" style={{ color: "#fff" , fontSize: 18}}>
-                  Select Retention time:
-                  </label>
-                  <input
-                    id="column-slider"
-                    type="range"
-                    min="0"
-                    max={heatmapData.dataArray.shape[0] -1 }
-                    value={selectedIndex}
-                    onChange={handleImsSliderChange}
-                  />
-                  <span style={{ color: "#fff", marginLeft: "10px", fontSize: 20 }}>
-                    {selectedIndex}
-                  </span>
-
-                  </div>
-            </>)
-          : viewMode === "null" () }</>
-        )}
+              <div style={{ marginBottom: "0 px" }}>
+                <label htmlFor="column-slider" style={{ color: "#fff", fontSize: 18 }}>
+                  Select Retention time 1:
+                </label>
+                <input
+                  id="column-slider"
+                  type="range"
+                  min="0"
+                  max={heatmapData?.dataArray?.shape[0] - 1}
+                  value={selectedIndex}
+                  onChange={handleImsSliderChange}
+                />
+                <span style={{ color: "#fff", marginLeft: "10px", fontSize: 20 }}>
+                  {selectedIndex}
+                </span>
+              </div>
+              <div style={{ marginLeft: "700px" }}>
+                <label htmlFor="column-slider2" style={{ color: "#fff", fontSize: 18 }}>
+                  Select Retention time 2:
+                </label>
+                <input
+                  id="column-slider2"
+                  type="range"
+                  min="0"
+                  max={heatmapData2?.dataArray2?.shape[0] - 1 || 0}
+                  value={selectedIndex2}
+                  onChange={handleImsSliderChange2}
+                />
+                <span style={{ color: "#fff", marginLeft: "10px", fontSize: 20 }}>
+                  {selectedIndex2}
+                </span>
+              </div>
+            </>
+          )}
+        </div>
       </div>
-    </div>
-  );
-}
-
+    );
+  }
 
 export default HeatmapUploader;
 

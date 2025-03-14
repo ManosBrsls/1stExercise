@@ -362,7 +362,20 @@
   --h5w-tickLabels--color: #fcfcfc;
   --h5w-axisLabels--color:#fcfcfc;
   --h5w-grid--color: white;
-  --h5w-line--color:rgb(250, 11, 11);
+  --h5w-line--color:rgb(250, 0, 0);
+}
+
+.container7{
+  overflow: visible;
+  display: flex;
+  --h5w-plotTitle--color: white;
+  --h5w-colorBar-ticks--color:white;
+  --h5w-tickLabels--color: white;
+  --h5w-ticks-color: white;
+  --h5w-tickLabels--color: #fcfcfc;
+  --h5w-axisLabels--color:#fcfcfc;
+  --h5w-grid--color: white;
+  --h5w-line--color:rgb(11, 250, 103);
 }
 
 
