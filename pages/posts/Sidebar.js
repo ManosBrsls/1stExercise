@@ -4,13 +4,15 @@ import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faHome, faChartLine } from '@fortawesome/free-solid-svg-icons';
-import UploadButton from '../UploadButton';
+import IMSUploadButton from '../ImsUploadButton';
 import styles from "../../styles/Home.module.css";
 import GCIMSUploadButton from '../GcImsUploadButton';
 
-const Sidebar = ({ onDataUpload, onSelectDataset, onGCIMSDataSelect }) => {
-  const [datasets, setDatasets] = useState({});
+
+const Sidebar = ({ onIMSDataSelect, onGCIMSDataSelect }) => {
+  
   const [gcimsDatasets, setGcimsDatasets] = useState({});
+  const [imsDatasets, setImsDatasets] = useState({});
   const [isIMSVisible, setIMSVisible] = useState(false);
   const [isGCIMSVisible, setGCIMSVisible] = useState(false);
   const [sidebarWidth, setSidebarWidth] = useState('auto');
@@ -26,15 +28,16 @@ const Sidebar = ({ onDataUpload, onSelectDataset, onGCIMSDataSelect }) => {
     } else {
       setSidebarWidth('auto'); // Reset to auto when dropdown is closed
     }
-  }, [isGCIMSVisible, datasets, gcimsDatasets]);
+  }, [isGCIMSVisible, gcimsDatasets]);
 
   // Handler for IMS file uploads
-  const handleUpload = (filename, timeData, valueData) => {
-    setDatasets((prevDatasets) => ({
-      ...prevDatasets,
-      [filename]: { timeData, valueData },
+  const handleIMSUpload = (filename, buffer) => {
+    setImsDatasets((prev) => ({
+      ...prev,
+      [filename]: buffer,
     }));
-    onDataUpload(Object.keys(datasets));
+    // Optionally, pass the updated file list to a parent component
+    // onGCIMSDataSelect(Object.keys(gcimsDatasets)); // if needed
   };
 
   // New handler for GC IMS uploads
@@ -47,18 +50,20 @@ const Sidebar = ({ onDataUpload, onSelectDataset, onGCIMSDataSelect }) => {
     // onGCIMSDataSelect(Object.keys(gcimsDatasets)); // if needed
   };
 
-  // Handler when a user clicks on an IMS dataset (for example, different chart types)
   const handleIMSDatasetClick = (filename, chartNumber) => {
-    const { timeData, valueData } = datasets[filename];
-    onSelectDataset(timeData, valueData, chartNumber, filename);
+    const buffer = imsDatasets[filename];
+    // Call the parent's GC IMS selection handler.
+    // You might want to pass additional info such as the chart number.
+    onIMSDataSelect(buffer, chartNumber, filename);
   };
 
+
   // Handler when a user selects a GC IMS dataset to visualize
-  const handleGCIMSDatasetClick = (filename, chartNumber) => {
+  const handleGCIMSDatasetClick = (filename) => {
     const buffer = gcimsDatasets[filename];
     // Call the parent's GC IMS selection handler.
     // You might want to pass additional info such as the chart number.
-    onGCIMSDataSelect(buffer, chartNumber, filename);
+    onGCIMSDataSelect(buffer, filename);
   };
 
   const handleIMSClick = () => {
@@ -87,8 +92,8 @@ const Sidebar = ({ onDataUpload, onSelectDataset, onGCIMSDataSelect }) => {
             IMS
           </a>
           {isIMSVisible && (
-            <div className={styles.dropdownMenu}>
-              <Link legacyBehavior href="/Linechart1">
+            <div className={styles.dropdownMenu} ref={gcImsDropdownRef}>
+              <Link legacyBehavior href="/Linechart">
                 <a className={styles.dropdownItem}>
                   <span style={dropdownTextStyle}>IMS Graph</span>
                   <FontAwesomeIcon icon={faChartLine} style={{ ...dropdownIconStyle, fontSize: '20px', width: '20px', height: '20px' }} />
@@ -96,9 +101,10 @@ const Sidebar = ({ onDataUpload, onSelectDataset, onGCIMSDataSelect }) => {
               </Link>
               <a className={styles.dropdownItem} onClick={(e) => e.stopPropagation()}>
                 <span style={dropdownTextStyle}>Upload File</span>
-                <UploadButton onUpload={handleUpload} />
+                <IMSUploadButton onUpload={handleIMSUpload} />
               </a>
-              {Object.keys(datasets).map((filename) => (
+              {/* List uploaded GC IMS files for selection */}
+              {Object.keys(imsDatasets).map((filename) => (
                 <div key={filename}>
                   <a
                     className={styles.dropdownItem}
@@ -124,7 +130,7 @@ const Sidebar = ({ onDataUpload, onSelectDataset, onGCIMSDataSelect }) => {
           </a>
           {isGCIMSVisible && (
             <div className={styles.dropdownMenu} ref={gcImsDropdownRef}>
-              <Link legacyBehavior href="/LineVis">
+              <Link legacyBehavior href="/Heatmap">
                 <a className={styles.dropdownItem}>
                   <span style={dropdownTextStyle}>GC IMS Graph</span>
                   <FontAwesomeIcon icon={faChartLine} style={{ ...dropdownIconStyle, fontSize: '20px', width: '20px', height: '20px' }} />
@@ -139,15 +145,9 @@ const Sidebar = ({ onDataUpload, onSelectDataset, onGCIMSDataSelect }) => {
                 <div key={filename}>
                   <a
                     className={styles.dropdownItem}
-                    onClick={() => handleGCIMSDatasetClick(filename, 1)}
+                    onClick={() => handleGCIMSDatasetClick(filename)}
                   >
-                    <span style={dropdownTextStyle}>{filename} - Chart 1</span>
-                  </a>
-                  <a
-                    className={styles.dropdownItem}
-                    onClick={() => handleGCIMSDatasetClick(filename, 2)}
-                  >
-                    <span style={dropdownTextStyle}>{filename} - Chart 2</span>
+                    <span style={dropdownTextStyle}>{filename}</span>
                   </a>
                 </div>
               ))}

@@ -362,7 +362,7 @@
   --h5w-tickLabels--color: #fcfcfc;
   --h5w-axisLabels--color:#fcfcfc;
   --h5w-grid--color: white;
-  --h5w-line--color:rgb(250, 0, 0);
+  --h5w-line--color:rgb(250, 11, 11);
 }
 
 .container7{
@@ -377,6 +377,3 @@
   --h5w-grid--color: white;
   --h5w-line--color:rgb(11, 250, 103);
 }
-
-
-

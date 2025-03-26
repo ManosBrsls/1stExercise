@@ -236,7 +236,7 @@ function Linechart() {
     return (
       <div className={styles.container2}>
         <Sidebar onIMSDataUpload={handleIMSDataUpload} onIMSDataSelect={handleIMSDataSelect}/>
-        <div className={styles.card} style={{borderRadius: "40px", backgroundColor: "#084072", marginLeft: "350px", cursor: "pointer"}}>
+        <div className={styles.card} style={{borderRadius: "40px", backgroundColor: "#084072", marginLeft: "200px", cursor: "pointer"}}>
           {heatmapData2 &&  (
             <>
               <Toolbar className={styles.container4}>
@@ -311,7 +311,7 @@ function Linechart() {
                   {selectedIndex}
                 </span>
               </div>
-              <div style={{ marginLeft: "700px" }}>
+              <div style={{ display: "flex", alignItems: "center" }}>
                 <label htmlFor="column-slider2" style={{ color: "#fff", fontSize: 18 }}>
                   Select Retention time 2:
                 </label>
@@ -335,4 +335,3 @@ function Linechart() {
   }
 
 export default Linechart;
-
