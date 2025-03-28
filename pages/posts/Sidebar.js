@@ -9,7 +9,7 @@ import styles from "../../styles/Home.module.css";
 import GCIMSUploadButton from '../GcImsUploadButton';
 
 
-const Sidebar = ({ onIMSDataSelect, onGCIMSDataSelect }) => {
+const Sidebar = ({ onIMSDataSelect, onGCIMSDataUpload  }) => {
   
   const [gcimsDatasets, setGcimsDatasets] = useState({});
   const [imsDatasets, setImsDatasets] = useState({});
@@ -40,16 +40,6 @@ const Sidebar = ({ onIMSDataSelect, onGCIMSDataSelect }) => {
     // onGCIMSDataSelect(Object.keys(gcimsDatasets)); // if needed
   };
 
-  // New handler for GC IMS uploads
-  const handleGCIMSUpload = (filename, buffer) => {
-    setGcimsDatasets((prev) => ({
-      ...prev,
-      [filename]: buffer,
-    }));
-    // Optionally, pass the updated file list to a parent component
-    // onGCIMSDataSelect(Object.keys(gcimsDatasets)); // if needed
-  };
-
   const handleIMSDatasetClick = (filename, chartNumber) => {
     const buffer = imsDatasets[filename];
     // Call the parent's GC IMS selection handler.
@@ -58,13 +48,6 @@ const Sidebar = ({ onIMSDataSelect, onGCIMSDataSelect }) => {
   };
 
 
-  // Handler when a user selects a GC IMS dataset to visualize
-  const handleGCIMSDatasetClick = (filename) => {
-    const buffer = gcimsDatasets[filename];
-    // Call the parent's GC IMS selection handler.
-    // You might want to pass additional info such as the chart number.
-    onGCIMSDataSelect(buffer, filename);
-  };
 
   const handleIMSClick = () => {
     setIMSVisible(!isIMSVisible);
@@ -138,19 +121,8 @@ const Sidebar = ({ onIMSDataSelect, onGCIMSDataSelect }) => {
               </Link>
               <a className={styles.dropdownItem} onClick={(e) => e.stopPropagation()}>
                 <span style={dropdownTextStyle}>Upload File</span>
-                <GCIMSUploadButton onUpload={handleGCIMSUpload} />
+                <GCIMSUploadButton onUpload={onGCIMSDataUpload} />
               </a>
-              {/* List uploaded GC IMS files for selection */}
-              {Object.keys(gcimsDatasets).map((filename) => (
-                <div key={filename}>
-                  <a
-                    className={styles.dropdownItem}
-                    onClick={() => handleGCIMSDatasetClick(filename)}
-                  >
-                    <span style={dropdownTextStyle}>{filename}</span>
-                  </a>
-                </div>
-              ))}
             </div>
           )}
         </li>

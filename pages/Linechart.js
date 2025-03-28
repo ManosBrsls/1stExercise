@@ -24,7 +24,8 @@ function Linechart() {
 
   const [error, setError] = useState(null);
   const [scaleType, setScaleType] = useState("linear");
-  const [showGrid, setShowGrid] = useState(false);
+  const [showGrid1, setShowGrid1] = useState(false);
+  const [showGrid2, setShowGrid2] = useState(false);
 
 
   const [lineDomain, setLineDomain] = useState([null, null]);
@@ -240,13 +241,6 @@ function Linechart() {
           {heatmapData2 &&  (
             <>
               <Toolbar className={styles.container4}>
-                    <DomainWidget
-                      customDomain={customDomain2}
-                      dataDomain={lineDomain}
-                      onCustomDomainChange={setCustomDomain2}
-                      scaleType={scaleType}
-                    />
-                    <Separator />
                     <ToggleBtn
                       icon={FaCamera}
                       label="Snap Shot"
@@ -256,13 +250,26 @@ function Linechart() {
                     <Separator />
                     <ToggleBtn
                       icon={FaTh}
-                      label="Grid"
-                      onToggle={() => setShowGrid(!showGrid)}
+                      label="Grid 1"
+                      onToggle={() => setShowGrid1(!showGrid1)}
+                    />
+                    <Separator />
+                    <ToggleBtn
+                      icon={FaTh}
+                      label="Grid 2"
+                      onToggle={() => setShowGrid2(!showGrid2)}
                     />
                     <Separator />
                     <ToggleBtn
                       icon={FaDownload}
-                      label="Download CSV"
+                      label="Download CSV Chart1"
+                      onToggle={() => handleDownloadImsCSV()}
+                    >          
+                    </ToggleBtn>
+                    <Separator />
+                    <ToggleBtn
+                      icon={FaDownload}
+                      label="Download CSV Chart2"
                       onToggle={() => handleDownloadImsCSV()}
                     >          
                     </ToggleBtn>
@@ -275,7 +282,7 @@ function Linechart() {
                     aspect="auto"
                     scaleType="linear"
                     curveType="OnlyLine"
-                    showGrid={showGrid}
+                    showGrid={showGrid1}
                     title="IMS Spectra Graph 1"
                     abscissaParams={{ label: "Drift Time (msec)" }}
                     ordinateLabel="Intensity Values (counts)"
@@ -288,14 +295,15 @@ function Linechart() {
                     aspect="auto"
                     scaleType="linear"
                     curveType="OnlyLine"
-                    showGrid={showGrid} // avoid duplicate grid lines
+                    showGrid={showGrid2} // avoid duplicate grid lines
                     title="IMS Spectra Graph 2" // you may leave title empty to avoid overlapping titles
                     abscissaParams={{ label: "Drift Time (msec)" }}
                     ordinateLabel="Intensity Values (counts)"
 
                   />
               </div>
-              <div style={{ marginBottom: "0 px" }}>
+              <div style={{ display: "flex", alignItems: "auto", gap: "360px", marginTop: "20px" }}>
+              <div>
                 <label htmlFor="column-slider" style={{ color: "#fff", fontSize: 18 }}>
                   Select Retention time 1:
                 </label>
@@ -311,7 +319,7 @@ function Linechart() {
                   {selectedIndex}
                 </span>
               </div>
-              <div style={{ display: "flex", alignItems: "center" }}>
+              <div>
                 <label htmlFor="column-slider2" style={{ color: "#fff", fontSize: 18 }}>
                   Select Retention time 2:
                 </label>
@@ -327,11 +335,12 @@ function Linechart() {
                   {selectedIndex2}
                 </span>
               </div>
-            </>
-          )}
-        </div>
+            </div>
+          </>
+        )}
       </div>
-    );
-  }
+    </div>
+  );
+}
 
 export default Linechart;

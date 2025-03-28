@@ -33,74 +33,18 @@ function HeatmapUploader() {
   const imsSpectra = useRef(null);
   const chromGram = useRef(null);
 
-  const [username, setUsername] = useState("");
+  
   const [passwordEntered, setPasswordEntered] = useState(false);
   const [authError, setAuthError] = useState(null);
 
 
   const correctCredentials = {
-    username: "expertUser", // Replace with your desired username
     password: "123", // Replace with your desired password
   };
 
 
 
   const handleGCIMSDataUpload = (filename, buffer) => {
-
-    // try {
-    //   const h5File = new jsfive.File(buffer);
-
-    //   const valuesDataset = h5File.get("spectrumPoints");
-    //   const dataArray = ndarray(valuesDataset.value, valuesDataset.shape);
-
-      
-
-    //   setChromData(dataArray)
-
-
-    //   const chromArray = [];
-
-    //   console.log(dataArray.shape[1])
-
-    //   for (let i = 0; i < dataArray.data.length; i += dataArray.shape[1] ) {
-        
-    //     chromArray.push(dataArray.data[i]);
-    //   }
-
-    //   console.log(chromArray) 
-
-    //   const finalChromArray = ndarray(chromArray, chromArray.shape)
-    //   const chromDomain = getDomain(finalChromArray)
-
-    //   const rowDataArray = Array.from(
-    //     dataArray.data.slice(
-    //       selectedIndex * dataArray.shape[1],
-    //       (selectedIndex + 1) * dataArray.shape[1]
-    //     )
-    //   );
-
-    //   const heatMapDomain = getDomain(dataArray);
-    //   setLineDomain(getDomain(rowDataArray));
-
-    //   const initialLineData = dataArray.pick(selectedIndex, null);
-    //   setLineData(initialLineData);
-      
-    //   setCustomDomain(heatMapDomain);
-
-    //   setHeatmapData({dataArray, domain1: heatMapDomain});
-
-    //   setChromData(finalChromArray)
-    //   setChromDomain(chromDomain)
-
-    // } catch (err) {
-    //   console.error("Error processing file:", err);
-    //   setError("Error processing file.");
-    // }
-   
-  };
-
-
-  const handleGCIMSDataSelect = (filename, buffer) => {
 
     try {
       const h5File = new jsfive.File(buffer);
@@ -153,8 +97,6 @@ function HeatmapUploader() {
     }
    
   };
-
-
 
 
   const handleDownloadImsCSV = () => {
@@ -318,11 +260,11 @@ function HeatmapUploader() {
 
   const handleViewChange = (newView) => {
     if (!passwordEntered) {
-      const enteredUsername = prompt("Enter your username:");
+     
       const enteredPassword = prompt("Enter your password:");
 
       if (
-        enteredUsername === correctCredentials.username &&
+       
         enteredPassword === correctCredentials.password
       ) {
         setPasswordEntered(true);
@@ -340,7 +282,7 @@ function HeatmapUploader() {
 
   return (
     <div className={styles.container2}>
-      <Sidebar onGCIMSDataUpload={handleGCIMSDataUpload} onGCIMSDataSelect={handleGCIMSDataSelect} />
+      <Sidebar onGCIMSDataUpload={handleGCIMSDataUpload} />
       <div
         className={styles.card}
         style={{borderRadius: "40px", backgroundColor: "#084072", marginLeft: "200px", cursor: "pointer"}}
