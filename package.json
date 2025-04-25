@@ -9,6 +9,7 @@
     "@fortawesome/fontawesome-svg-core": "^6.5.2",
     "@fortawesome/free-solid-svg-icons": "^6.5.2",
     "@fortawesome/react-fontawesome": "^0.2.0",
+    "@h5web/h5wasm": "^14.0.1",
     "@h5web/lib": "^12.0.1",
     "@headlessui/react": "^1.7.18",
     "@headlessui/tailwindcss": "^0.2.0",
@@ -34,6 +35,7 @@
     "react-plotly.js": "^2.6.0",
     "react-range": "^1.10.0",
     "react-use": "^17.5.0",
+    "sweetalert2": "^11.17.2",
     "three": "^0.166.1"
   },
   "engines": {

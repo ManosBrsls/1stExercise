@@ -9,10 +9,14 @@ import styles from "../styles/Home.module.css";
 import { FaCamera, FaChartArea, FaDownload,  FaMap, FaTh, FaChartLine } from "react-icons/fa";
 import "@fortawesome/fontawesome-svg-core/styles.css";
 import html2canvas from "html2canvas";
+import Popup from "./Popup";
 
 
 
 function Linechart() {
+
+
+  const [showPopup, setShowPopup] = useState(false);
   const [heatmapData, setHeatmapData] = useState(null);
   const [heatmapData2, setHeatmapData2] = useState(null);
 
@@ -39,39 +43,10 @@ function Linechart() {
 
   const handleIMSDataUpload = (filename, buffer) => {
 
-    // try {
-    //   const h5File = new jsfive.File(buffer);
-
-    //   const valuesDataset = h5File.get("spectrumPoints");
-    //   const dataArray = ndarray(valuesDataset.value, valuesDataset.shape);
-
-
-    //   const rowDataArray = Array.from(
-    //     dataArray.data.slice(
-    //       selectedIndex * dataArray.shape[1],
-    //       (selectedIndex + 1) * dataArray.shape[1]
-    //     )
-    //   );
-
-    //   const heatMapDomain = getDomain(dataArray);
-    //   setLineDomain(getDomain(rowDataArray));
-
-    //   const initialLineData = dataArray.pick(selectedIndex, null);
-    //   setLineData(initialLineData);
-      
-    //   setCustomDomain(heatMapDomain);
-
-    //   setHeatmapData({dataArray, domain1: heatMapDomain});
-
-    //   setChromData(finalChromArray)
-    //   setChromDomain(chromDomain)
-
-    // } catch (err) {
-    //   console.error("Error processing file:", err);
-    //   setError("Error processing file.");
-    // }
+ 
    
   };
+
 
   const handleIMSDataSelect = (buffer, chartNumber, filename) => {
     try {
@@ -148,6 +123,13 @@ function Linechart() {
           (newIndex + 1) * heatmapData.dataArray.shape[1]
         )
       );
+
+      if (newIndex > 20) {
+        setShowPopup(true);
+      } else {
+        setShowPopup(false);
+      }
+      
       // console.log(rowDataArray)
       const selectedLineData = ndarray(rowDataArray, [rowDataArray.length]);
       console.log(selectedLineData)

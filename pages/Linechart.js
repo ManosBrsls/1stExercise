@@ -1,14 +1,15 @@
 "use client";
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import ndarray from "ndarray";
-import {HeatmapVis, getDomain, Toolbar, DomainWidget, ColorMapSelector, ScaleSelector, Separator, ToggleBtn, LineVis,} from "@h5web/lib";
+import {getDomain, Toolbar, Separator, ToggleBtn, LineVis,} from "@h5web/lib";
 import * as jsfive from "jsfive";
 import "@h5web/lib/dist/styles.css";
 import Sidebar from "./posts/Sidebar";
 import styles from "../styles/Home.module.css";
-import { FaCamera, FaChartArea, FaDownload,  FaMap, FaTh, FaChartLine } from "react-icons/fa";
+import { FaCamera, FaDownload, FaTh } from "react-icons/fa";
 import "@fortawesome/fontawesome-svg-core/styles.css";
 import html2canvas from "html2canvas";
+import Swal from "sweetalert2";
 
 
 
@@ -38,39 +39,25 @@ function Linechart() {
   const imsSpectra = useRef(null);
 
 
+  useEffect(() => {
+    if (selectedIndex > 20) { // Change 20 to your actual threshold
+      Swal.fire({
+        title: "⚠ ALERT ⚠",
+        text: `VOC Level: ${selectedIndex} ppm`,
+        icon: "warning",
+        background: "#000",
+        color: "#fff",
+        confirmButtonText: "OK",
+        confirmButtonColor: "#ff0000",
+        timer: 10000, // Auto-close after 5 seconds
+      });
+    }
+  }, [selectedIndex]);
+
+
   const handleIMSDataUpload = (filename, buffer) => {
 
-    // try {
-    //   const h5File = new jsfive.File(buffer);
 
-    //   const valuesDataset = h5File.get("spectrumPoints");
-    //   const dataArray = ndarray(valuesDataset.value, valuesDataset.shape);
-
-
-    //   const rowDataArray = Array.from(
-    //     dataArray.data.slice(
-    //       selectedIndex * dataArray.shape[1],
-    //       (selectedIndex + 1) * dataArray.shape[1]
-    //     )
-    //   );
-
-    //   const heatMapDomain = getDomain(dataArray);
-    //   setLineDomain(getDomain(rowDataArray));
-
-    //   const initialLineData = dataArray.pick(selectedIndex, null);
-    //   setLineData(initialLineData);
-      
-    //   setCustomDomain(heatMapDomain);
-
-    //   setHeatmapData({dataArray, domain1: heatMapDomain});
-
-    //   setChromData(finalChromArray)
-    //   setChromDomain(chromDomain)
-
-    // } catch (err) {
-    //   console.error("Error processing file:", err);
-    //   setError("Error processing file.");
-    // }
    
   };
 
@@ -79,8 +66,15 @@ function Linechart() {
       console.log(filename)
       const h5File = new jsfive.File(buffer);
 
-      const valuesDataset = h5File.get("spectrumPoints");
+      console.log(h5File)
 
+      const valuesDataset = h5File.get("spectrumPoints");
+      const headerDataset = h5File.get("spectrumMetadata");
+
+     console.log(headerDataset)
+     
+    
+    
       
 
       if (chartNumber === 1) {
