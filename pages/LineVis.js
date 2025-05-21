@@ -1,22 +1,21 @@
 "use client";
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import ndarray from "ndarray";
-import {HeatmapVis, getDomain, Toolbar, DomainWidget, ColorMapSelector, ScaleSelector, Separator, ToggleBtn, LineVis,} from "@h5web/lib";
+import {getDomain, Toolbar, Separator, ToggleBtn, LineVis,} from "@h5web/lib";
 import * as jsfive from "jsfive";
+import { h5wasmReady, FS, File } from "h5wasm";
 import "@h5web/lib/dist/styles.css";
 import Sidebar from "./posts/Sidebar";
 import styles from "../styles/Home.module.css";
-import { FaCamera, FaChartArea, FaDownload,  FaMap, FaTh, FaChartLine } from "react-icons/fa";
+import { FaCamera, FaDownload, FaTh } from "react-icons/fa";
 import "@fortawesome/fontawesome-svg-core/styles.css";
 import html2canvas from "html2canvas";
-import Popup from "./Popup";
+import Swal from "sweetalert2";
+
 
 
 
 function Linechart() {
-
-
-  const [showPopup, setShowPopup] = useState(false);
   const [heatmapData, setHeatmapData] = useState(null);
   const [heatmapData2, setHeatmapData2] = useState(null);
 
@@ -28,7 +27,8 @@ function Linechart() {
 
   const [error, setError] = useState(null);
   const [scaleType, setScaleType] = useState("linear");
-  const [showGrid, setShowGrid] = useState(false);
+  const [showGrid1, setShowGrid1] = useState(false);
+  const [showGrid2, setShowGrid2] = useState(false);
 
 
   const [lineDomain, setLineDomain] = useState([null, null]);
@@ -41,20 +41,88 @@ function Linechart() {
   const imsSpectra = useRef(null);
 
 
+  useEffect(() => {
+    if (selectedIndex > 20) { // Change 20 to your actual threshold
+      Swal.fire({
+        title: "⚠ ALERT ⚠",
+        text: `VOC Level: ${selectedIndex} ppm`,
+        icon: "warning",
+        background: "#000",
+        color: "#fff",
+        confirmButtonText: "OK",
+        confirmButtonColor: "#ff0000",
+        timer: 10000, // Auto-close after 5 seconds
+      });
+    }
+  }, [selectedIndex]);
+
+
   const handleIMSDataUpload = (filename, buffer) => {
 
- 
+
    
   };
 
-
-  const handleIMSDataSelect = (buffer, chartNumber, filename) => {
+  const handleIMSDataSelect = async (buffer, chartNumber, filename) => {
     try {
-      console.log(filename)
-      const h5File = new jsfive.File(buffer);
+     
+      await h5wasmReady;
+
+      // Mount the buffer into the WASM virtual filesystem
+      const filePath = `/tmp/${filename}`;
+      const data = new Uint8Array(buffer);
+      FS.writeFile(filePath, data);
+
+    // Now open the file using its path
+      const h5File = new File(filePath, "r");
+      
 
       const valuesDataset = h5File.get("spectrumPoints");
+      const metadaDataset = h5File.get("spectrumMetadata");
+      const headerDataset = h5File.get("spectrumHeader");
 
+      
+      console.log(valuesDataset)
+      console.log(metadaDataset.value)
+      console.log(headerDataset.value)
+     
+      const aek = ndarray(headerDataset.value, headerDataset.shape);
+      const aek2 = ndarray(metadaDataset.value, metadaDataset.shape);
+      const aek3 = ndarray(valuesDataset.value, valuesDataset.shape);
+
+    
+     
+
+
+      const slope1 = aek.data[0][9];
+      const offset1 = aek.data[0][10]; 
+      const slope2 = aek.data[0][11];
+      const offset2 = aek.data[0][12];
+      const sample_delay = aek.data[0][1];
+      const sample_distance = aek.data[0][2];
+      const period = aek.data[0][8];
+      const average = aek.data[0][4];
+      
+      const polarity = []
+      const gain = aek2.data[0][4];
+      console.log(aek3.size)
+
+      let trans = []
+
+      for (let i = 0; i < aek3.size; i += aek3.shape[0]) {
+        let row = [];
+        for (let j = 0; j < aek3.size; j++) {
+          row.push(aek3.data[j][i]);
+        }
+        transform.push(row);
+      }
+      console.log(trans)
+
+
+      for (let i = 0; i < aek.size; i++) {
+        polarity.push(aek.data[i][0]);  
+      }
+      
       
 
       if (chartNumber === 1) {
@@ -123,13 +191,6 @@ function Linechart() {
           (newIndex + 1) * heatmapData.dataArray.shape[1]
         )
       );
-
-      if (newIndex > 20) {
-        setShowPopup(true);
-      } else {
-        setShowPopup(false);
-      }
-      
       // console.log(rowDataArray)
       const selectedLineData = ndarray(rowDataArray, [rowDataArray.length]);
       console.log(selectedLineData)
@@ -218,17 +279,10 @@ function Linechart() {
     return (
       <div className={styles.container2}>
         <Sidebar onIMSDataUpload={handleIMSDataUpload} onIMSDataSelect={handleIMSDataSelect}/>
-        <div className={styles.card} style={{borderRadius: "40px", backgroundColor: "#084072", marginLeft: "350px", cursor: "pointer"}}>
+        <div className={styles.card} style={{borderRadius: "40px", backgroundColor: "#084072", marginLeft: "200px", cursor: "pointer"}}>
           {heatmapData2 &&  (
             <>
               <Toolbar className={styles.container4}>
-                    <DomainWidget
-                      customDomain={customDomain2}
-                      dataDomain={lineDomain}
-                      onCustomDomainChange={setCustomDomain2}
-                      scaleType={scaleType}
-                    />
-                    <Separator />
                     <ToggleBtn
                       icon={FaCamera}
                       label="Snap Shot"
@@ -238,13 +292,26 @@ function Linechart() {
                     <Separator />
                     <ToggleBtn
                       icon={FaTh}
-                      label="Grid"
-                      onToggle={() => setShowGrid(!showGrid)}
+                      label="Grid 1"
+                      onToggle={() => setShowGrid1(!showGrid1)}
+                    />
+                    <Separator />
+                    <ToggleBtn
+                      icon={FaTh}
+                      label="Grid 2"
+                      onToggle={() => setShowGrid2(!showGrid2)}
                     />
                     <Separator />
                     <ToggleBtn
                       icon={FaDownload}
-                      label="Download CSV"
+                      label="Download CSV Chart1"
+                      onToggle={() => handleDownloadImsCSV()}
+                    >          
+                    </ToggleBtn>
+                    <Separator />
+                    <ToggleBtn
+                      icon={FaDownload}
+                      label="Download CSV Chart2"
                       onToggle={() => handleDownloadImsCSV()}
                     >          
                     </ToggleBtn>
@@ -257,7 +324,7 @@ function Linechart() {
                     aspect="auto"
                     scaleType="linear"
                     curveType="OnlyLine"
-                    showGrid={showGrid}
+                    showGrid={showGrid1}
                     title="IMS Spectra Graph 1"
                     abscissaParams={{ label: "Drift Time (msec)" }}
                     ordinateLabel="Intensity Values (counts)"
@@ -270,14 +337,15 @@ function Linechart() {
                     aspect="auto"
                     scaleType="linear"
                     curveType="OnlyLine"
-                    showGrid={showGrid} // avoid duplicate grid lines
+                    showGrid={showGrid2} // avoid duplicate grid lines
                     title="IMS Spectra Graph 2" // you may leave title empty to avoid overlapping titles
                     abscissaParams={{ label: "Drift Time (msec)" }}
                     ordinateLabel="Intensity Values (counts)"
 
                   />
               </div>
-              <div style={{ marginBottom: "0 px" }}>
+              <div style={{ display: "flex", alignItems: "auto", gap: "360px", marginTop: "20px" }}>
+              <div>
                 <label htmlFor="column-slider" style={{ color: "#fff", fontSize: 18 }}>
                   Select Retention time 1:
                 </label>
@@ -293,7 +361,7 @@ function Linechart() {
                   {selectedIndex}
                 </span>
               </div>
-              <div style={{ marginLeft: "700px" }}>
+              <div>
                 <label htmlFor="column-slider2" style={{ color: "#fff", fontSize: 18 }}>
                   Select Retention time 2:
                 </label>
@@ -309,12 +377,12 @@ function Linechart() {
                   {selectedIndex2}
                 </span>
               </div>
-            </>
-          )}
-        </div>
+            </div>
+          </>
+        )}
       </div>
-    );
-  }
+    </div>
+  );
+}
 
 export default Linechart;
-
