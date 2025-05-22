@@ -77,58 +77,76 @@ function Linechart() {
       const h5File = new File(filePath, "r");
       
 
-      const valuesDataset = h5File.get("spectrumPoints");
+      const pointsDataset = h5File.get("spectrumPoints");
       const metadaDataset = h5File.get("spectrumMetadata");
       const headerDataset = h5File.get("spectrumHeader");
 
       
-      console.log(valuesDataset)
+      console.log(pointsDataset)
       console.log(metadaDataset.value)
       console.log(headerDataset.value)
      
-      const aek = ndarray(headerDataset.value, headerDataset.shape);
-      const aek2 = ndarray(metadaDataset.value, metadaDataset.shape);
-      const aek3 = ndarray(valuesDataset.value, valuesDataset.shape);
+      const spectrumHeader = ndarray(headerDataset.value, headerDataset.shape);
+      const spectrumMetadata = ndarray(metadaDataset.value, metadaDataset.shape);
+      const spectrumPoints = ndarray(pointsDataset.value, pointsDataset.shape);
 
-    
      
 
-
-      const slope1 = aek.data[0][9];
-      const offset1 = aek.data[0][10]; 
-      const slope2 = aek.data[0][11];
-      const offset2 = aek.data[0][12];
-      const sample_delay = aek.data[0][1];
-      const sample_distance = aek.data[0][2];
-      const period = aek.data[0][8];
-      const average = aek.data[0][4];
+      const slope1 = spectrumHeader.data[0][9];
+      const offset1 = spectrumHeader.data[0][10]; 
+      const slope2 = spectrumHeader.data[0][11];
+      const offset2 = spectrumHeader.data[0][12];
+      const sample_delay = spectrumHeader.data[0][1];
+      const sample_distance = spectrumHeader.data[0][2];
+      const period = spectrumHeader.data[0][8];
+      const average = spectrumHeader.data[0][4];
       
       const polarity = []
-      const gain = aek2.data[0][4];
-      console.log(aek3.size)
+      const gain = spectrumMetadata.data[0][4];
+      
+      const transposedPoints = new Float32Array(spectrumPoints.shape[0] * spectrumPoints.shape[1]);
 
-      let trans = []
-
-      for (let i = 0; i < aek3.size; i += aek3.shape[0]) {
-        let row = [];
-        for (let j = 0; j < aek3.size; j++) {
-          row.push(aek3.data[j][i]);
+      for(let i = 0; i < spectrumPoints.shape[0]; i++) {
+       for(let j = 0; j < spectrumPoints.shape[1]; j++) {
+          transposedPoints[j*spectrumPoints.shape[0] + i] = spectrumPoints.data[i * spectrumPoints.shape[1] + j];
         }
-        transform.push(row);
       }
-      console.log(trans)
 
-
-      for (let i = 0; i < aek.size; i++) {
-        polarity.push(aek.data[i][0]);  
+      for (let i = 0; i < spectrumHeader.size; i++) {
+        polarity.push(spectrumHeader.data[i][0]);  
       }
+      
+      const filteredSpectrum = []
+      for (let p of [0, 1]) {
+
+        const cols = polarity.length 
+        const rows = transposedPoints.length / polarity.length
+        
+        for (let col = 0; col < cols; col++) {
+          if (polarity[col] === p) {
+            for (let row = 0; row < rows; row++) {
+              const index =  row * cols + col;
+              filteredSpectrum.push(transposedPoints[index]);
+            }
+          }
+          let n_rows = filteredSpectrum.length / spectrumPoints.shape[1]
+          
+
+        }
+        console.log(filteredSpectrum)
+        
+
+        
+      }
+      
+
       
       
 
       if (chartNumber === 1) {
-      const dataArray = ndarray(valuesDataset.value, valuesDataset.shape);
+      const dataArray = ndarray(pointsDataset.value, pointsDataset.shape);
       
-      const dataArray2 = ndarray(valuesDataset.value, valuesDataset.shape);
+      const dataArray2 = ndarray(pointsDataset.value, pointsDataset.shape);
         
 
       
@@ -151,8 +169,8 @@ function Linechart() {
 
 
     }else if (chartNumber === 2) {
-      const dataArray = ndarray(valuesDataset.value, valuesDataset.shape);
-      const dataArray2 = ndarray(valuesDataset.value, valuesDataset.shape);
+      const dataArray = ndarray(pointsDataset.value, pointsDataset.shape);
+      const dataArray2 = ndarray(pointsDataset.value, pointsDataset.shape);
 
       
       const rowDataArray2 = Array.from(
