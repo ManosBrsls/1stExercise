@@ -82,9 +82,7 @@ function Linechart() {
       const headerDataset = h5File.get("spectrumHeader");
 
       
-      console.log(pointsDataset)
-      console.log(metadaDataset.value)
-      console.log(headerDataset.value)
+
      
       const spectrumHeader = ndarray(headerDataset.value, headerDataset.shape);
       const spectrumMetadata = ndarray(metadaDataset.value, metadaDataset.shape);
@@ -106,39 +104,44 @@ function Linechart() {
       
       const transposedPoints = new Float32Array(spectrumPoints.shape[0] * spectrumPoints.shape[1]);
 
-      for(let i = 0; i < spectrumPoints.shape[0]; i++) {
-       for(let j = 0; j < spectrumPoints.shape[1]; j++) {
-          transposedPoints[j*spectrumPoints.shape[0] + i] = spectrumPoints.data[i * spectrumPoints.shape[1] + j];
-        }
-      }
+     
+
+      // for(let i = 0; i < spectrumPoints.shape[0]; i++) {
+      //  for(let j = 0; j < spectrumPoints.shape[1]; j++) {
+      //     transposedPoints[j*spectrumPoints.shape[0] + i] = spectrumPoints.data[i * spectrumPoints.shape[1] + j];
+      //   }
+      // }
+      // console.log(transposedPoints)
 
       for (let i = 0; i < spectrumHeader.size; i++) {
         polarity.push(spectrumHeader.data[i][0]);  
       }
       
+      
       const filteredSpectrum = []
+
       for (let p of [0, 1]) {
 
         const cols = polarity.length 
         const rows = transposedPoints.length / polarity.length
+        
         
         for (let col = 0; col < cols; col++) {
           if (polarity[col] === p) {
             for (let row = 0; row < rows; row++) {
               const index =  row * cols + col;
               filteredSpectrum.push(transposedPoints[index]);
+              console.log(transposedPoints[index])
             }
-          }
-          let n_rows = filteredSpectrum.length / spectrumPoints.shape[1]
-          
-
-        }
-        console.log(filteredSpectrum)
-        
-
+          } 
+        }  
+      
         
       }
       
+      
+      const n_rows = filteredSpectrum.length / spectrumPoints.shape[1]
+     
 
       
       
