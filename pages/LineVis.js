@@ -101,51 +101,130 @@ function Linechart() {
       
       const polarity = []
       const gain = spectrumMetadata.data[0][4];
+      const user_calibration = true
       
-      const transposedPoints = new Float32Array(spectrumPoints.shape[0] * spectrumPoints.shape[1]);
+      const transposedPoints = ndarray(new Float32Array(spectrumPoints.shape[0] * spectrumPoints.shape[1]), [spectrumPoints.shape[1], spectrumPoints.shape[0]]);
 
      
 
-      // for(let i = 0; i < spectrumPoints.shape[0]; i++) {
-      //  for(let j = 0; j < spectrumPoints.shape[1]; j++) {
-      //     transposedPoints[j*spectrumPoints.shape[0] + i] = spectrumPoints.data[i * spectrumPoints.shape[1] + j];
-      //   }
-      // }
-      // console.log(transposedPoints)
+      for(let i = 0; i < spectrumPoints.shape[0]; i++) {
+        for(let j = 0; j < spectrumPoints.shape[1]; j++) {
+           transposedPoints.set(j, i, spectrumPoints.get(i, j));
+         }
+       }
+      
+      const numRows = transposedPoints.shape[0];
+      const numCols = transposedPoints.shape[1];
+      let countPol0 = 0;
+      let countPol1 = 0;
+
+
 
       for (let i = 0; i < spectrumHeader.size; i++) {
         polarity.push(spectrumHeader.data[i][0]);  
       }
-      
-      
-      const filteredSpectrum = []
 
-      for (let p of [0, 1]) {
 
-        const cols = polarity.length 
-        const rows = transposedPoints.length / polarity.length
-        
-        
-        for (let col = 0; col < cols; col++) {
-          if (polarity[col] === p) {
-            for (let row = 0; row < rows; row++) {
-              const index =  row * cols + col;
-              filteredSpectrum.push(transposedPoints[index]);
-              console.log(transposedPoints[index])
-            }
-          } 
-        }  
+      for (let j=0; j < numCols; j++) {
+        if (polarity[j] === 0) {
+          countPol0++;
+        } else if (polarity[j] === 1) {
+          countPol1++;
+        }
+      }
+
+      const data0 = new Float32Array(countPol0 * numRows);
+      const data1 = new Float32Array(countPol1 * numRows);
+
+      const filteredSpectrum0 = ndarray(data0, [numRows, countPol0]);
+      const filteredSpectrum1 = ndarray(data1, [numRows, countPol1]);
       
-        
+      let colIndex0 = 0;
+      let colIndex1 = 0;
+
+      for (let j = 0; j < numCols; j++) {
+        if (polarity[j] === 0) {
+          for (let i = 0; i < numRows; i++) {
+            filteredSpectrum0.set(i, colIndex0, transposedPoints.get(i, j));
+          }
+          colIndex0++;
+        } else if (polarity[j] === 1) {
+          for (let i = 0; i < numRows; i++) {
+            filteredSpectrum1.set(i, colIndex1, transposedPoints.get(i, j));
+          }
+          colIndex1++;
+        }
       }
       
-      
-      const n_rows = filteredSpectrum.length / spectrumPoints.shape[1]
+
+      const driftTimes0 = [];
+      const driftTimes1 = [];
+ 
+      const retentionTimes0 = [];
+      const retentionTimes1 = [];
      
+      const n_rows0 = filteredSpectrum0.shape[0];
+      const n_rows1 = filteredSpectrum1.shape[0];
+ 
+      const n_cols0 = filteredSpectrum0.shape[1];
+      const n_cols1 = filteredSpectrum1.shape[1];
+ 
+      for (let i = 0; i < n_rows0; i++) {
+        driftTimes0.push((sample_delay + i * sample_distance) / 1000000);
+      }
+ 
+      for (let i = 0; i < n_rows1; i++) {
+        driftTimes1.push((sample_delay + i * sample_distance) / 1000000);
+      }
+ 
+ 
+      for (let i = 0; i < n_cols0; i++) {
+        retentionTimes0.push(
+          (average * i * period) / 1000000000
+        );
+      }
+      for (let i = 0; i < n_cols1; i++) {
+        retentionTimes1.push(
+          (average * i * period) / 1000000000
+        );
+      }
+    const calibratedData0 = new Float32Array(filteredSpectrum0.shape[0] * filteredSpectrum0.shape[1]);
+    const calibratedSpectrum0 = ndarray(calibratedData0, [filteredSpectrum0.shape[0], filteredSpectrum0.shape[1]]);
+    
+    const calibratedData1 = new Float32Array(filteredSpectrum1.shape[0] * filteredSpectrum1.shape[1]);
+    const calibratedSpectrum1 = ndarray(calibratedData1, [filteredSpectrum1.shape[0], filteredSpectrum1.shape[1]]);
+    
+  if (user_calibration){
+    for (let i = 0; i < filteredSpectrum0.shape[0]; i++) {
+      for (let j = 0; j < filteredSpectrum0.shape[1]; j++) {
+        const value = filteredSpectrum0.get(i, j);
+        calibratedSpectrum0.set(i, j, value * slope1 + offset1);
+      }
+    }
+
+
+    for (let i = 0; i < filteredSpectrum1.shape[0]; i++) {
+      for (let j = 0; j < filteredSpectrum1.shape[1]; j++) {
+        const value = filteredSpectrum1.get(i, j);
+        calibratedSpectrum1.set(i, j, value * slope2 + offset2);
+      }
+    }
+
+  }else{
+    
+  }
+
+  const ion_current0 = [];
+
+  console.log(calibratedSpectrum0.shape)
+  console.log(calibratedSpectrum0)
+
+  console.log(calibratedSpectrum1.shape)
+  console.log(calibratedSpectrum1)
+
 
       
-      
-
+  
       if (chartNumber === 1) {
       const dataArray = ndarray(pointsDataset.value, pointsDataset.shape);
       
