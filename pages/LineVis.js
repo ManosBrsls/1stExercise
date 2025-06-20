@@ -60,7 +60,6 @@ function Linechart() {
   const handleIMSDataUpload = (filename, buffer) => {
 
 
-   
   };
 
   const handleIMSDataSelect = async (buffer, chartNumber, filename) => {
@@ -80,15 +79,10 @@ function Linechart() {
       const pointsDataset = h5File.get("spectrumPoints");
       const metadaDataset = h5File.get("spectrumMetadata");
       const headerDataset = h5File.get("spectrumHeader");
-
-      
-
-     
+ 
       const spectrumHeader = ndarray(headerDataset.value, headerDataset.shape);
       const spectrumMetadata = ndarray(metadaDataset.value, metadaDataset.shape);
       const spectrumPoints = ndarray(pointsDataset.value, pointsDataset.shape);
-
-     
 
       const slope1 = spectrumHeader.data[0][9];
       const offset1 = spectrumHeader.data[0][10]; 
@@ -112,6 +106,8 @@ function Linechart() {
            transposedPoints.set(j, i, spectrumPoints.get(i, j));
          }
        }
+
+      console.log("Transposed", transposedPoints);
       
       const numRows = transposedPoints.shape[0];
       const numCols = transposedPoints.shape[1];
@@ -155,6 +151,9 @@ function Linechart() {
           colIndex1++;
         }
       }
+
+      console.log("Filtered Spectrum 0:", filteredSpectrum0);
+      console.log("Filtered Spectrum 1:", filteredSpectrum1);
       
 
       const driftTimes0 = [];
@@ -188,6 +187,10 @@ function Linechart() {
           (average * i * period) / 1000000000
         );
       }
+
+      console.log("Drift Times 0:", driftTimes0);
+      console.log("retention 1:", retentionTimes0);
+      
     const calibratedData0 = new Float32Array(filteredSpectrum0.shape[0] * filteredSpectrum0.shape[1]);
     const calibratedSpectrum0 = ndarray(calibratedData0, [filteredSpectrum0.shape[0], filteredSpectrum0.shape[1]]);
     
@@ -211,16 +214,32 @@ function Linechart() {
     }
 
   }else{
-    
+    //calibrated_spectrum = filtered_spectrum 
   }
 
-  const ion_current0 = [];
+  const ionCurrentData0 = new Float32Array(calibratedSpectrum0.size);
+  const ionCurrent0 = ndarray(ionCurrentData0, calibratedSpectrum0.shape);
 
-  console.log(calibratedSpectrum0.shape)
-  console.log(calibratedSpectrum0)
+  const ionCurrentData1 = new Float32Array(calibratedSpectrum1.size);
+  const ionCurrent1 = ndarray(ionCurrentData1, calibratedSpectrum1.shape);
 
-  console.log(calibratedSpectrum1.shape)
-  console.log(calibratedSpectrum1)
+  for (let i = 0; i < calibratedSpectrum0.shape[0]; i++) {
+  for (let j = 0; j < calibratedSpectrum0.shape[1]; j++) {
+    const value = calibratedSpectrum0.get(i, j);
+    ionCurrent0.set(i, j, value / gain);
+  }
+}
+
+console.log("Ion Current 0:", ionCurrent0);
+
+  for (let i = 0; i < calibratedSpectrum1.shape[0]; i++) {
+  for (let j = 0; j < calibratedSpectrum1.shape[1]; j++) {
+    const value = calibratedSpectrum1.get(i, j);
+    ionCurrent1.set(i, j, value / gain);
+  }
+}
+
+console.log("Ion Current 1:", ionCurrent1);
 
 
       
