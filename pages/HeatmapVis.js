@@ -12,25 +12,46 @@ import html2canvas from "html2canvas";
 
 
 function HeatmapUploader() {
+  const [titleName, setTitleName] = useState("GC-IMS Heatmap");
   const [heatmapData, setHeatmapData] = useState(null);
   const [heatmapDomain, setHeatmapDomain] = useState(null);
-
-  const [xDomain, setXDomain] = useState([null, null]);
-  const [yDomain, setYDomain] = useState([null, null]);
-
   const [retentionTimes, setRetentionTimes] = useState([null]);
   const [driftTimes, setDriftTimes] = useState([null]);
+  const [customDomain, setCustomDomain] = useState([null, null]);
+  const [invertColorMap, setInvertColorMap] = useState(false);
 
   const [error, setError] = useState(null);
-  const [customDomain, setCustomDomain] = useState([null, null]);
-  const [colorMap, setColorMap] = useState("Viridis");
-  const [invertColorMap, setInvertColorMap] = useState(false);
+  
   const [scaleType, setScaleType] = useState("linear");
+  const [colorMap, setColorMap] = useState("Turbo");
   const [showGrid, setShowGrid] = useState(false);
   const [viewMode, setViewMode] = useState("heatmap");
 
 
+  // store both polarity datasets
+  const [dataArray0, setDataArray0] = useState(null);
+  const [dataArray1, setDataArray1] = useState(null);
+  const [domain0, setDomain0] = useState(null);
+  const [domain1, setDomain1] = useState(null);
+  const [driftTimes0, setDriftTimes0] = useState(null);
+  const [driftTimes1, setDriftTimes1] = useState(null);
+  const [retentionTimes0, setRetentionTimes0] = useState(null);
+  const [retentionTimes1, setRetentionTimes1] = useState(null);
+  const [currentPolarity, setCurrentPolarity] = useState(0); // default to 0
+
+
   const heatmapRef = useRef(null);
+
+
+  const [passwordEntered, setPasswordEntered] = useState(false);
+  const [authError, setAuthError] = useState(null);
+  
+  
+  const correctCredentials = {
+      password: "123", // Replace with your desired password
+  };
+
+
 
   const handleGCIMSDataUpload = async (filename, buffer) => {
 
@@ -44,6 +65,8 @@ function HeatmapUploader() {
       FS.writeFile(filePath, data);
       // Now open the file using its path
       const h5File = new File(filePath, "r");
+
+      setTitleName(filename);
 
       const pointsDataset = h5File.get("spectrumPoints");
       const metadaDataset = h5File.get("spectrumMetadata");
@@ -143,17 +166,14 @@ function HeatmapUploader() {
 
       for (let i = 0; i < n_cols0; i++) {
         retentionTimes0.push(
-          (average * i * period) / 1000000000
+          (average * i * (period)) / 1000000000
         );
       }
       for (let i = 0; i < n_cols1; i++) {
         retentionTimes1.push(
-          (average * i * period) / 1000000000
+          (average * i * (period)) / 1000000000
         );
       }
-
-      console.log("Drift Times 0:", driftTimes0);
-      console.log("Retention Times 0:", retentionTimes0);
 
       const calibratedData0 = new Float32Array(filteredSpectrum0.shape[0] * filteredSpectrum0.shape[1]);
       const calibratedSpectrum0 = ndarray(calibratedData0, [filteredSpectrum0.shape[0], filteredSpectrum0.shape[1]]);
@@ -235,24 +255,24 @@ function HeatmapUploader() {
       const floatValues1 = result1.flat(1);
       const dataArray1 = ndarray(floatValues1, [ionRow1, ionCol1]);
       const domain1 = getDomain(dataArray1);
-
-
-
-      console.log("Domain 0:", domain0);
-
-      console.log("Drift Times 0:", driftTimes0);
-      console.log("Retention Times 0:", retentionTimes0);
-
-      const twoDArray0 = ndarray(ionCurrent0.data, [ionRow0, ionCol0]);
-
-      const twoDArray1 = ndarray(ionCurrent1.data, [filteredSpectrum1.shape[0], filteredSpectrum1.shape[1]]);
+;
      
+      setDataArray0(dataArray0);
+      setDataArray1(dataArray1);
+      setDomain0(domain0);
+      setDomain1(domain1);
+      
+
+      setDriftTimes0(driftTimes0);
+      setDriftTimes1(driftTimes1);
+      setRetentionTimes0(retentionTimes0);
+      setRetentionTimes1(retentionTimes1);
+
+      setCurrentPolarity(0);
       setHeatmapData(dataArray0);
       setHeatmapDomain(domain0);
-
       setDriftTimes(driftTimes0);
       setRetentionTimes(retentionTimes0);
-
    
 
     } catch (err) {
@@ -263,28 +283,141 @@ function HeatmapUploader() {
   };
 
 
+  // Toggle polarity handler
+  const togglePolarity = () => {
+    const newPol = currentPolarity === 0 ? 1 : 0;
+    setCurrentPolarity(newPol);
+
+    if (newPol === 0) {
+      setHeatmapData(dataArray0);
+      setHeatmapDomain(domain0);
+      setCustomDomain(domain0)
+      setDriftTimes(driftTimes0);
+      setRetentionTimes(retentionTimes0);
+    } else {
+      setHeatmapData(dataArray1);
+      setHeatmapDomain(domain1);
+      setCustomDomain(domain1);
+      setDriftTimes(driftTimes1);
+      setRetentionTimes(retentionTimes1);
+    }
+  };
+
+
+
+    const handleSnapshot = () => {
+    if (heatmapRef.current) {
+      const originalOverflow = heatmapRef.current.style.overflow;
+      heatmapRef.current.style.overflow = "visible";
+
+      html2canvas(heatmapRef.current, {
+        width: heatmapRef.current.scrollWidth,
+        height: heatmapRef.current.scrollHeight,
+        scale: 1,
+      }).then((canvas) => {
+        const link = document.createElement("a");
+        link.href = canvas.toDataURL("image/png");
+        link.download = "heatmap_screenshot.png";
+        link.click();
+
+        heatmapRef.current.style.overflow = originalOverflow;
+      });
+    }
+  };
+
+
+    const handleViewChange = (newView) => {
+    if (!passwordEntered) {
+     
+      const enteredPassword = prompt("Enter your password:");
+
+      if (
+       
+        enteredPassword === correctCredentials.password
+      ) {
+        setPasswordEntered(true);
+        setViewMode(newView);
+        setAuthError(null);
+      } else {
+        setAuthError("Incorrect username or password. Access denied.");
+      }
+    } else {
+      setViewMode(newView);
+    }
+  };
+
+
+
 
   return (
-    <div className={styles.container2}>
-      <Sidebar onGCIMSDataUpload={handleGCIMSDataUpload} />
+<div className={styles.container2}>
+  <Sidebar onGCIMSDataUpload={handleGCIMSDataUpload} />
+    <div
+      className={styles.card}
+      style={{borderRadius: "40px", backgroundColor: "#084072", marginLeft: "200px", cursor: "pointer"}}
+    >
+      {heatmapData && heatmapDomain ? (
+        <>
+        <button onClick={togglePolarity} style={{ margin: "0.5rem", padding: "1rem", width: "190px", height: "40px", fontSize: "1.1rem", borderRadius: "18px", cursor: "pointer",boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
+            transition: "background-color 0.3s ease"}}>
+            Switch to Polarity {currentPolarity === 0 ? "1" : "0"}
+        </button>
+                <Toolbar className={styles.container4}>
+                  <ColorMapSelector
+                    className={styles.container4}
+                    onInversionChange={() => setInvertColorMap(!invertColorMap)}
+                    onValueChange={setColorMap}
+                    value={colorMap}
+                  />
+                  <Separator />
+                  <ToggleBtn
+                    icon={FaCamera}
+                    label="Snap Shot"
+                    onToggle={() => handleSnapshot()}
+                  >
+                  </ToggleBtn>
+                  <Separator />
+                  <ScaleSelector
+                    className={styles.container4}
+                    onScaleChange={setScaleType}
+                    options={["linear", "log", "symlog"]}
+                    value={scaleType}
+                  />
+                  <Separator />
+                  <ToggleBtn
+                    icon={FaTh}
+                    label="Grid"
+                    onToggle={() => setShowGrid(!showGrid)}
+                  />
+                  <Separator />
+                  <ToggleBtn
+                    icon={FaChartArea}
+                    label="IMS Spectra"
+                    onToggle={() => handleViewChange("imsSpectra")}
+                  />
+                  <Separator />
+                  <ToggleBtn
+                    icon={FaChartLine}
+                    label="Chrom Spectra"
+                    onToggle={() => handleViewChange("chromSpectra")}
+                  />
 
-      {error && <div className="error">{error}</div>}
-
-      {heatmapData != null && heatmapDomain != null ? (
-
+                </Toolbar>
+        {authError && <p style={{ color: "red" }}>{authError}</p>}
+        <div ref={heatmapRef} style={{display: "flex", height: "40rem", width: "75rem", backgroundColor: "#084072", fontSize: 19}}>
         <HeatmapVis
-          abscissaParams={{
-            value: retentionTimes, label: "Retention time (s)"
-          }}
+          ref={heatmapRef}
+          className={styles.container5}
+          title={titleName}
+          abscissaParams={{ value: retentionTimes, label: "Retention time (s)" }}
           aspect="auto"
-          colorMap="Turbo"
+          showGrid={showGrid}
+          colorMap={colorMap}
           dataArray={heatmapData}
           domain={heatmapDomain}
           invertColorMap={invertColorMap}
-          ordinateParams={{
-            value: driftTimes, label: "Drift time (ms)"
-          }}
-          showGrid={showGrid}
+          ordinateParams={{ value: driftTimes, label: "Drift time (ms)" }}
+          
           scaleType="linear"
           interactions={{
             selectToZoom: { modifierKey: "Shift" },
@@ -292,11 +425,88 @@ function HeatmapUploader() {
             yAxisZoom: false,
           }}
         />
+        </div>
+        </>
+      ) : viewMode === "imsSpectra" ? (
+        <>
+          <Toolbar className={styles.container4}>
+            <DomainWidget
+              customDomain={customDomain2}
+              dataDomain={lineDomain}
+              onCustomDomainChange={setCustomDomain2}
+              scaleType={scaleType}
+            />
+            <Separator />
+              <ToggleBtn
+                icon={FaCamera}
+                label="Snap Shot"
+                onToggle={() => handleSnapshotIMS()}
+              >
+              </ToggleBtn>
+              <Separator />
+              <ToggleBtn
+                icon={FaTh}
+                label="Grid"
+                onToggle={() => setShowGrid(!showGrid)}
+              />
+              <Separator />
+              <ToggleBtn
+                icon={FaMap}
+                label="Heatmap View"
+                onToggle={() => setViewMode("heatmap")}
+              />
+              <Separator />
+              <ToggleBtn
+                icon={FaChartLine}
+                label="Chrom Spectra"
+                onToggle={() => setViewMode("chromSpectra")}
+              />
+              <Separator />
+              <ToggleBtn
+                icon={FaDownload}
+                label="Download CSV"
+                onToggle={() => handleDownloadImsCSV()}
+              >          
+              </ToggleBtn>
+              </Toolbar>
+              <div ref={imsSpectra} style={{display: "flex", height: "40rem", width: "75rem", backgroundColor: "#084072", fontSize: 19}}>
+                <LineVis
+                  className={styles.container6}
+                  dataArray={lineData}
+                  domain={lineDomain}
+                  scaleType={"linear"}
+                  curveType="OnlyLine"
+                  showGrid={showGrid}
+                  title="IMS Spectra Graph"
+                  abscissaParams={{label: "Drift Time (msec)"}}
+                  ordinateLabel="Intensity Values (counts)"
+                />
+                </div>
+                  <div style={{ marginTop: "8px" }}>
+                    <label htmlFor="row-slider" style={{ color: "#fff", fontSize: 18 }}>
+                      Select Retention time:
+                    </label>
+                    <input
+                      id="row-slider"
+                      type="range"
+                      min="0"
+                      max={heatmapData.dataArray.shape[0] - 1}
+                      value={selectedIndex}
+                      onChange={handleImsSliderChange}
+                    />
+                    <span style={{ color: "#fff", marginLeft: "10px" , fontSize: 20}}>
+                      {selectedIndex}
+                    </span> 
+                </div>        
+        </>
+        ) : (
+          <p>Please upload a GC‑IMS .h5 file to render the heatmap.</p>
+        )}
 
-      ) : (
-        <p>Please upload a GC‑IMS .h5 file to render the heatmap.</p>
-      )}
-    </div>
+
+  </div>
+
+  </div>
   );
 }
 
