@@ -12,6 +12,7 @@ import html2canvas from "html2canvas";
 
 
 function HeatmapUploader() {
+
   const [titleName, setTitleName] = useState("GC-IMS Heatmap");
   const [heatmapData, setHeatmapData] = useState(null);
   const [heatmapDomain, setHeatmapDomain] = useState(null);
@@ -19,6 +20,10 @@ function HeatmapUploader() {
   const [driftTimes, setDriftTimes] = useState([null]);
   const [customDomain, setCustomDomain] = useState([null, null]);
   const [invertColorMap, setInvertColorMap] = useState(false);
+
+
+  const [lineData, setLineData] = useState(null);
+  const [lineDomain, setLineDomain] = useState(null);
 
   const [error, setError] = useState(null);
   
@@ -41,6 +46,7 @@ function HeatmapUploader() {
 
 
   const heatmapRef = useRef(null);
+  const imsSpectra = useRef(null);
 
 
   const [passwordEntered, setPasswordEntered] = useState(false);
@@ -97,13 +103,10 @@ function HeatmapUploader() {
         }
       }
 
-
       const numRows = transposedPoints.shape[0];
       const numCols = transposedPoints.shape[1];
       let countPol0 = 0;
       let countPol1 = 0;
-
-
 
       for (let i = 0; i < spectrumHeader.size; i++) {
         polarity.push(spectrumHeader.data[i][0]);
@@ -121,11 +124,12 @@ function HeatmapUploader() {
       const data0 = new Float32Array(countPol0 * numRows);
       const data1 = new Float32Array(countPol1 * numRows);
 
-      const filteredSpectrum0 = ndarray(data0, [numRows, countPol0]);
-      const filteredSpectrum1 = ndarray(data1, [numRows, countPol1]);
-      
-      console.log("Filtered Spectrum 0 shape:", filteredSpectrum0);
 
+      const filteredSpectrum0 = ndarray(data0, [numRows, countPol0]);
+  
+      const filteredSpectrum1 = ndarray(data1, [numRows, countPol1]);
+     
+  
       let colIndex0 = 0;
       let colIndex1 = 0;
 
@@ -143,17 +147,22 @@ function HeatmapUploader() {
         }
       }
 
+
       const driftTimes0 = [];
       const driftTimes1 = [];
+
 
       const retentionTimes0 = [];
       const retentionTimes1 = [];
 
+     
       const n_rows0 = filteredSpectrum0.shape[0];
       const n_rows1 = filteredSpectrum1.shape[0];
 
       const n_cols0 = filteredSpectrum0.shape[1];
       const n_cols1 = filteredSpectrum1.shape[1];
+
+
 
       for (let i = 0; i < n_rows0; i++) {
         driftTimes0.push((sample_delay + i * sample_distance) / 1000000);
@@ -213,9 +222,7 @@ function HeatmapUploader() {
           ionCurrent0.set(i, j, value / gain);
         }
       }
-
-
-
+    
       const values0 = Array.from(ionCurrent0.data);
 
 
@@ -226,7 +233,7 @@ function HeatmapUploader() {
           ionCurrent1.set(i, j, value / gain);
         }
       }
-
+      console.log(ionCurrent1);
 
       const ionRow0 = ionCurrent0.shape[0];
       const ionCol0 = ionCurrent0.shape[1];
@@ -240,7 +247,7 @@ function HeatmapUploader() {
         const row = ionCurrent0.data.slice(i * ionCol0, (i + 1) * ionCol0);
         result0.push(Array.from(row));
       }
-
+      
 
       const floatValues = result0.flat(1);
       const dataArray0 = ndarray(floatValues, [ionRow0, ionCol0]);
@@ -261,7 +268,18 @@ function HeatmapUploader() {
       setDataArray1(dataArray1);
       setDomain0(domain0);
       setDomain1(domain1);
+
+
+      const firstColumn = new Float32Array(dataArray0.shape[0]);
+      for (let i = 0; i < dataArray0.shape[0]; i++) {
+        firstColumn[i] = dataArray0.get(i, 0);
+      }
+      const initialLine = ndarray(firstColumn, [firstColumn.length]);
       
+      setLineData(initialLine);
+      setLineDomain(getDomain(initialLine));
+      setSelectedIndex(0); // initialize the slider
+
 
       setDriftTimes0(driftTimes0);
       setDriftTimes1(driftTimes1);
@@ -305,6 +323,8 @@ function HeatmapUploader() {
 
 
 
+
+
     const handleSnapshot = () => {
     if (heatmapRef.current) {
       const originalOverflow = heatmapRef.current.style.overflow;
@@ -321,6 +341,27 @@ function HeatmapUploader() {
         link.click();
 
         heatmapRef.current.style.overflow = originalOverflow;
+      });
+    }
+  };
+
+
+    const handleSnapshotIMS = () => {
+    if (imsSpectra.current) {
+      const originalOverflow = imsSpectra.current.style.overflow;
+      imsSpectra.current.style.overflow = "visible";
+
+      html2canvas(imsSpectra.current, {
+        width: imsSpectra.current.scrollWidth,
+        height: imsSpectra.current.scrollHeight,
+        scale: 1,
+      }).then((canvas) => {
+        const link = document.createElement("a");
+        link.href = canvas.toDataURL("image/png");
+        link.download = "Ims_Spectra_screenshot.png";
+        link.click();
+
+        imsSpectra.current.style.overflow = originalOverflow;
       });
     }
   };
@@ -348,20 +389,42 @@ function HeatmapUploader() {
 
 
 
+const [selectedIndex, setSelectedIndex] = useState(0);
 
-  return (
+const handleImsSliderChange = (event) => {
+  const index = parseInt(event.target.value);
+  setSelectedIndex(index);
+
+  if (dataArray0 && driftTimes0) {
+    const column = new Float32Array(dataArray0.shape[0]);
+    for (let i = 0; i < dataArray0.shape[0]; i++) {
+      column[i] = dataArray0.get(i, index);
+    }
+    const lineNdarray = ndarray(column, [column.length]);
+    setLineData(lineNdarray);
+    setLineDomain(getDomain(lineNdarray));
+  }
+};
+
+
+
+
+return (
 <div className={styles.container2}>
   <Sidebar onGCIMSDataUpload={handleGCIMSDataUpload} />
     <div
       className={styles.card}
       style={{borderRadius: "40px", backgroundColor: "#084072", marginLeft: "200px", cursor: "pointer"}}
     >
-      {heatmapData && heatmapDomain ? (
+      {heatmapData && heatmapDomain && (
         <>
+        
         <button onClick={togglePolarity} style={{ margin: "0.5rem", padding: "1rem", width: "190px", height: "40px", fontSize: "1.1rem", borderRadius: "18px", cursor: "pointer",boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
             transition: "background-color 0.3s ease"}}>
             Switch to Polarity {currentPolarity === 0 ? "1" : "0"}
         </button>
+        {viewMode === "heatmap" ? (
+          <>
                 <Toolbar className={styles.container4}>
                   <ColorMapSelector
                     className={styles.container4}
@@ -430,12 +493,6 @@ function HeatmapUploader() {
       ) : viewMode === "imsSpectra" ? (
         <>
           <Toolbar className={styles.container4}>
-            <DomainWidget
-              customDomain={customDomain2}
-              dataDomain={lineDomain}
-              onCustomDomainChange={setCustomDomain2}
-              scaleType={scaleType}
-            />
             <Separator />
               <ToggleBtn
                 icon={FaCamera}
@@ -470,43 +527,44 @@ function HeatmapUploader() {
               </ToggleBtn>
               </Toolbar>
               <div ref={imsSpectra} style={{display: "flex", height: "40rem", width: "75rem", backgroundColor: "#084072", fontSize: 19}}>
-                <LineVis
-                  className={styles.container6}
-                  dataArray={lineData}
-                  domain={lineDomain}
-                  scaleType={"linear"}
-                  curveType="OnlyLine"
-                  showGrid={showGrid}
-                  title="IMS Spectra Graph"
-                  abscissaParams={{label: "Drift Time (msec)"}}
-                  ordinateLabel="Intensity Values (counts)"
+              <LineVis
+                className={styles.container6}
+                ref={imsSpectra}
+                dataArray={lineData}
+                domain={lineDomain}
+                scaleType={"linear"}
+                curveType="OnlyLine"
+                showGrid={showGrid}
+                title="IMS Spectra Graph"
+                abscissaParams={{ value: driftTimes0, label: "Drift Time (ms)" }}
+                ordinateLabel="Ion Current (pA)"
+              />
+              </div>
+
+              <div style={{ marginTop: "8px" }}>
+                <label htmlFor="row-slider" style={{ color: "#fff", fontSize: 18 }}>
+                  Select Retention time:
+                </label>
+                <input
+                  id="row-slider"
+                  type="range"
+                  min="0"
+                  max={dataArray0?.shape[1] - 1 || 0}
+                  value={selectedIndex}
+                  onChange={handleImsSliderChange}
                 />
-                </div>
-                  <div style={{ marginTop: "8px" }}>
-                    <label htmlFor="row-slider" style={{ color: "#fff", fontSize: 18 }}>
-                      Select Retention time:
-                    </label>
-                    <input
-                      id="row-slider"
-                      type="range"
-                      min="0"
-                      max={heatmapData.dataArray.shape[0] - 1}
-                      value={selectedIndex}
-                      onChange={handleImsSliderChange}
-                    />
-                    <span style={{ color: "#fff", marginLeft: "10px" , fontSize: 20}}>
-                      {selectedIndex}
-                    </span> 
-                </div>        
+                <span style={{ color: "#fff", marginLeft: "10px", fontSize: 20 }}>
+                  {retentionTimes0?.[selectedIndex]?.toFixed(3)} s
+                </span>
+              </div>    
+
         </>
-        ) : (
-          <p>Please upload a GC‑IMS .h5 file to render the heatmap.</p>
-        )}
-
-
+        ) : viewMode === "null" ()}</>
+         
+        )}   
+    </div>
   </div>
 
-  </div>
   );
 }
 

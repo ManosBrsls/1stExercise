@@ -1,507 +1,234 @@
 "use client";
 import React, { useState, useRef, useEffect } from "react";
 import ndarray from "ndarray";
-import {getDomain, Toolbar, Separator, ToggleBtn, LineVis,} from "@h5web/lib";
-import * as jsfive from "jsfive";
-import { h5wasmReady, FS, File } from "h5wasm";
+import { HeatmapVis, getDomain, Toolbar, DomainWidget, ColorMapSelector, ScaleSelector, Separator, VisCanvas, ToggleBtn, LineVis } from "@h5web/lib";
+import { h5wasmReady, FS, File, configure } from "h5wasm";
 import "@h5web/lib/dist/styles.css";
 import Sidebar from "./posts/Sidebar";
 import styles from "../styles/Home.module.css";
-import { FaCamera, FaDownload, FaTh } from "react-icons/fa";
+import { FaCamera, FaChartArea, FaDownload, FaMap, FaTh, FaChartLine } from "react-icons/fa";
 import "@fortawesome/fontawesome-svg-core/styles.css";
 import html2canvas from "html2canvas";
-import Swal from "sweetalert2";
 
 
+function HeatmapUploader() {
 
-
-function Linechart() {
+  const [titleName, setTitleName] = useState("GC-IMS Heatmap");
   const [heatmapData, setHeatmapData] = useState(null);
-  const [heatmapData2, setHeatmapData2] = useState(null);
-
-  const [selectedIndex, setSelectedIndex] = useState(0);
-  const [selectedIndex2, setSelectedIndex2] = useState(0);
-
+  const [heatmapDomain, setHeatmapDomain] = useState(null);
+  const [retentionTimes, setRetentionTimes] = useState([null]);
+  const [driftTimes, setDriftTimes] = useState([null]);
   const [customDomain, setCustomDomain] = useState([null, null]);
-  const [customDomain2, setCustomDomain2] = useState([null, null]);
+  const [invertColorMap, setInvertColorMap] = useState(false);
 
   const [error, setError] = useState(null);
+  
   const [scaleType, setScaleType] = useState("linear");
-  const [showGrid1, setShowGrid1] = useState(false);
-  const [showGrid2, setShowGrid2] = useState(false);
+  const [colorMap, setColorMap] = useState("Turbo");
+  const [showGrid, setShowGrid] = useState(false);
+  const [viewMode, setViewMode] = useState("heatmap");
 
 
-  const [lineDomain, setLineDomain] = useState([null, null]);
-  const [lineData, setLineData] = useState(null);
-  const [lineDomain2, setLineDomain2] = useState([null, null]);
-  const [lineData2, setLineData2] = useState(null);
+  // store both polarity datasets
+  const [dataArray0, setDataArray0] = useState(null);
+  const [dataArray1, setDataArray1] = useState(null);
+  const [domain0, setDomain0] = useState(null);
+  const [domain1, setDomain1] = useState(null);
+  const [driftTimes0, setDriftTimes0] = useState(null);
+  const [driftTimes1, setDriftTimes1] = useState(null);
+  const [retentionTimes0, setRetentionTimes0] = useState(null);
+  const [retentionTimes1, setRetentionTimes1] = useState(null);
+  const [currentPolarity, setCurrentPolarity] = useState(0); // default to 0
+
+
+  const heatmapRef = useRef(null);
+
+
+  const [passwordEntered, setPasswordEntered] = useState(false);
+  const [authError, setAuthError] = useState(null);
   
   
-
-  const imsSpectra = useRef(null);
-
-
-  useEffect(() => {
-    if (selectedIndex > 20) { // Change 20 to your actual threshold
-      Swal.fire({
-        title: "⚠ ALERT ⚠",
-        text: `VOC Level: ${selectedIndex} ppm`,
-        icon: "warning",
-        background: "#000",
-        color: "#fff",
-        confirmButtonText: "OK",
-        confirmButtonColor: "#ff0000",
-        timer: 10000, // Auto-close after 5 seconds
-      });
-    }
-  }, [selectedIndex]);
-
-
-  const handleIMSDataUpload = (filename, buffer) => {
-
-
+  const correctCredentials = {
+      password: "123", // Replace with your desired password
   };
 
-  const handleIMSDataSelect = async (buffer, chartNumber, filename) => {
+
+
+  const handleGCIMSDataUpload = async (filename, buffer) => {
+
     try {
-     
+      // await configure({ memorySize: 2 ** 28 });
       await h5wasmReady;
 
       // Mount the buffer into the WASM virtual filesystem
       const filePath = `/tmp/${filename}`;
       const data = new Uint8Array(buffer);
       FS.writeFile(filePath, data);
-
-    // Now open the file using its path
+      // Now open the file using its path
       const h5File = new File(filePath, "r");
-      
+
+      setTitleName(filename);
 
       const pointsDataset = h5File.get("spectrumPoints");
       const metadaDataset = h5File.get("spectrumMetadata");
       const headerDataset = h5File.get("spectrumHeader");
- 
+
       const spectrumHeader = ndarray(headerDataset.value, headerDataset.shape);
       const spectrumMetadata = ndarray(metadaDataset.value, metadaDataset.shape);
       const spectrumPoints = ndarray(pointsDataset.value, pointsDataset.shape);
 
       const slope1 = spectrumHeader.data[0][9];
-      const offset1 = spectrumHeader.data[0][10]; 
+      const offset1 = spectrumHeader.data[0][10];
       const slope2 = spectrumHeader.data[0][11];
       const offset2 = spectrumHeader.data[0][12];
       const sample_delay = spectrumHeader.data[0][1];
       const sample_distance = spectrumHeader.data[0][2];
       const period = spectrumHeader.data[0][8];
       const average = spectrumHeader.data[0][4];
-      
+
       const polarity = []
       const gain = spectrumMetadata.data[0][4];
-      const user_calibration = true
-      
+
       const transposedPoints = ndarray(new Float32Array(spectrumPoints.shape[0] * spectrumPoints.shape[1]), [spectrumPoints.shape[1], spectrumPoints.shape[0]]);
 
-     
-
-      for(let i = 0; i < spectrumPoints.shape[0]; i++) {
-        for(let j = 0; j < spectrumPoints.shape[1]; j++) {
-           transposedPoints.set(j, i, spectrumPoints.get(i, j));
-         }
-       }
-
-      console.log("Transposed", transposedPoints);
-      
-      const numRows = transposedPoints.shape[0];
-      const numCols = transposedPoints.shape[1];
-      let countPol0 = 0;
-      let countPol1 = 0;
-
+      for (let i = 0; i < spectrumPoints.shape[0]; i++) {
+        for (let j = 0; j < spectrumPoints.shape[1]; j++) {
+          transposedPoints.set(j, i, spectrumPoints.get(i, j));
+        }
+      }
 
 
       for (let i = 0; i < spectrumHeader.size; i++) {
-        polarity.push(spectrumHeader.data[i][0]);  
+        polarity.push(spectrumHeader.data[i][0]);
       }
 
+      const filteredSpectrum = transposedPoints;
+      console.log(filteredSpectrum)
 
-      for (let j=0; j < numCols; j++) {
-        if (polarity[j] === 0) {
-          countPol0++;
-        } else if (polarity[j] === 1) {
-          countPol1++;
-        }
+      const driftTimes = [];
+      const retentionTimes = [];
+      const nRows = filteredSpectrum.shape[0];
+      const nCols = filteredSpectrum.shape[1];
+
+      for (let i = 0; i < nRows; i++) {
+        driftTimes[i] = (sample_delay + i * sample_distance) / 1000000;
       }
-
-      const data0 = new Float32Array(countPol0 * numRows);
-      const data1 = new Float32Array(countPol1 * numRows);
-
-      const filteredSpectrum0 = ndarray(data0, [numRows, countPol0]);
-      const filteredSpectrum1 = ndarray(data1, [numRows, countPol1]);
-      
-      let colIndex0 = 0;
-      let colIndex1 = 0;
-
-      for (let j = 0; j < numCols; j++) {
-        if (polarity[j] === 0) {
-          for (let i = 0; i < numRows; i++) {
-            filteredSpectrum0.set(i, colIndex0, transposedPoints.get(i, j));
-          }
-          colIndex0++;
-        } else if (polarity[j] === 1) {
-          for (let i = 0; i < numRows; i++) {
-            filteredSpectrum1.set(i, colIndex1, transposedPoints.get(i, j));
-          }
-          colIndex1++;
-        }
+   
+      for (let i = 0; i < nCols; i++) {
+        retentionTimes[i] = i * average * period / 1000000000;
       }
-
-      console.log("Filtered Spectrum 0:", filteredSpectrum0);
-      console.log("Filtered Spectrum 1:", filteredSpectrum1);
-      
-
-      const driftTimes0 = [];
-      const driftTimes1 = [];
- 
-      const retentionTimes0 = [];
-      const retentionTimes1 = [];
      
-      const n_rows0 = filteredSpectrum0.shape[0];
-      const n_rows1 = filteredSpectrum1.shape[0];
- 
-      const n_cols0 = filteredSpectrum0.shape[1];
-      const n_cols1 = filteredSpectrum1.shape[1];
- 
-      for (let i = 0; i < n_rows0; i++) {
-        driftTimes0.push((sample_delay + i * sample_distance) / 1000000);
-      }
- 
-      for (let i = 0; i < n_rows1; i++) {
-        driftTimes1.push((sample_delay + i * sample_distance) / 1000000);
-      }
- 
- 
-      for (let i = 0; i < n_cols0; i++) {
-        retentionTimes0.push(
-          (average * i * period) / 1000000000
-        );
-      }
-      for (let i = 0; i < n_cols1; i++) {
-        retentionTimes1.push(
-          (average * i * period) / 1000000000
-        );
-      }
+    const ionCurrent = ndarray(new Float32Array(nRows * nCols),[nRows, nCols]);
 
-      console.log("Drift Times 0:", driftTimes0);
-      console.log("retention 1:", retentionTimes0);
-      
-    const calibratedData0 = new Float32Array(filteredSpectrum0.shape[0] * filteredSpectrum0.shape[1]);
-    const calibratedSpectrum0 = ndarray(calibratedData0, [filteredSpectrum0.shape[0], filteredSpectrum0.shape[1]]);
+    for (let i = 0; i < nRows; i++) {
+      for (let j = 0; j < nCols; j++) {
+        const raw = filteredSpectrum.get(i, j);
+        const polarityVal = polarity[j];
+        const slope = polarityVal === 0 ? slope1 : slope2;
+        const offset = polarityVal === 0 ? offset1 : offset2;
+        const calibrated = raw * slope + offset;
+        ionCurrent.set(i, j, calibrated / gain);
+      }
+    }
+
+    console.log(ionCurrent)
+
     
-    const calibratedData1 = new Float32Array(filteredSpectrum1.shape[0] * filteredSpectrum1.shape[1]);
-    const calibratedSpectrum1 = ndarray(calibratedData1, [filteredSpectrum1.shape[0], filteredSpectrum1.shape[1]]);
-    
-  if (user_calibration){
-    for (let i = 0; i < filteredSpectrum0.shape[0]; i++) {
-      for (let j = 0; j < filteredSpectrum0.shape[1]; j++) {
-        const value = filteredSpectrum0.get(i, j);
-        calibratedSpectrum0.set(i, j, value * slope1 + offset1);
-      }
-    }
 
 
-    for (let i = 0; i < filteredSpectrum1.shape[0]; i++) {
-      for (let j = 0; j < filteredSpectrum1.shape[1]; j++) {
-        const value = filteredSpectrum1.get(i, j);
-        calibratedSpectrum1.set(i, j, value * slope2 + offset2);
-      }
-    }
 
-  }else{
-    //calibrated_spectrum = filtered_spectrum 
-  }
-
-  const ionCurrentData0 = new Float32Array(calibratedSpectrum0.size);
-  const ionCurrent0 = ndarray(ionCurrentData0, calibratedSpectrum0.shape);
-
-  const ionCurrentData1 = new Float32Array(calibratedSpectrum1.size);
-  const ionCurrent1 = ndarray(ionCurrentData1, calibratedSpectrum1.shape);
-
-  for (let i = 0; i < calibratedSpectrum0.shape[0]; i++) {
-  for (let j = 0; j < calibratedSpectrum0.shape[1]; j++) {
-    const value = calibratedSpectrum0.get(i, j);
-    ionCurrent0.set(i, j, value / gain);
-  }
-}
-
-console.log("Ion Current 0:", ionCurrent0);
-
-  for (let i = 0; i < calibratedSpectrum1.shape[0]; i++) {
-  for (let j = 0; j < calibratedSpectrum1.shape[1]; j++) {
-    const value = calibratedSpectrum1.get(i, j);
-    ionCurrent1.set(i, j, value / gain);
-  }
-}
-
-console.log("Ion Current 1:", ionCurrent1);
-
-
-      
-  
-      if (chartNumber === 1) {
-      const dataArray = ndarray(pointsDataset.value, pointsDataset.shape);
-      
-      const dataArray2 = ndarray(pointsDataset.value, pointsDataset.shape);
-        
-
-      
-      const rowDataArray = Array.from(
-        dataArray.data.slice(
-          selectedIndex * dataArray.shape[1],
-          (selectedIndex + 1) * dataArray.shape[1]
-        )
-      );
-
-      const heatMapDomain = getDomain(dataArray);
-      setLineDomain(getDomain(rowDataArray));
-
-      const initialLineData = dataArray.pick(selectedIndex, null);
-      setLineData(initialLineData);
-      
-      setCustomDomain(heatMapDomain);
-
-      setHeatmapData({dataArray, dataArray2, domain1: heatMapDomain});
-
-
-    }else if (chartNumber === 2) {
-      const dataArray = ndarray(pointsDataset.value, pointsDataset.shape);
-      const dataArray2 = ndarray(pointsDataset.value, pointsDataset.shape);
-
-      
-      const rowDataArray2 = Array.from(
-        dataArray2.data.slice(
-          selectedIndex2 * dataArray2.shape[1],
-          (selectedIndex2 + 1) * dataArray2.shape[1]
-        )
-      );
-
-      const heatMapDomain2 = getDomain(dataArray2);
-      setLineDomain2(getDomain(rowDataArray2));
-
-      const initialLineData2 = dataArray2.pick(selectedIndex2, null);
-      setLineData2(initialLineData2);
-      
-      setCustomDomain(heatMapDomain2);
-
-      setHeatmapData2({dataArray, dataArray2, domain1: heatMapDomain2})
-      
-    }
 
     } catch (err) {
       console.error("Error processing file:", err);
       setError("Error processing file.");
     }
+
   };
 
 
-    const handleImsSliderChange = (event) => {
-      const newIndex = parseInt(event.target.value, 10);
-      setSelectedIndex(newIndex);
-      console.log(heatmapData.dataArray.shape[0])
-      const rowDataArray = Array.from(
-        heatmapData.dataArray.data.slice(
-          newIndex * heatmapData.dataArray.shape[1],
-          (newIndex + 1) * heatmapData.dataArray.shape[1]
-        )
-      );
-      // console.log(rowDataArray)
-      const selectedLineData = ndarray(rowDataArray, [rowDataArray.length]);
-      console.log(selectedLineData)
-      setLineData(selectedLineData);
-  
-      const rowDomain = getDomain(selectedLineData);
-      setLineDomain(rowDomain);
-      setCustomDomain2(rowDomain);
-    };
+    const handleSnapshot = () => {
+    if (heatmapRef.current) {
+      const originalOverflow = heatmapRef.current.style.overflow;
+      heatmapRef.current.style.overflow = "visible";
 
-    const handleImsSliderChange2 = (event) => {
-      const newIndex2 = parseInt(event.target.value, 10);
-      setSelectedIndex2(newIndex2);
-      console.log(heatmapData2.dataArray2.shape[0])
-      const rowDataArray2 = Array.from(
-        heatmapData2.dataArray2.data.slice(
-          newIndex2 * heatmapData2.dataArray2.shape[1],
-          (newIndex2 + 1) * heatmapData2.dataArray2.shape[1]
-        )
-      );
-      // console.log(rowDataArray)
-      const selectedLineData2 = ndarray(rowDataArray2, [rowDataArray2.length]);
-      console.log(selectedLineData2)
-      setLineData2(selectedLineData2);
-  
-      const rowDomain = getDomain(selectedLineData2);
-      setLineDomain2(rowDomain);
-      setCustomDomain2(rowDomain);
-    };
+      html2canvas(heatmapRef.current, {
+        width: heatmapRef.current.scrollWidth,
+        height: heatmapRef.current.scrollHeight,
+        scale: 1,
+      }).then((canvas) => {
+        const link = document.createElement("a");
+        link.href = canvas.toDataURL("image/png");
+        link.download = "heatmap_screenshot.png";
+        link.click();
 
-
-  
-    const handleSnapshotIMS = () => {
-      if (imsSpectra.current) {
-        const originalOverflow = imsSpectra.current.style.overflow;
-        imsSpectra.current.style.overflow = "visible";
-  
-        html2canvas(imsSpectra.current, {
-          width: imsSpectra.current.scrollWidth,
-          height: imsSpectra.current.scrollHeight,
-          scale: 1,
-        }).then((canvas) => {
-          const link = document.createElement("a");
-          link.href = canvas.toDataURL("image/png");
-          link.download = "Ims_Spectra_screenshot.png";
-          link.click();
-  
-          imsSpectra.current.style.overflow = originalOverflow;
-        });
-      }
-    };
-
-
-
-    const handleDownloadImsCSV = () => {
-      if (!lineData || !heatmapData) {
-        return;
-      }
-    
-      const { dataArray } = heatmapData;
-    
-      // Assuming `dataArray` contains drift time values in its second dimension (or another mapping).
-      // Replace this logic with the actual way you derive drift times.
-      const driftTimeArray = Array.from({ length: dataArray.shape[1] }, (_, index) => index); // Replace with actual drift time calculation.
-    
-      let csvContent = "data:text/csv;charset=utf-8,";
-      csvContent += "Drift Time (msec),Intensity Values (counts)\n";
-    
-      lineData.data.forEach((yValue, index) => {
-        const xValue = driftTimeArray[index]; // Use the actual drift time values here.
-        csvContent += `${xValue},${yValue}\n`;
+        heatmapRef.current.style.overflow = originalOverflow;
       });
-    
-      const encodedUri = encodeURI(csvContent);
-      const link = document.createElement("a");
-      link.setAttribute("href", encodedUri);
-      link.setAttribute("download", "Ims_Spectra.csv");
-    
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    };
+    }
+  };
 
 
-
-    return (
-      <div className={styles.container2}>
-        <Sidebar onIMSDataUpload={handleIMSDataUpload} onIMSDataSelect={handleIMSDataSelect}/>
-        <div className={styles.card} style={{borderRadius: "40px", backgroundColor: "#084072", marginLeft: "200px", cursor: "pointer"}}>
-          {heatmapData2 &&  (
-            <>
-              <Toolbar className={styles.container4}>
-                    <ToggleBtn
-                      icon={FaCamera}
-                      label="Snap Shot"
-                      onToggle={() => handleSnapshotIMS()}
-                    >
-                    </ToggleBtn>
-                    <Separator />
-                    <ToggleBtn
-                      icon={FaTh}
-                      label="Grid 1"
-                      onToggle={() => setShowGrid1(!showGrid1)}
-                    />
-                    <Separator />
-                    <ToggleBtn
-                      icon={FaTh}
-                      label="Grid 2"
-                      onToggle={() => setShowGrid2(!showGrid2)}
-                    />
-                    <Separator />
-                    <ToggleBtn
-                      icon={FaDownload}
-                      label="Download CSV Chart1"
-                      onToggle={() => handleDownloadImsCSV()}
-                    >          
-                    </ToggleBtn>
-                    <Separator />
-                    <ToggleBtn
-                      icon={FaDownload}
-                      label="Download CSV Chart2"
-                      onToggle={() => handleDownloadImsCSV()}
-                    >          
-                    </ToggleBtn>
+return (
+<div className={styles.container2}>
+  <Sidebar onGCIMSDataUpload={handleGCIMSDataUpload} />
+    <div
+      className={styles.card}
+      style={{borderRadius: "40px", backgroundColor: "#084072", marginLeft: "200px", cursor: "pointer"}}
+    >
+      {heatmapData && heatmapDomain ? (
+        <>
+          <Toolbar className={styles.container4}>
+              <ToggleBtn
+                icon={FaCamera}
+                label="Snap Shot"
+                onToggle={() => handleSnapshot()}
+              >
+              </ToggleBtn>
+              <Separator />
+              <ToggleBtn
+                icon={FaTh}
+                label="Grid"
+                onToggle={() => setShowGrid(!showGrid)}
+              />
+              <Separator />
+  
               </Toolbar>
-              <div ref={imsSpectra} style={{display:"flex", position: "relative", height: "40rem", width: "75rem", backgroundColor: "#084072", fontSize: 19}}>
-                  <LineVis
-                    className={styles.container6}
-                    dataArray={lineData}
-                    domain={lineDomain}
-                    aspect="auto"
-                    scaleType="linear"
-                    curveType="OnlyLine"
-                    showGrid={showGrid1}
-                    title="IMS Spectra Graph 1"
-                    abscissaParams={{ label: "Drift Time (msec)" }}
-                    ordinateLabel="Intensity Values (counts)"
-
-                  />
-                  <LineVis
-                    className={styles.container7}
-                    dataArray={lineData2}
-                    domain={lineDomain2}
-                    aspect="auto"
-                    scaleType="linear"
-                    curveType="OnlyLine"
-                    showGrid={showGrid2} // avoid duplicate grid lines
-                    title="IMS Spectra Graph 2" // you may leave title empty to avoid overlapping titles
-                    abscissaParams={{ label: "Drift Time (msec)" }}
-                    ordinateLabel="Intensity Values (counts)"
-
-                  />
-              </div>
-              <div style={{ display: "flex", alignItems: "auto", gap: "360px", marginTop: "20px" }}>
-              <div>
-                <label htmlFor="column-slider" style={{ color: "#fff", fontSize: 18 }}>
-                  Select Retention time 1:
-                </label>
-                <input
-                  id="column-slider"
-                  type="range"
-                  min="0"
-                  max={heatmapData?.dataArray?.shape[0] - 1}
-                  value={selectedIndex}
-                  onChange={handleImsSliderChange}
+              <div ref={imsSpectra} style={{display: "flex", height: "40rem", width: "75rem", backgroundColor: "#084072", fontSize: 19}}>
+                <LineVis
+                  className={styles.container6}
+                  dataArray={lineData}
+                  domain={lineDomain}
+                  scaleType={"linear"}
+                  curveType="OnlyLine"
+                  showGrid={showGrid}
+                  title="IMS Spectra Graph"
+                  abscissaParams={{label: "Drift Time (msec)"}}
+                  ordinateLabel="Intensity Values (counts)"
                 />
-                <span style={{ color: "#fff", marginLeft: "10px", fontSize: 20 }}>
-                  {selectedIndex}
-                </span>
-              </div>
-              <div>
-                <label htmlFor="column-slider2" style={{ color: "#fff", fontSize: 18 }}>
-                  Select Retention time 2:
-                </label>
-                <input
-                  id="column-slider2"
-                  type="range"
-                  min="0"
-                  max={heatmapData2?.dataArray2?.shape[0] - 1 || 0}
-                  value={selectedIndex2}
-                  onChange={handleImsSliderChange2}
-                />
-                <span style={{ color: "#fff", marginLeft: "10px", fontSize: 20 }}>
-                  {selectedIndex2}
-                </span>
-              </div>
-            </div>
-          </>
+                </div>
+                  <div style={{ marginTop: "8px" }}>
+                    <label htmlFor="row-slider" style={{ color: "#fff", fontSize: 18 }}>
+                      Select Retention time:
+                    </label>
+                    <input
+                      id="row-slider"
+                      type="range"
+                      min="0"
+                      max={heatmapData.dataArray.shape[0] - 1}
+                      value={selectedIndex}
+                      onChange={handleImsSliderChange}
+                    />
+                    <span style={{ color: "#fff", marginLeft: "10px" , fontSize: 20}}>
+                      {selectedIndex}
+                    </span> 
+                </div>        
+        </>
+        ) : (
+          <p>Please upload a GC‑IMS .h5 file to render the heatmap.</p>
         )}
-      </div>
     </div>
+  </div>
   );
 }
 
-export default Linechart;
+
+export default HeatmapUploader;
