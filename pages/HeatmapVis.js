@@ -21,19 +21,17 @@ function HeatmapUploader() {
   const [customDomain, setCustomDomain] = useState([null, null]);
   const [invertColorMap, setInvertColorMap] = useState(false);
 
-
   const [lineData, setLineData] = useState(null);
   const [lineDomain, setLineDomain] = useState(null);
 
   const [error, setError] = useState(null);
-  
+
   const [scaleType, setScaleType] = useState("linear");
   const [colorMap, setColorMap] = useState("Turbo");
   const [showGrid, setShowGrid] = useState(false);
+  const [showImsGrid, setShowImsGrid] = useState(false);
   const [viewMode, setViewMode] = useState("heatmap");
 
-
-  // store both polarity datasets
   const [dataArray0, setDataArray0] = useState(null);
   const [dataArray1, setDataArray1] = useState(null);
   const [domain0, setDomain0] = useState(null);
@@ -42,9 +40,19 @@ function HeatmapUploader() {
   const [driftTimes1, setDriftTimes1] = useState(null);
   const [retentionTimes0, setRetentionTimes0] = useState(null);
   const [retentionTimes1, setRetentionTimes1] = useState(null);
-  const [currentPolarity, setCurrentPolarity] = useState(0); // default to 0
+  const [currentPolarity, setCurrentPolarity] = useState(0);
 
+  const [chromData0, setChromData0] = useState(null);
+  const [chromData1, setChromData1] = useState(null);
+  const [chromDomain0, setChromDomain0] = useState(null);
+  const [chromDomain1, setChromDomain1] = useState(null);
+  const [selectedChromIndex, setSelectedChromIndex] = useState(0);
 
+  const [gcSpectrumData, setGcSpectrumData] = useState(null);
+  const [gcSpectrumDomain, setGcSpectrumDomain] = useState(null);
+  const [selectedGcIndex, setSelectedGcIndex] = useState(0);
+
+  const chromGram = useRef(null);
   const heatmapRef = useRef(null);
   const imsSpectra = useRef(null);
 
@@ -54,9 +62,62 @@ function HeatmapUploader() {
   
   
   const correctCredentials = {
-      password: "123", // Replace with your desired password
+    password: "123",
   };
 
+  const togglePolarity = () => {
+    const newPol = currentPolarity === 0 ? 1 : 0;
+    setCurrentPolarity(newPol);
+
+    if (newPol === 0) {
+      setHeatmapData(dataArray0);
+      setHeatmapDomain(domain0);
+      setCustomDomain(domain0);
+      setDriftTimes(driftTimes0);
+      setRetentionTimes(retentionTimes0);
+    } else {
+      setHeatmapData(dataArray1);
+      setHeatmapDomain(domain1);
+      setCustomDomain(domain1);
+      setDriftTimes(driftTimes1);
+      setRetentionTimes(retentionTimes1);
+    }
+
+    setSelectedIndex(0);
+    const dataArr = newPol === 0 ? dataArray0 : dataArray1;
+    if (dataArr) {
+      const firstColumn = new Float32Array(dataArr.shape[0]);
+      for (let i = 0; i < dataArr.shape[0]; i++) {
+        firstColumn[i] = dataArr.get(i, 0);
+      }
+      const newLine = ndarray(firstColumn, [firstColumn.length]);
+      setLineData(newLine);
+      setLineDomain(getDomain(newLine));
+    }
+  };
+  
+
+  const handleImsPolarityToggle = () => {
+    togglePolarity();
+  };
+
+  const [selectedIndex, setSelectedIndex] = useState(0);
+
+  const handleImsSliderChange = (event) => {
+    const index = parseInt(event.target.value);
+    setSelectedIndex(index);
+
+    const dataArr = currentPolarity === 0 ? dataArray0 : dataArray1;
+    if (dataArr) {
+      const column = new Float32Array(dataArr.shape[0]);
+      for (let i = 0; i < dataArr.shape[0]; i++) {
+        column[i] = dataArr.get(i, index);
+      }
+      const lineNdarray = ndarray(column, [column.length]);
+      setLineData(lineNdarray);
+      setLineDomain(getDomain(lineNdarray));
+    }
+  };
 
 
   const handleGCIMSDataUpload = async (filename, buffer) => {
@@ -165,22 +226,22 @@ function HeatmapUploader() {
 
 
       for (let i = 0; i < n_rows0; i++) {
-        driftTimes0.push((sample_delay + i * sample_distance) / 1000000);
+        driftTimes0.push((sample_delay + i * sample_distance) / 1e6);
       }
 
       for (let i = 0; i < n_rows1; i++) {
-        driftTimes1.push((sample_delay + i * sample_distance) / 1000000);
+        driftTimes1.push((sample_delay + i * sample_distance) / 1e6);
       }
 
 
       for (let i = 0; i < n_cols0; i++) {
         retentionTimes0.push(
-          (average * i * (period)) / 1000000000
+          (average * i * (period)) / 1e9
         );
       }
       for (let i = 0; i < n_cols1; i++) {
         retentionTimes1.push(
-          (average * i * (period)) / 1000000000
+          (average * i * (period)) / 1e9
         );
       }
 
@@ -219,9 +280,11 @@ function HeatmapUploader() {
       for (let i = 0; i < calibratedSpectrum0.shape[0]; i++) {
         for (let j = 0; j < calibratedSpectrum0.shape[1]; j++) {
           const value = calibratedSpectrum0.get(i, j);
-          ionCurrent0.set(i, j, value / gain);
+          ionCurrent0.set(i, j, (value / gain)* 1e12);
         }
       }
+
+      console.log("Ion Current 0:", ionCurrent0);
     
       const values0 = Array.from(ionCurrent0.data);
 
@@ -230,10 +293,10 @@ function HeatmapUploader() {
       for (let i = 0; i < calibratedSpectrum1.shape[0]; i++) {
         for (let j = 0; j < calibratedSpectrum1.shape[1]; j++) {
           const value = calibratedSpectrum1.get(i, j);
-          ionCurrent1.set(i, j, value / gain);
+          ionCurrent1.set(i, j, (value / gain)* 1e12);
         }
       }
-      console.log(ionCurrent1);
+      
 
       const ionRow0 = ionCurrent0.shape[0];
       const ionCol0 = ionCurrent0.shape[1];
@@ -280,6 +343,20 @@ function HeatmapUploader() {
       setLineDomain(getDomain(initialLine));
       setSelectedIndex(0); // initialize the slider
 
+      // Chromatogram build
+      const chromatogramData0 = computeChromatogram(ionCurrent0);
+      const chromatogramData1 = computeChromatogram(ionCurrent1);
+
+      setChromData0(chromatogramData0);
+      setChromData1(chromatogramData1);
+      setChromDomain0(getDomain(chromatogramData0));
+      setChromDomain1(getDomain(chromatogramData1));
+
+      // GC spectrum init at index 0
+      const gcLine0 = computeGCSpectrum(ionCurrent0, 0);
+      const gcLine1 = computeGCSpectrum(ionCurrent1, 0);
+      setGcSpectrumData(currentPolarity === 0 ? gcLine0 : gcLine1);
+      setGcSpectrumDomain(getDomain(currentPolarity === 0 ? gcLine0 : gcLine1));
 
       setDriftTimes0(driftTimes0);
       setDriftTimes1(driftTimes1);
@@ -301,27 +378,43 @@ function HeatmapUploader() {
   };
 
 
-  // Toggle polarity handler
-  const togglePolarity = () => {
-    const newPol = currentPolarity === 0 ? 1 : 0;
-    setCurrentPolarity(newPol);
+  const computeChromatogram = (ionCurrent) => {
+    const ionRow = ionCurrent.shape[0];
+    const ionCol = ionCurrent.shape[1];
+    const chrom = new Float32Array(ionCol);
 
-    if (newPol === 0) {
-      setHeatmapData(dataArray0);
-      setHeatmapDomain(domain0);
-      setCustomDomain(domain0)
-      setDriftTimes(driftTimes0);
-      setRetentionTimes(retentionTimes0);
-    } else {
-      setHeatmapData(dataArray1);
-      setHeatmapDomain(domain1);
-      setCustomDomain(domain1);
-      setDriftTimes(driftTimes1);
-      setRetentionTimes(retentionTimes1);
+    for (let j = 0; j < ionCol; j++) {
+      let sum = 0;
+      for (let i = 0; i < ionRow; i++) {
+        sum += ionCurrent.get(i, j);
+      }
+      chrom[j] = sum;
     }
+
+    return ndarray(chrom, [chrom.length]);
   };
 
+  const computeGCSpectrum = (ionCurrent, driftIndex) => {
+    const ionRow = ionCurrent.shape[0];
+    const ionCol = ionCurrent.shape[1];
+    const gcLine = new Float32Array(ionCol);
 
+    for (let j = 0; j < ionCol; j++) {
+      gcLine[j] = ionCurrent.data[j * ionRow + driftIndex];
+    }
+
+    return ndarray(gcLine, [gcLine.length]);
+  };
+
+  const handleGcSliderChange = (event) => {
+    const index = parseInt(event.target.value);
+    setSelectedGcIndex(index);
+
+    const ionData = currentPolarity === 0 ? dataArray0 : dataArray1;
+    const gcLine = computeGCSpectrum(ionData, index);
+    setGcSpectrumData(gcLine);
+    setGcSpectrumDomain(getDomain(gcLine));
+  };
 
 
 
@@ -389,23 +482,41 @@ function HeatmapUploader() {
 
 
 
-const [selectedIndex, setSelectedIndex] = useState(0);
+  const handleDownloadImsCSV = () => {
+  const dataArr = currentPolarity === 0 ? dataArray0 : dataArray1;
+  const driftArr = currentPolarity === 0 ? driftTimes0 : driftTimes1;
+  const retentionArr = currentPolarity === 0 ? retentionTimes0 : retentionTimes1;
 
-const handleImsSliderChange = (event) => {
-  const index = parseInt(event.target.value);
-  setSelectedIndex(index);
-
-  if (dataArray0 && driftTimes0) {
-    const column = new Float32Array(dataArray0.shape[0]);
-    for (let i = 0; i < dataArray0.shape[0]; i++) {
-      column[i] = dataArray0.get(i, index);
-    }
-    const lineNdarray = ndarray(column, [column.length]);
-    setLineData(lineNdarray);
-    setLineDomain(getDomain(lineNdarray));
+  if (!dataArr || !driftArr || !retentionArr || selectedIndex >= dataArr.shape[1]) {
+    alert("Data not available.");
+    return;
   }
+
+  const ionColumn = new Float32Array(dataArr.shape[0]);
+  for (let i = 0; i < dataArr.shape[0]; i++) {
+    ionColumn[i] = dataArr.get(i, selectedIndex);
+  }
+
+  const csvRows = [["Drift Time (ms)", "Ion Current (pA)"]];
+  for (let i = 0; i < driftArr.length; i++) {
+    csvRows.push([driftArr[i].toFixed(6), ionColumn[i].toFixed(22)]);
+  }
+
+  const csvContent = csvRows.map(e => e.join(",")).join("\n");
+
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const link = document.createElement("a");
+  const retentionLabel = retentionArr[selectedIndex].toFixed(3);
+  link.href = URL.createObjectURL(blob);
+  link.setAttribute("download", `ims_spectrum_retention_${retentionLabel}s.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
 };
 
+  const handleChromSliderChange = (event) => {
+    setSelectedChromIndex(parseInt(event.target.value));
+  };
 
 
 
@@ -418,7 +529,6 @@ return (
     >
       {heatmapData && heatmapDomain && (
         <>
-        
         <button onClick={togglePolarity} style={{ margin: "0.5rem", padding: "1rem", width: "190px", height: "40px", fontSize: "1.1rem", borderRadius: "18px", cursor: "pointer",boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
             transition: "background-color 0.3s ease"}}>
             Switch to Polarity {currentPolarity === 0 ? "1" : "0"}
@@ -493,7 +603,7 @@ return (
       ) : viewMode === "imsSpectra" ? (
         <>
           <Toolbar className={styles.container4}>
-            <Separator />
+            
               <ToggleBtn
                 icon={FaCamera}
                 label="Snap Shot"
@@ -504,7 +614,7 @@ return (
               <ToggleBtn
                 icon={FaTh}
                 label="Grid"
-                onToggle={() => setShowGrid(!showGrid)}
+                onToggle={() => setShowImsGrid(!showImsGrid)}
               />
               <Separator />
               <ToggleBtn
@@ -534,10 +644,10 @@ return (
                 domain={lineDomain}
                 scaleType={"linear"}
                 curveType="OnlyLine"
-                showGrid={showGrid}
+                showGrid={showImsGrid}
                 title="IMS Spectra Graph"
                 abscissaParams={{ value: driftTimes0, label: "Drift Time (ms)" }}
-                ordinateLabel="Ion Current (pA)"
+                ordinateLabel="Ion Current pA"
               />
               </div>
 
@@ -554,13 +664,77 @@ return (
                   onChange={handleImsSliderChange}
                 />
                 <span style={{ color: "#fff", marginLeft: "10px", fontSize: 20 }}>
-                  {retentionTimes0?.[selectedIndex]?.toFixed(3)} s
+                  {retentionTimes?.[selectedIndex]?.toFixed(3)} s
                 </span>
               </div>    
 
         </>
-        ) : viewMode === "null" ()}</>
-         
+        ) : viewMode === "chromSpectra" ? (
+          <>
+            <Toolbar className={styles.container4}>
+              <ToggleBtn
+                icon={FaCamera}
+                label="Snap Shot"
+                onToggle={() => handleSnapshotGC()}
+              >
+              </ToggleBtn>
+              <Separator />
+              <ToggleBtn
+                icon={FaTh}
+                label="Grid"
+                onToggle={() => setShowGrid(!showGrid)}
+              />
+              <Separator />
+              <ToggleBtn
+                icon={FaMap}
+                label="Heatmap View"
+                onToggle={() => setViewMode("heatmap")}
+              />
+              <Separator />
+              <ToggleBtn
+                icon={FaChartArea}
+                label="IMS Spectra"
+                onToggle={() => setViewMode("imsSpectra")}
+              />
+              <Separator />
+              <ToggleBtn
+                icon={FaDownload}
+                label="Download CSV"
+                onToggle={() => handleDownloadChromCSV()}
+              >          
+              </ToggleBtn>
+              </Toolbar>
+              <div ref={chromGram} style={{display: "flex", height: "40rem", width: "76rem", backgroundColor: "#084072", fontSize: 19}}>
+                <LineVis
+                  className={styles.container6}
+                  dataArray={gcSpectrumData}
+                  domain={gcSpectrumDomain}
+                  scaleType={"linear"}
+                  curveType="OnlyLine"
+                  showGrid={showGrid}
+                  title="Gc Chromatogram Graph"
+                  abscissaParams={{ value: currentPolarity === 0 ? retentionTimes0 : retentionTimes1, label: "Retention Time (s)" }}
+                  ordinateLabel="Ion Current (pA)"
+                  />
+              </div>
+                <div style={{ marginTop: "8px" }}>
+                  <label htmlFor="column-slider" style={{ color: "#fff" , fontSize: 18}}>
+                    Select Drift time:
+                  </label>
+                  <input
+                    id="column-slider"
+                    type="range"
+                    min="0"
+                    max={(currentPolarity === 0 ? driftTimes0?.length : driftTimes1?.length) - 1 || 0}
+                    value={selectedGcIndex}
+                    onChange={handleGcSliderChange}
+                  />
+                  <span style={{ color: "#fff", marginLeft: "10px", fontSize: 20 }}>
+                    {(currentPolarity === 0 ? driftTimes0?.[selectedGcIndex] : driftTimes1?.[selectedGcIndex])?.toFixed(3)} ms
+                  </span>
+                </div> 
+        </>             
+        ) : viewMode === "null" ()}</>  
         )}   
     </div>
   </div>
