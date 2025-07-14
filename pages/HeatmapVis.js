@@ -325,7 +325,7 @@ function HeatmapUploader() {
       const floatValues1 = result1.flat(1);
       const dataArray1 = ndarray(floatValues1, [ionRow1, ionCol1]);
       const domain1 = getDomain(dataArray1);
-;
+
      
       setDataArray0(dataArray0);
       setDataArray1(dataArray1);
@@ -459,6 +459,26 @@ function HeatmapUploader() {
     }
   };
 
+  const handleSnapshotGC = () => {
+    if (chromGram.current) {
+      const originalOverflow = chromGram.current.style.overflow;
+      chromGram.current.style.overflow = "visible";
+
+      html2canvas(chromGram.current, {
+        width: chromGram.current.scrollWidth,
+        height: chromGram.current.scrollHeight,
+        scale: 1,
+      }).then((canvas) => {
+        const link = document.createElement("a");
+        link.href = canvas.toDataURL("image/png");
+        link.download = "GC_Spectra_screenshot.png";
+        link.click();
+
+        chromGram.current.style.overflow = originalOverflow;
+      });
+    }
+  };
+
 
     const handleViewChange = (newView) => {
     if (!passwordEntered) {
@@ -517,6 +537,41 @@ function HeatmapUploader() {
   const handleChromSliderChange = (event) => {
     setSelectedChromIndex(parseInt(event.target.value));
   };
+
+  const handleDownloadGcCSV = () => {
+  const dataArr = currentPolarity === 0 ? dataArray0 : dataArray1;
+  const retentionArr = currentPolarity === 0 ? retentionTimes0 : retentionTimes1;
+  const driftArr = currentPolarity === 0 ? driftTimes0 : driftTimes1;
+
+  if (!dataArr || !retentionArr || selectedGcIndex >= dataArr.shape[0]) {
+    alert("Data not available.");
+    return;
+  }
+
+  const ionRow = dataArr.shape[0];
+  const ionCol = dataArr.shape[1];
+
+  const gcLine = new Float32Array(ionCol);
+  for (let j = 0; j < ionCol; j++) {
+    gcLine[j] = dataArr.data[j * ionRow + selectedGcIndex];
+  }
+
+  const csvRows = [["Retention Time (s)", "Ion Current (pA)"]];
+  for (let i = 0; i < retentionArr.length; i++) {
+    csvRows.push([retentionArr[i].toFixed(6), gcLine[i].toFixed(22)]);
+  }
+
+  const csvContent = csvRows.map(e => e.join(",")).join("\n");
+
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const link = document.createElement("a");
+  const driftLabel = driftArr?.[selectedGcIndex]?.toFixed(3);
+  link.href = URL.createObjectURL(blob);
+  link.setAttribute("download", `gc_spectrum_drift_${driftLabel}ms.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
 
 
 
@@ -622,7 +677,7 @@ return (
                 label="Heatmap View"
                 onToggle={() => setViewMode("heatmap")}
               />
-              <Separator />
+      
               <ToggleBtn
                 icon={FaChartLine}
                 label="Chrom Spectra"
@@ -672,6 +727,13 @@ return (
         ) : viewMode === "chromSpectra" ? (
           <>
             <Toolbar className={styles.container4}>
+              
+              <ToggleBtn
+                icon={FaTh}
+                label="Grid"
+                onToggle={() => setShowGrid(!showGrid)}
+              />
+             <Separator />
               <ToggleBtn
                 icon={FaCamera}
                 label="Snap Shot"
@@ -680,17 +742,11 @@ return (
               </ToggleBtn>
               <Separator />
               <ToggleBtn
-                icon={FaTh}
-                label="Grid"
-                onToggle={() => setShowGrid(!showGrid)}
-              />
-              <Separator />
-              <ToggleBtn
                 icon={FaMap}
                 label="Heatmap View"
                 onToggle={() => setViewMode("heatmap")}
               />
-              <Separator />
+           
               <ToggleBtn
                 icon={FaChartArea}
                 label="IMS Spectra"
@@ -700,7 +756,7 @@ return (
               <ToggleBtn
                 icon={FaDownload}
                 label="Download CSV"
-                onToggle={() => handleDownloadChromCSV()}
+                onToggle={() => handleDownloadGcCSV()}
               >          
               </ToggleBtn>
               </Toolbar>
