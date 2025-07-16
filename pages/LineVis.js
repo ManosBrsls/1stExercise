@@ -7,26 +7,46 @@ import html2canvas from "html2canvas";
 import { FaCamera, FaDownload, FaTh } from "react-icons/fa";
 import Sidebar from "./posts/Sidebar";
 import styles from "../styles/Home.module.css";
+import "@h5web/lib/dist/styles.css";
 
 function IMSLineCharts() {
-  const [selectedIndex1, setSelectedIndex1] = useState(0);
+
+  const [dataArray2, setDataArray2] = useState(null); // file 2, polarity 0
+  const [dataArray3, setDataArray3] = useState(null); // file 2, polarity 1
+  const [domain2, setDomain2] = useState(null);
+  const [domain3, setDomain3] = useState(null);
+  const [driftTimes2, setDriftTimes2] = useState(null);
+  const [driftTimes3, setDriftTimes3] = useState(null);
+  const [retentionTimes2, setRetentionTimes2] = useState(null);
+  const [retentionTimes3, setRetentionTimes3] = useState(null);
+  const [currentPolarity2, setCurrentPolarity2] = useState(0);
+
+
+  const [selectedIndex, setSelectedIndex] = useState(0);
   const [selectedIndex2, setSelectedIndex2] = useState(0);
   const [dataArray0, setDataArray0] = useState(null);
-  const [currentPolarity1, setCurrentPolarity1] = useState(0);
+  const [currentPolarity, setCurrentPolarity] = useState(0);
   const [dataArray1, setDataArray1] = useState(null);
-  const [dataArray2, setDataArray2] = useState(null);
 
+ 
+  const [retentionTimes, setRetentionTimes] = useState([null]);
+  const [driftTimes, setDriftTimes] = useState([null]);
 
-  const [driftTimes1, setDriftTimes1] = useState(null);
-  const [driftTimes2, setDriftTimes2] = useState(null);
+  const [domain0, setDomain0] = useState(null);
+  const [domain1, setDomain1] = useState(null);
+
+ const [error, setError] = useState(null);
+
   const [lineData, setLineData] = useState(null);
   const [lineDomain, setLineDomain] = useState(null);
-
-  const [ionData1Pol0, setIonData1Pol0] = useState(null);
-  const [ionData2Pol0, setIonData2Pol0] = useState(null);
+  const [driftTimes0, setDriftTimes0] = useState(null);
+  const [driftTimes1, setDriftTimes1] = useState(null);
+  const [retentionTimes0, setRetentionTimes0] = useState(null);
+  const [retentionTimes1, setRetentionTimes1] = useState(null);
 
   const [lineData1, setLineData1] = useState(null);
   const [lineDomain1, setLineDomain1] = useState(null);
+
   const [lineData2, setLineData2] = useState(null);
   const [lineDomain2, setLineDomain2] = useState(null);
 
@@ -35,53 +55,84 @@ function IMSLineCharts() {
 
   const imsSpectraRef = useRef(null);
 
-  const togglePolarity = () => {
-    const newPol = currentPolarity1 === 0 ? 1 : 0;
-    setCurrentPolarity1(newPol);
 
-    if (newPol === 0) {
-      setHeatmapData(dataArray0);
-      setHeatmapDomain(domain0);
-      setCustomDomain(domain0);
-      setDriftTimes(driftTimes0);
-      setRetentionTimes(retentionTimes0);
-    } else {
-      setHeatmapData(dataArray1);
-      setHeatmapDomain(domain1);
-      setCustomDomain(domain1);
-      setDriftTimes(driftTimes1);
-      setRetentionTimes(retentionTimes1);
-    }
-    setSelectedIndex1(0);
+
+    const togglePolarity = () => {
+    const newPol = currentPolarity === 0 ? 1 : 0;
+    setCurrentPolarity(newPol);
+
     const dataArr = newPol === 0 ? dataArray0 : dataArray1;
+    const driftArr = newPol === 0 ? driftTimes0 : driftTimes1;
+
     if (dataArr) {
       const firstColumn = new Float32Array(dataArr.shape[0]);
       for (let i = 0; i < dataArr.shape[0]; i++) {
         firstColumn[i] = dataArr.get(i, 0);
       }
       const newLine = ndarray(firstColumn, [firstColumn.length]);
-      setLineData(newLine);
-      setLineDomain(getDomain(newLine));
-    }  
-  }
-
-    const handleImsSliderChange = (event) => {
-      const index = parseInt(event.target.value);
-      setSelectedIndex1(index);
-
-      const dataArr = dataArray0 
-      if (dataArr) {
-        const column = new Float32Array(dataArr.shape[0]);
-        for (let i = 0; i < dataArr.shape[0]; i++) {
-          column[i] = dataArr.get(i, index);
-        }
-        const lineNdarray1 = ndarray(column, [column.length]);
-        setLineData1(lineNdarray1);
-        setLineDomain1(getDomain(lineNdarray1));
-      }
+      setLineData1(newLine);
+      setLineDomain1(getDomain(newLine));
+    }
+    setSelectedIndex(0);
   };
 
-  const processFile = async (buffer, chartNumber, filename) => {
+
+    const togglePolarity2 = () => {
+    const newPol = currentPolarity2 === 0 ? 1 : 0;
+    setCurrentPolarity2(newPol);
+
+    const dataArr = newPol === 0 ? dataArray2 : dataArray3;
+    const driftArr = newPol === 0 ? driftTimes2 : driftTimes3;
+
+    if (dataArr) {
+      const firstColumn = new Float32Array(dataArr.shape[0]);
+      for (let i = 0; i < dataArr.shape[0]; i++) {
+        firstColumn[i] = dataArr.get(i, 0);
+      }
+      const newLine = ndarray(firstColumn, [firstColumn.length]);
+      setLineData2(newLine);
+      setLineDomain2(getDomain(newLine));
+    }
+    setSelectedIndex2(0);
+  };
+
+
+  const handleImsSliderChange = (event) => {
+    const index = parseInt(event.target.value);
+    setSelectedIndex(index);
+
+    const dataArr = currentPolarity === 0 ? dataArray0 : dataArray1;
+    if (dataArr) {
+      const column = new Float32Array(dataArr.shape[0]);
+      for (let i = 0; i < dataArr.shape[0]; i++) {
+        column[i] = dataArr.get(i, index);
+      }
+      const lineNdarray = ndarray(column, [column.length]);
+      setLineData1(lineNdarray);
+      setLineDomain1(getDomain(lineNdarray));
+    }
+  };
+
+
+    const handleSlider2 = (event) => {
+    const index = parseInt(event.target.value);
+    setSelectedIndex2(index);
+    const dataArr = currentPolarity2 === 0 ? dataArray2 : dataArray3;
+    if (dataArr) {
+      const column = new Float32Array(dataArr.shape[0]);
+      for (let i = 0; i < dataArr.shape[0]; i++) {
+        column[i] = dataArr.get(i, index);
+      }
+      const lineNdarray = ndarray(column, [column.length]);
+      setLineData2(lineNdarray);
+      setLineDomain2(getDomain(lineNdarray));
+    }
+  };
+
+
+  const handleIMSDataSelect = async (buffer, chartNumber, filename) => {
+    try{
+      console.log("Processing file:", filename);
     await h5wasmReady;
     const filePath = `/tmp/${filename}`;
     FS.writeFile(filePath, new Uint8Array(buffer));
@@ -183,12 +234,12 @@ function IMSLineCharts() {
 
       for (let i = 0; i < n_cols0; i++) {
         retentionTimes0.push(
-          (average * i * (period)) / 1e9
+          ( i * (period)) / 1e9
         );
       }
       for (let i = 0; i < n_cols1; i++) {
         retentionTimes1.push(
-          (average * i * (period)) / 1e9
+          (i * (period)) / 1e9
         );
       }
       const calibratedData0 = new Float32Array(filteredSpectrum0.shape[0] * filteredSpectrum0.shape[1]);
@@ -230,7 +281,6 @@ function IMSLineCharts() {
         }
       }
 
-      const values0 = Array.from(ionCurrent0.data);
 
       for (let i = 0; i < calibratedSpectrum1.shape[0]; i++) {
         for (let j = 0; j < calibratedSpectrum1.shape[1]; j++) {
@@ -264,96 +314,261 @@ function IMSLineCharts() {
 
       const floatValues1 = result1.flat(1);
       const dataArray1 = ndarray(floatValues1, [ionRow1, ionCol1]);
-      const domain1 = getDomain(dataArray1);     
-      
+      const domain1 = getDomain(dataArray1);  
+
       const firstColumn = new Float32Array(dataArray0.shape[0]);
       for (let i = 0; i < dataArray0.shape[0]; i++) {
-        firstColumn[i] = dataArray0.get(i, 0);
+          firstColumn[i] = dataArray0.get(i, 0);            
       }
       const initialLine = ndarray(firstColumn, [firstColumn.length]);
-      setCurrentPolarity1(0);
 
-    if (chartNumber === 1) {
-      setLineData1(initialLine);
-      setLineDomain1(getDomain(initialLine));
-      setDriftTimes1(driftTimes0);
-      setSelectedIndex1(0);
+      if (chartNumber === 1) {
+        setDataArray0(dataArray0);
+        setDataArray1(dataArray1);
+        setDomain0(domain0);
+        setDomain1(domain1);
+        
+        
+        setDriftTimes0(driftTimes0);
+        setDriftTimes1(driftTimes1);
 
-    } else if (chartNumber === 2) {
+      
+        setRetentionTimes0(retentionTimes0);
+        setRetentionTimes1(retentionTimes1);
+        setLineData1(initialLine);
+       
+      
+        setLineDomain1(getDomain(initialLine));
+        setSelectedIndex(0); 
+        setCurrentPolarity(0);
+      }else if (chartNumber === 2) {
+        setDataArray2(dataArray0);
+        setDataArray3(dataArray1);
+        setDomain2(domain0);
+        setDomain3(domain1);
+        setDriftTimes2(driftTimes0);
+        setDriftTimes3(driftTimes1);
+        setRetentionTimes2(retentionTimes0);
+        setRetentionTimes3(retentionTimes1);
+        setCurrentPolarity2(0);
+        setSelectedIndex2(0);  
+        
 
-      setLineData2(initialLine);
-      setLineDomain2(getDomain(initialLine));
-      setDriftTimes2(driftTimes0);
-      setSelectedIndex2(0);
+        const firstColumn = new Float32Array(dataArray0.shape[0]);
+
+        for (let i = 0; i < dataArray0.shape[0]; i++) {
+          firstColumn[i] = dataArray0.get(i, 0);
+        }
+        const initialLine2 = ndarray(firstColumn, [firstColumn.length]);
+        setLineData2(initialLine2);
+        setLineDomain2(getDomain(initialLine2));      
+
+      }
+    }catch (err) {
+      console.error("Error processing file:", err);
+      setError("Error processing file.");
+    }
+
+  };
+
+
+const handleIMSDataUpload = (filename, buffer) => {
+
+};
+
+
+  const handleSnapshotIMS1 = () => {
+    if (imsSpectraRef.current) {
+      const originalOverflow = imsSpectraRef.current.style.overflow;
+      imsSpectraRef.current.style.overflow = "visible";
+
+      html2canvas(imsSpectraRef.current, {
+        width: imsSpectraRef.current.scrollWidth,
+        height: imsSpectraRef.current.scrollHeight,
+        scale: 1,
+      }).then((canvas) => {
+        const link = document.createElement("a");
+        link.href = canvas.toDataURL("image/png");
+        link.download = "Ims_Spectra_screenshot.png";
+        link.click();
+
+        imsSpectraRef.current.style.overflow = originalOverflow;
+      });
     }
   };
 
+const handleDownloadLineData1 = () => {
+  if (!lineData1 || !driftTimes0) return;
+
+  let csv = "Drift Time (ms),Ion Current (pA)\n";
+  for (let i = 0; i < lineData1.shape[0]; i++) {
+    const drift = driftTimes0[i];
+    const intensity = lineData1.get(i);
+    csv += `${drift},${intensity}\n`;
+  }
+
+  const blob = new Blob([csv], { type: "text/csv" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "line_data_chart1.csv";
+  link.click();
+};
+
+const handleDownloadLineData2 = () => {
+  if (!lineData2 || !driftTimes2) return;
+
+  let csv = "Drift Time (ms),Ion Current (pA)\n";
+  for (let i = 0; i < lineData2.shape[0]; i++) {
+    const drift = driftTimes2[i];
+    const intensity = lineData2.get(i);
+    csv += `${drift},${intensity}\n`;
+  }
+
+  const blob = new Blob([csv], { type: "text/csv" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "line_data_chart2.csv";
+  link.click();
+};
 
 
-  const handleSlider2 = (e) => {
-    const idx = parseInt(e.target.value);
-    setSelectedIndex2(idx);
-    const line = ionData2Pol0.pick(idx, null);
-    setLineData2(line);
-    setLineDomain2(getDomain(line));
-  };
 
 
+return (
+  <div className={styles.container2}>
+    <Sidebar onIMSDataUpload={handleIMSDataUpload} onIMSDataSelect={handleIMSDataSelect} />
 
-  return (
-    <div className={styles.container2}>
-      <Sidebar onIMSDataSelect={processFile} />
-      <div className={styles.card} style={{ marginLeft: 200, backgroundColor: "#084072" }}>
-        {ionData2Pol0 && (
-          <>
-            <Toolbar className={styles.container4}>
-              <ToggleBtn icon={FaCamera} label="Snap Shot" onToggle={handleSnapshot} />
-              <Separator />
-              <ToggleBtn icon={FaTh} label="Grid 1" onToggle={() => setShowGrid1(!showGrid1)} />
-              <Separator />
-              <ToggleBtn icon={FaTh} label="Grid 2" onToggle={() => setShowGrid2(!showGrid2)} />
-              <Separator />
-              <ToggleBtn icon={FaDownload} label="Download Chart 1" onToggle={() => downloadCSV(lineData1, driftTimes1, "chart1.csv")} />
-              <Separator />
-              <ToggleBtn icon={FaDownload} label="Download Chart 2" onToggle={() => downloadCSV(lineData2, driftTimes2, "chart2.csv")} />
-            </Toolbar>
+    <div className={styles.card} style={{ borderRadius: "40px", backgroundColor: "#084072", marginLeft: "200px", cursor: "pointer" }}>
+      {lineData1 && lineDomain1 && driftTimes0 && (
+        <>
+          <Toolbar className={styles.container4}>
+            <ToggleBtn
+              icon={FaTh}
+              label="Grid 1"
+              onToggle={() => setShowGrid1(!showGrid1)}
+            />
+            <ToggleBtn
+              icon={FaTh}
+              label="Grid 2"
+              onToggle={() => setShowGrid2(!showGrid2)}
+            />
+            <Separator />
+            <ToggleBtn
+              icon={FaDownload}
+              label="Toggle Polarity Chart 1"
+              onToggle={() => togglePolarity()}
+            />
+            <ToggleBtn
+              icon={FaDownload}
+              label="Toggle Polarity Chart 2"
+              onToggle={() => togglePolarity2()}
+            />
+            <Separator />
+            <ToggleBtn
+              icon={FaCamera}
+              label="Snap Shot 1"
+              onToggle={() => handleSnapshotIMS1()}
+            />
+            <Separator />
+            <ToggleBtn
+              icon={FaDownload}
+              label="Download CSV 1"
+              onToggle={handleDownloadLineData1}
+            />
+            <ToggleBtn
+              icon={FaDownload}
+              label="Download CSV 2"
+              onToggle={handleDownloadLineData2}
+            />
+          </Toolbar>
+          <div
+            ref={imsSpectraRef}
+            style={{
+              display: "flex",
+              position: "relative",
+              height: "40rem",
+              width: "75rem",
+              backgroundColor: "#084072",
+              fontSize: 19,
+            }}
+          >
+            <LineVis
+              className={styles.container6}
+              dataArray={lineData1}
+              domain={lineDomain1}
+              aspect="auto"
+              scaleType="linear"
+              curveType="OnlyLine"
+              showGrid={showGrid1}
+              title="IMS Spectra Graph 1"
+              abscissaParams={{ value: driftTimes0, label: "Drift Time (msec)" }}
+              ordinateLabel="Ion Current pA"
+            />
 
-            <div ref={imsSpectraRef} style={{ display: "flex", gap: "2rem", height: "40rem", backgroundColor: "#084072" }}>
+            {lineData2 && lineDomain2 && driftTimes2 && (
               <LineVis
-                dataArray={lineData1}
-                domain={lineDomain1}
-                scaleType="linear"
-                showGrid={showGrid1}
-                title="IMS Spectra Dataset 1"
-                abscissaParams={{value:driftTimes0, label: "Drift Time (msec)" }}
-                ordinateLabel="Intensity (counts)"
-              />
-              <LineVis
+                className={styles.container7}
                 dataArray={lineData2}
                 domain={lineDomain2}
+                aspect="auto"
                 scaleType="linear"
+                curveType="OnlyLine"
                 showGrid={showGrid2}
-                title="IMS Spectra Dataset 2"
-                abscissaParams={{ label: "Drift Time (msec)" }}
-                ordinateLabel="Intensity (counts)"
+                title="IMS Spectra Graph 2"
+                abscissaParams={{ value: driftTimes2, label: "Drift Time (msec)" }}
+                ordinateLabel="Ion Current pA"
               />
+            )}
+          </div>
+
+          <div style={{ display: "flex", alignItems: "auto", gap: "360px", marginTop: "20px" }}>
+            <div>
+              <label htmlFor="column-slider" style={{ color: "#fff", fontSize: 18 }}>
+                Select Retention time 1:
+              </label>
+              {dataArray0 && (
+                <>
+                  <input
+                    id="column-slider"
+                    type="range"
+                    min="0"
+                    max={(currentPolarity === 0 ? dataArray0?.shape[1] : dataArray1?.shape[1]) - 1 || 0}
+                    value={selectedIndex}
+                    onChange={handleImsSliderChange}
+                  />
+                  <span style={{ color: "#fff", marginLeft: "10px", fontSize: 20 }}>
+                    {retentionTimes0?.[selectedIndex]?.toFixed(3)} s
+                  </span>
+                </>
+              )}
             </div>
 
-            <div style={{ display: "flex", justifyContent: "space-around", marginTop: 20 }}>
-              <div>
-                <label style={{ color: "white" }}>Retention Time 1:</label>
-                <input type="range" min="0" max={ionData1Pol0.shape[0] - 1} value={selectedIndex1} onChange={handleSlider1} />
-              </div>
-              <div>
-                <label style={{ color: "white" }}>Retention Time 2:</label>
-                <input type="range" min="0" max={ionData2Pol0.shape[0] - 1} value={selectedIndex2} onChange={handleSlider2} />
-              </div>
+            <div>
+              <label htmlFor="column-slider2" style={{ color: "#fff", fontSize: 18 }}>
+                Select Retention time 2:
+              </label>
+              {dataArray2 && (
+                <>
+                  <input
+                    id="column-slider2"
+                    type="range"
+                    min="0"
+                    max={dataArray2?.shape[1] - 1 || 0}
+                    value={selectedIndex2}
+                    onChange={handleSlider2}
+                  />
+                  <span style={{ color: "#fff", marginLeft: "10px", fontSize: 20 }}>
+                    {retentionTimes2?.[selectedIndex2]?.toFixed(3)} s
+                  </span>
+                </>
+              )}
             </div>
-          </>
-        )}
-      </div>
+          </div>
+        </>
+      )}
     </div>
-  );
+  </div>
+);
 }
 
 export default IMSLineCharts;

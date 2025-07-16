@@ -57,8 +57,7 @@ function Linechart() {
 
   const handleIMSDataUpload = (filename, buffer) => {
 
-
-   
+  
   };
 
   const handleIMSDataSelect = (buffer, chartNumber, filename) => {

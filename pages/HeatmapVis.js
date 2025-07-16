@@ -284,10 +284,6 @@ function HeatmapUploader() {
         }
       }
 
-      console.log("Ion Current 0:", ionCurrent0);
-    
-      const values0 = Array.from(ionCurrent0.data);
-
 
 
       for (let i = 0; i < calibratedSpectrum1.shape[0]; i++) {
@@ -573,6 +569,35 @@ function HeatmapUploader() {
   document.body.removeChild(link);
 };
 
+console.log(heatmapData)
+const handleDownloadHeatmapCSV = () => {
+  if (!heatmapData || !driftTimes0 || !retentionTimes0) {
+    console.error("Missing heatmap data or axis labels");
+    return;
+  }
+
+  const { dataArray } = heatmapData;
+  console.log(dataArray.shape[0])
+  const csvRows = [["Retention Time (s)", "Drift Time (ms)", "Ion Current (pA)"]];
+
+  for (let i = 0; i < dataArray.shape[0]; i++) {
+    for (let j = 0; j < dataArray.shape[1]; j++) {
+      const retention = retentionTimes0[i];
+      const drift = driftTimes0[j];
+      const ion = dataArray.get(i, j);
+      csvRows.push([retention, drift, ion]);
+    }
+  }
+
+  const csvString = csvRows.map((row) => row.join(",")).join("\n");
+  const blob = new Blob([csvString], { type: "text/csv;charset=utf-8;" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.setAttribute("download", "IMS_Heatmap.csv");
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
 
 
 return (
@@ -605,13 +630,6 @@ return (
                   >
                   </ToggleBtn>
                   <Separator />
-                  <ScaleSelector
-                    className={styles.container4}
-                    onScaleChange={setScaleType}
-                    options={["linear", "log", "symlog"]}
-                    value={scaleType}
-                  />
-                  <Separator />
                   <ToggleBtn
                     icon={FaTh}
                     label="Grid"
@@ -623,13 +641,17 @@ return (
                     label="IMS Spectra"
                     onToggle={() => handleViewChange("imsSpectra")}
                   />
-                  <Separator />
                   <ToggleBtn
                     icon={FaChartLine}
                     label="Chrom Spectra"
                     onToggle={() => handleViewChange("chromSpectra")}
                   />
-
+                  <Separator />
+                  <ToggleBtn
+                    icon={FaDownload}
+                    label="Download Heatmap CSV"
+                    onToggle={handleDownloadHeatmapCSV}
+                  />
                 </Toolbar>
         {authError && <p style={{ color: "red" }}>{authError}</p>}
         <div ref={heatmapRef} style={{display: "flex", height: "40rem", width: "75rem", backgroundColor: "#084072", fontSize: 19}}>
@@ -701,7 +723,7 @@ return (
                 curveType="OnlyLine"
                 showGrid={showImsGrid}
                 title="IMS Spectra Graph"
-                abscissaParams={{ value: driftTimes0, label: "Drift Time (ms)" }}
+                abscissaParams={{ value: driftTimes, label: "Drift Time (ms)" }}
                 ordinateLabel="Ion Current pA"
               />
               </div>
