@@ -18,7 +18,7 @@ function HeatmapUploader() {
   const [heatmapDomain, setHeatmapDomain] = useState(null);
   const [retentionTimes, setRetentionTimes] = useState([null]);
   const [driftTimes, setDriftTimes] = useState([null]);
-  const [customDomain, setCustomDomain] = useState([null, null]);
+ 
   const [invertColorMap, setInvertColorMap] = useState(false);
 
   const [lineData, setLineData] = useState(null);
@@ -72,13 +72,11 @@ function HeatmapUploader() {
     if (newPol === 0) {
       setHeatmapData(dataArray0);
       setHeatmapDomain(domain0);
-      setCustomDomain(domain0);
       setDriftTimes(driftTimes0);
       setRetentionTimes(retentionTimes0);
     } else {
       setHeatmapData(dataArray1);
-      setHeatmapDomain(domain1);
-      setCustomDomain(domain1);
+      setHeatmapDomain(domain1);  
       setDriftTimes(driftTimes1);
       setRetentionTimes(retentionTimes1);
     }
@@ -236,12 +234,12 @@ function HeatmapUploader() {
 
       for (let i = 0; i < n_cols0; i++) {
         retentionTimes0.push(
-          (average * i * (period)) / 1e9
+          ( i * (period)) / 1e9
         );
       }
       for (let i = 0; i < n_cols1; i++) {
         retentionTimes1.push(
-          (average * i * (period)) / 1e9
+          ( i * (period)) / 1e9
         );
       }
 
@@ -364,7 +362,6 @@ function HeatmapUploader() {
       setHeatmapDomain(domain0);
       setDriftTimes(driftTimes0);
       setRetentionTimes(retentionTimes0);
-   
 
     } catch (err) {
       console.error("Error processing file:", err);
@@ -569,22 +566,28 @@ function HeatmapUploader() {
   document.body.removeChild(link);
 };
 
-console.log(heatmapData)
-const handleDownloadHeatmapCSV = () => {
+
+
+const handleDownload = () => {
+  const enteredCode = prompt("Enter access code:");
+  if (enteredCode !== "123") {
+    alert("Incorrect code. Access denied.");
+    return;
+  }
+
   if (!heatmapData || !driftTimes0 || !retentionTimes0) {
     console.error("Missing heatmap data or axis labels");
     return;
   }
 
-  const { dataArray } = heatmapData;
-  console.log(dataArray.shape[0])
+
   const csvRows = [["Retention Time (s)", "Drift Time (ms)", "Ion Current (pA)"]];
 
-  for (let i = 0; i < dataArray.shape[0]; i++) {
-    for (let j = 0; j < dataArray.shape[1]; j++) {
-      const retention = retentionTimes0[i];
-      const drift = driftTimes0[j];
-      const ion = dataArray.get(i, j);
+  for (let i = 0; i < heatmapData.shape[0]; i++) {
+    for (let j = 0; j < heatmapData.shape[1]; j++) {
+      const retention = retentionTimes[i];
+      const drift = driftTimes[j];
+      const ion = heatmapData.get(i, j);
       csvRows.push([retention, drift, ion]);
     }
   }
@@ -593,7 +596,7 @@ const handleDownloadHeatmapCSV = () => {
   const blob = new Blob([csvString], { type: "text/csv;charset=utf-8;" });
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
-  link.setAttribute("download", "IMS_Heatmap.csv");
+  link.setAttribute("download", "GC_IMS_Heatmap.csv");
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
@@ -650,7 +653,7 @@ return (
                   <ToggleBtn
                     icon={FaDownload}
                     label="Download Heatmap CSV"
-                    onToggle={handleDownloadHeatmapCSV}
+                    onToggle={(handleDownload)}
                   />
                 </Toolbar>
         {authError && <p style={{ color: "red" }}>{authError}</p>}
