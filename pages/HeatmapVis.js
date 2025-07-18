@@ -1,12 +1,12 @@
 "use client";
 import React, { useState, useRef, useEffect } from "react";
 import ndarray from "ndarray";
-import { HeatmapVis, getDomain, Toolbar, DomainWidget, ColorMapSelector, ScaleSelector, Separator, VisCanvas, ToggleBtn, LineVis } from "@h5web/lib";
+import { HeatmapVis, getDomain, Toolbar, ColorMapSelector,  Separator, ToggleBtn, LineVis } from "@h5web/lib";
 import { h5wasmReady, FS, File, configure } from "h5wasm";
 import "@h5web/lib/dist/styles.css";
 import Sidebar from "./posts/Sidebar";
 import styles from "../styles/Home.module.css";
-import { FaCamera, FaChartArea, FaDownload, FaMap, FaTh, FaChartLine } from "react-icons/fa";
+import { FaCamera, FaChartArea, FaDownload, FaMap, FaTh, FaChartLine, FaSlidersH} from "react-icons/fa";
 import "@fortawesome/fontawesome-svg-core/styles.css";
 import html2canvas from "html2canvas";
 
@@ -26,7 +26,6 @@ function HeatmapUploader() {
 
   const [error, setError] = useState(null);
 
-  const [scaleType, setScaleType] = useState("linear");
   const [colorMap, setColorMap] = useState("Turbo");
   const [showGrid, setShowGrid] = useState(false);
   const [showImsGrid, setShowImsGrid] = useState(false);
@@ -612,10 +611,10 @@ return (
     >
       {heatmapData && heatmapDomain && (
         <>
-        <button onClick={togglePolarity} style={{ margin: "0.5rem", padding: "1rem", width: "190px", height: "40px", fontSize: "1.1rem", borderRadius: "18px", cursor: "pointer",boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
+        {/* <button onClick={togglePolarity} style={{ margin: "0.5rem", padding: "1rem", width: "190px", height: "40px", fontSize: "1.1rem", borderRadius: "18px", cursor: "pointer",boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
             transition: "background-color 0.3s ease"}}>
             Switch to Polarity {currentPolarity === 0 ? "1" : "0"}
-        </button>
+        </button> */}
         {viewMode === "heatmap" ? (
           <>
                 <Toolbar className={styles.container4}>
@@ -654,6 +653,12 @@ return (
                     icon={FaDownload}
                     label="Download Heatmap CSV"
                     onToggle={(handleDownload)}
+                  />
+                  <Separator />
+                  <ToggleBtn
+                    icon={FaSlidersH}
+                    label="Change Polarity"
+                    onToggle={(togglePolarity)}
                   />
                 </Toolbar>
         {authError && <p style={{ color: "red" }}>{authError}</p>}
@@ -715,6 +720,12 @@ return (
                 onToggle={() => handleDownloadImsCSV()}
               >          
               </ToggleBtn>
+              <Separator />
+              <ToggleBtn
+                icon={FaSlidersH}
+                label="Change Polarity"
+                onToggle={(togglePolarity)}
+              />
               </Toolbar>
               <div ref={imsSpectra} style={{display: "flex", height: "40rem", width: "75rem", backgroundColor: "#084072", fontSize: 19}}>
               <LineVis
@@ -784,6 +795,12 @@ return (
                 onToggle={() => handleDownloadGcCSV()}
               >          
               </ToggleBtn>
+              <Separator />
+              <ToggleBtn
+                icon={FaSlidersH}
+                label="Change Polarity"
+                onToggle={(togglePolarity)}
+              />              
               </Toolbar>
               <div ref={chromGram} style={{display: "flex", height: "40rem", width: "76rem", backgroundColor: "#084072", fontSize: 19}}>
                 <LineVis

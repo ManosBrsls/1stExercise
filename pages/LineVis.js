@@ -4,7 +4,7 @@ import { File, FS, h5wasmReady } from "h5wasm";
 import ndarray from "ndarray";
 import { getDomain, LineVis, Toolbar, ToggleBtn, Separator } from "@h5web/lib";
 import html2canvas from "html2canvas";
-import { FaCamera, FaDownload, FaTh } from "react-icons/fa";
+import { FaCamera, FaDownload, FaTh, FaSlidersH } from "react-icons/fa";
 import Sidebar from "./posts/Sidebar";
 import styles from "../styles/Home.module.css";
 import "@h5web/lib/dist/styles.css";
@@ -454,19 +454,19 @@ return (
             />
             <Separator />
             <ToggleBtn
-              icon={FaDownload}
+              icon={FaSlidersH}
               label="Toggle Polarity Chart 1"
               onToggle={() => togglePolarity()}
             />
             <ToggleBtn
-              icon={FaDownload}
+              icon={FaSlidersH}
               label="Toggle Polarity Chart 2"
               onToggle={() => togglePolarity2()}
             />
             <Separator />
             <ToggleBtn
               icon={FaCamera}
-              label="Snap Shot 1"
+              label="Snap Shot "
               onToggle={() => handleSnapshotIMS1()}
             />
             <Separator />
