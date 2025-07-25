@@ -612,7 +612,7 @@ const handleRunPrediction1 = async () => {
 
   const fileName =titleName;
   const pollarity = currentPolarity // Replace with your actual retention index state
-  console.log("Running prediction for file:", fileName,  "with polarity:", pollarity);
+
   try {
     const response = await fetch("http://127.0.0.1:8000/api/predict/gcims/dpm-model", {
       method: "POST",
@@ -631,9 +631,7 @@ const handleRunPrediction1 = async () => {
 
     const result = await response.json();
     setPredictionResult(result);
-    console.log("Prediction Result:", result);
-    
-    alert("Prediction completed. Check the console for results.");
+
   } catch (error) {
     console.error("Prediction request failed:", error);
     alert("Failed to run prediction. See console for details.");
