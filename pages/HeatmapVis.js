@@ -1,12 +1,13 @@
 "use client";
 import React, { useState, useRef, useEffect } from "react";
 import ndarray from "ndarray";
+import Swal from "sweetalert2";
 import { HeatmapVis, getDomain, Toolbar, ColorMapSelector,  Separator, ToggleBtn, LineVis } from "@h5web/lib";
 import { h5wasmReady, FS, File, configure } from "h5wasm";
 import "@h5web/lib/dist/styles.css";
 import Sidebar from "./posts/Sidebar";
 import styles from "../styles/Home.module.css";
-import { FaCamera, FaChartArea, FaDownload, FaMap, FaTh, FaChartLine, FaSlidersH} from "react-icons/fa";
+import { FaCamera, FaChartArea, FaDownload, FaMap, FaTh, FaChartLine, FaSlidersH, FaPlay} from "react-icons/fa";
 import "@fortawesome/fontawesome-svg-core/styles.css";
 import html2canvas from "html2canvas";
 
@@ -14,6 +15,7 @@ import html2canvas from "html2canvas";
 function HeatmapUploader() {
 
   const [titleName, setTitleName] = useState("GC-IMS Heatmap");
+  const [predictionResult, setPredictionResult] = useState(null);
   const [heatmapData, setHeatmapData] = useState(null);
   const [heatmapDomain, setHeatmapDomain] = useState(null);
   const [retentionTimes, setRetentionTimes] = useState([null]);
@@ -602,6 +604,67 @@ const handleDownload = () => {
 };
 
 
+const handleRunPrediction1 = async () => {
+  if (!titleName) {
+    alert("Please upload a file first.");
+    return;
+  }
+
+  const fileName =titleName;
+  const pollarity = currentPolarity // Replace with your actual retention index state
+  console.log("Running prediction for file:", fileName,  "with polarity:", pollarity);
+  try {
+    const response = await fetch("http://127.0.0.1:8000/api/predict/gcims/dpm-model", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        file_name: fileName,
+        polarity: pollarity
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`Server error: ${response.status}`);
+    }
+
+    const result = await response.json();
+    setPredictionResult(result);
+    console.log("Prediction Result:", result);
+    
+    alert("Prediction completed. Check the console for results.");
+  } catch (error) {
+    console.error("Prediction request failed:", error);
+    alert("Failed to run prediction. See console for details.");
+  }
+};
+
+
+useEffect(() => {
+  if (predictionResult?.prediction > -1 ) {
+    Swal.fire({
+      title: "⚠ ALERT ⚠",
+      html: `
+        <div style="text-align: left;">
+          <p><strong>Message:</strong> ${predictionResult.message}</p>
+          <p><strong>Prediction:</strong> ${predictionResult.prediction}</p>
+          <p><strong>Confidence:</strong> ${predictionResult.confidence !== null ? (predictionResult.confidence * 100).toFixed(2) + "%" : "N/A"}</p>
+          <p><strong>Note:</strong> ${predictionResult.note}</p>
+          <p><strong>Red Alert:</strong> ${predictionResult.red_alert ? "🚨 YES" : "❌ NO"}</p>
+        </div>
+      `,
+      icon: predictionResult.red_alert ? "error" : "info",
+      background: "#000",
+      color: "#fff",
+      confirmButtonText: "OK",
+      confirmButtonColor: predictionResult.red_alert ? "#ff0000" : "#3085d6",
+      timer: 1000000000, // practically never auto-closes
+    });
+  }
+}, [predictionResult]);
+
+
 return (
 <div className={styles.container2}>
   <Sidebar onGCIMSDataUpload={handleGCIMSDataUpload} />
@@ -611,13 +674,14 @@ return (
     >
       {heatmapData && heatmapDomain && (
         <>
-        {/* <button onClick={togglePolarity} style={{ margin: "0.5rem", padding: "1rem", width: "190px", height: "40px", fontSize: "1.1rem", borderRadius: "18px", cursor: "pointer",boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
-            transition: "background-color 0.3s ease"}}>
-            Switch to Polarity {currentPolarity === 0 ? "1" : "0"}
-        </button> */}
         {viewMode === "heatmap" ? (
           <>
                 <Toolbar className={styles.container4}>
+                  <ToggleBtn
+                    icon={FaPlay}
+                    label="Run Prediction"
+                    onToggle={handleRunPrediction1}
+                  />                  
                   <ColorMapSelector
                     className={styles.container4}
                     onInversionChange={() => setInvertColorMap(!invertColorMap)}
@@ -666,7 +730,7 @@ return (
         <HeatmapVis
           ref={heatmapRef}
           className={styles.container5}
-          title={titleName}
+          title={"GC_IMS Spectrum" + ": " +  titleName}
           abscissaParams={{ value: retentionTimes, label: "Retention time (s)" }}
           aspect="auto"
           showGrid={showGrid}
@@ -727,7 +791,7 @@ return (
                 onToggle={(togglePolarity)}
               />
               </Toolbar>
-              <div ref={imsSpectra} style={{display: "flex", height: "40rem", width: "75rem", backgroundColor: "#084072", fontSize: 19}}>
+              <div ref={imsSpectra} style={{display: "flex", height: "40rem", width: "75rem", backgroundColor: "#fcfcfc", fontSize: 19}}>
               <LineVis
                 className={styles.container6}
                 ref={imsSpectra}
@@ -736,7 +800,7 @@ return (
                 scaleType={"linear"}
                 curveType="OnlyLine"
                 showGrid={showImsGrid}
-                title="IMS Spectra Graph"
+                title={"IMS Graph" + ": " + titleName}
                 abscissaParams={{ value: driftTimes, label: "Drift Time (ms)" }}
                 ordinateLabel="Ion Current pA"
               />
@@ -744,7 +808,7 @@ return (
 
               <div style={{ marginTop: "8px" }}>
                 <label htmlFor="row-slider" style={{ color: "#fff", fontSize: 18 }}>
-                  Select Retention time:
+                  Select Spectra Index:
                 </label>
                 <input
                   id="row-slider"
@@ -755,7 +819,7 @@ return (
                   onChange={handleImsSliderChange}
                 />
                 <span style={{ color: "#fff", marginLeft: "10px", fontSize: 20 }}>
-                  {retentionTimes?.[selectedIndex]?.toFixed(3)} s
+                  {[selectedIndex]}
                 </span>
               </div>    
 
@@ -802,7 +866,7 @@ return (
                 onToggle={(togglePolarity)}
               />              
               </Toolbar>
-              <div ref={chromGram} style={{display: "flex", height: "40rem", width: "76rem", backgroundColor: "#084072", fontSize: 19}}>
+              <div ref={chromGram} style={{display: "flex", height: "40rem", width: "76rem", backgroundColor: "#fcfcfc", fontSize: 19}}>
                 <LineVis
                   className={styles.container6}
                   dataArray={gcSpectrumData}
@@ -810,14 +874,14 @@ return (
                   scaleType={"linear"}
                   curveType="OnlyLine"
                   showGrid={showGrid}
-                  title="Gc Chromatogram Graph"
+                  title={"GC_IMS Graph" + ": " + titleName}
                   abscissaParams={{ value: currentPolarity === 0 ? retentionTimes0 : retentionTimes1, label: "Retention Time (s)" }}
                   ordinateLabel="Ion Current (pA)"
                   />
               </div>
                 <div style={{ marginTop: "8px" }}>
                   <label htmlFor="column-slider" style={{ color: "#fff" , fontSize: 18}}>
-                    Select Drift time:
+                    Select Spectra Index:
                   </label>
                   <input
                     id="column-slider"
@@ -828,7 +892,7 @@ return (
                     onChange={handleGcSliderChange}
                   />
                   <span style={{ color: "#fff", marginLeft: "10px", fontSize: 20 }}>
-                    {(currentPolarity === 0 ? driftTimes0?.[selectedGcIndex] : driftTimes1?.[selectedGcIndex])?.toFixed(3)} ms
+                    {(currentPolarity === 0 ? [selectedGcIndex] : [selectedGcIndex])} 
                   </span>
                 </div> 
         </>             

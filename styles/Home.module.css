@@ -355,27 +355,27 @@
 .container6{
   overflow: visible;
   display: flex;
-  --h5w-plotTitle--color: white;
-  --h5w-colorBar-ticks--color:white;
-  --h5w-tickLabels--color: white;
-  --h5w-ticks-color: white;
-  --h5w-tickLabels--color: #fcfcfc;
-  --h5w-axisLabels--color:#fcfcfc;
-  --h5w-grid--color: white;
-  --h5w-line--color:rgb(255, 255, 255);
+  --h5w-plotTitle--color: rgb(0, 0, 0);
+  --h5w-colorBar-ticks--color:rgb(0, 0, 0);
+  --h5w-tickLabels--color: rgb(0, 0, 0);
+  --h5w-ticks-color: rgb(0, 0, 0);
+  --h5w-tickLabels--color: #000000;
+  --h5w-axisLabels--color:#000000;
+  --h5w-grid--color: rgb(0, 0, 0);
+  --h5w-line--color:rgb(0, 0, 0);
 }
 
 .container7{
   overflow: visible;
   display: flex;
-  --h5w-plotTitle--color: white;
-  --h5w-colorBar-ticks--color:white;
-  --h5w-tickLabels--color: white;
-  --h5w-ticks-color: white;
-  --h5w-tickLabels--color: #fcfcfc;
-  --h5w-axisLabels--color:#fcfcfc;
-  --h5w-grid--color: white;
-  --h5w-line--color:rgb(255, 255, 255);
+  --h5w-plotTitle--color: rgb(0, 0, 0);
+  --h5w-colorBar-ticks--color:rgb(0, 0, 0);
+  --h5w-tickLabels--color: rgb(0, 0, 0);
+  --h5w-ticks-color: rgb(0, 0, 0);
+  --h5w-tickLabels--color: #000000;
+  --h5w-axisLabels--color:#000000;
+  --h5w-grid--color: rgb(0, 0, 0);
+  --h5w-line--color:rgb(0, 0, 0);
 }
 
 .custom-alert {

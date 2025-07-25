@@ -24,7 +24,7 @@ export default function Home() {
         
           <div className={styles.logoContainer}>
           
-            <Image src="/techBiot_Logo.png" alt="Logo"  width={720} height={270}/>
+            <Image src="/Techbiot final large1.ai_page-0001.jpg" alt="Logo"  width={950} height={670}/>
           </div>
         </div>    
       </main>

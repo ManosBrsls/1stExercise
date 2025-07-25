@@ -1,15 +1,19 @@
 "use client";
 import React, { useState, useRef, useEffect } from "react";
+import Swal from "sweetalert2";
 import { File, FS, h5wasmReady } from "h5wasm";
 import ndarray from "ndarray";
 import { getDomain, LineVis, Toolbar, ToggleBtn, Separator } from "@h5web/lib";
 import html2canvas from "html2canvas";
-import { FaCamera, FaDownload, FaTh, FaSlidersH } from "react-icons/fa";
+import { FaCamera, FaDownload, FaTh, FaSlidersH, FaPlay } from "react-icons/fa";
 import Sidebar from "./posts/Sidebar";
 import styles from "../styles/Home.module.css";
 import "@h5web/lib/dist/styles.css";
 
 function IMSLineCharts() {
+  const [titleName, setTitleName] = useState("GC-IMS Heatmap");
+  const [titleName2, setTitleName2] = useState("GC-IMS Heatmap");
+  const [predictionResult, setPredictionResult] = useState(null);
 
   const [dataArray2, setDataArray2] = useState(null); // file 2, polarity 0
   const [dataArray3, setDataArray3] = useState(null); // file 2, polarity 1
@@ -132,7 +136,7 @@ function IMSLineCharts() {
 
   const handleIMSDataSelect = async (buffer, chartNumber, filename) => {
     try{
-      console.log("Processing file:", filename);
+    console.log("Processing file:", filename);
     await h5wasmReady;
     const filePath = `/tmp/${filename}`;
     FS.writeFile(filePath, new Uint8Array(buffer));
@@ -323,6 +327,7 @@ function IMSLineCharts() {
       const initialLine = ndarray(firstColumn, [firstColumn.length]);
 
       if (chartNumber === 1) {
+        setTitleName(filename);
         setDataArray0(dataArray0);
         setDataArray1(dataArray1);
         setDomain0(domain0);
@@ -342,6 +347,7 @@ function IMSLineCharts() {
         setSelectedIndex(0); 
         setCurrentPolarity(0);
       }else if (chartNumber === 2) {
+        setTitleName2(filename);
         setDataArray2(dataArray0);
         setDataArray3(dataArray1);
         setDomain2(domain0);
@@ -431,6 +437,105 @@ const handleDownloadLineData2 = () => {
   link.click();
 };
 
+const handleRunPrediction1 = async () => {
+  if (!titleName) {
+    alert("Please upload a file first.");
+    return;
+  }
+
+  const fileName =titleName;
+  const index = selectedIndex;
+  const pollarity = currentPolarity // Replace with your actual retention index state
+  console.log("Running prediction for file:", fileName, "at index:", index, "with polarity:", pollarity);
+  try {
+    const response = await fetch("http://127.0.0.1:8000/api/predict/ims/dpm-model", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        file_name: fileName,
+        index: index,
+        polarity: pollarity
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`Server error: ${response.status}`);
+    }
+
+    const result = await response.json();
+    setPredictionResult(result);
+    console.log("Prediction Result:", result);
+    
+    alert("Prediction completed. Check the console for results.");
+  } catch (error) {
+    console.error("Prediction request failed:", error);
+    alert("Failed to run prediction. See console for details.");
+  }
+};
+
+useEffect(() => {
+  if (predictionResult?.prediction > -1 ) {
+    Swal.fire({
+      title: "⚠ ALERT ⚠",
+      html: `
+        <div style="text-align: left;">
+          <p><strong>Message:</strong> ${predictionResult.message}</p>
+          <p><strong>Prediction:</strong> ${predictionResult.prediction}</p>
+          <p><strong>Confidence:</strong> ${predictionResult.confidence !== null ? (predictionResult.confidence * 100).toFixed(2) + "%" : "N/A"}</p>
+          <p><strong>Note:</strong> ${predictionResult.note}</p>
+          <p><strong>Red Alert:</strong> ${predictionResult.red_alert ? "🚨 YES" : "❌ NO"}</p>
+        </div>
+      `,
+      icon: predictionResult.red_alert ? "error" : "info",
+      background: "#000",
+      color: "#fff",
+      confirmButtonText: "OK",
+      confirmButtonColor: predictionResult.red_alert ? "#ff0000" : "#3085d6",
+      timer: 1000000000, // practically never auto-closes
+    });
+  }
+}, [predictionResult]);
+
+
+const handleRunPrediction2 = async () => {
+  if (!titleName) {
+    alert("Please upload a file first.");
+    return;
+  }
+
+  const fileName =titleName2;
+  const index = selectedIndex2;
+  const pollarity = currentPolarity2 
+  console.log("Running prediction for file:", fileName, "at index:", index, "with polarity:", pollarity);
+  try {
+    const response = await fetch("http://127.0.0.1:8000/api/predict/ims/dpm-model", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        file_name: fileName,
+        index: index,
+        polarity: pollarity
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`Server error: ${response.status}`);
+    }
+
+    const result = await response.json();
+    console.log("Prediction Result:", result);
+    setPredictionResult(result);
+    alert("Prediction completed. Check the console for results.");
+    console.log("Prediction Result:", result[0]);
+  } catch (error) {
+    console.error("Prediction request failed:", error);
+    alert("Failed to run prediction. See console for details.");
+  }
+};
 
 
 
@@ -438,10 +543,21 @@ return (
   <div className={styles.container2}>
     <Sidebar onIMSDataUpload={handleIMSDataUpload} onIMSDataSelect={handleIMSDataSelect} />
 
-    <div className={styles.card} style={{ borderRadius: "40px", backgroundColor: "#084072", marginLeft: "200px", cursor: "pointer" }}>
+    <div className={styles.card} style={{ borderRadius: "40px", backgroundColor: "#fcfcfc", marginLeft: "200px", cursor: "pointer" }}>
       {lineData1 && lineDomain1 && driftTimes0 && (
         <>
           <Toolbar className={styles.container4}>
+            <ToggleBtn
+              icon={FaPlay}
+              label="Run Prediction1"
+              onToggle={handleRunPrediction1}
+            />
+            <ToggleBtn
+              icon={FaPlay}
+              label="Run Prediction2"
+              onToggle={handleRunPrediction2}
+            />
+            <Separator />
             <ToggleBtn
               icon={FaTh}
               label="Grid 1"
@@ -455,12 +571,12 @@ return (
             <Separator />
             <ToggleBtn
               icon={FaSlidersH}
-              label="Toggle Polarity Chart 1"
+              label="Change Polarity Chart 1"
               onToggle={() => togglePolarity()}
             />
             <ToggleBtn
               icon={FaSlidersH}
-              label="Toggle Polarity Chart 2"
+              label="Change Polarity Chart 2"
               onToggle={() => togglePolarity2()}
             />
             <Separator />
@@ -488,7 +604,7 @@ return (
               position: "relative",
               height: "40rem",
               width: "75rem",
-              backgroundColor: "#084072",
+              backgroundColor: "#fcfcfc",
               fontSize: 19,
             }}
           >
@@ -500,11 +616,10 @@ return (
               scaleType="linear"
               curveType="OnlyLine"
               showGrid={showGrid1}
-              title="IMS Spectra Graph 1"
+              title={titleName}
               abscissaParams={{ value: driftTimes0, label: "Drift Time (msec)" }}
               ordinateLabel="Ion Current pA"
             />
-
             {lineData2 && lineDomain2 && driftTimes2 && (
               <LineVis
                 className={styles.container7}
@@ -514,7 +629,7 @@ return (
                 scaleType="linear"
                 curveType="OnlyLine"
                 showGrid={showGrid2}
-                title="IMS Spectra Graph 2"
+                title={titleName2}
                 abscissaParams={{ value: driftTimes2, label: "Drift Time (msec)" }}
                 ordinateLabel="Ion Current pA"
               />
@@ -523,8 +638,8 @@ return (
 
           <div style={{ display: "flex", alignItems: "auto", gap: "360px", marginTop: "20px" }}>
             <div>
-              <label htmlFor="column-slider" style={{ color: "#fff", fontSize: 18 }}>
-                Select Retention time 1:
+              <label htmlFor="column-slider" style={{ color: "#000", fontSize: 18 }}>
+                Select Spectra 1 Index:
               </label>
               {dataArray0 && (
                 <>
@@ -536,16 +651,16 @@ return (
                     value={selectedIndex}
                     onChange={handleImsSliderChange}
                   />
-                  <span style={{ color: "#fff", marginLeft: "10px", fontSize: 20 }}>
-                    {retentionTimes0?.[selectedIndex]?.toFixed(3)} s
+                  <span style={{ color: "#000", marginLeft: "10px", fontSize: 20 }}>
+                    {[selectedIndex]} 
                   </span>
                 </>
               )}
             </div>
 
             <div>
-              <label htmlFor="column-slider2" style={{ color: "#fff", fontSize: 18 }}>
-                Select Retention time 2:
+              <label htmlFor="column-slider2" style={{ color: "#000", fontSize: 18 }}>
+                 Select Spectra 2 Index:
               </label>
               {dataArray2 && (
                 <>
@@ -557,11 +672,12 @@ return (
                     value={selectedIndex2}
                     onChange={handleSlider2}
                   />
-                  <span style={{ color: "#fff", marginLeft: "10px", fontSize: 20 }}>
-                    {retentionTimes2?.[selectedIndex2]?.toFixed(3)} s
+                  <span style={{ color: "#000", marginLeft: "10px", fontSize: 20 }}>
+                    {[selectedIndex2]} 
                   </span>
                 </>
               )}
+
             </div>
           </div>
         </>
