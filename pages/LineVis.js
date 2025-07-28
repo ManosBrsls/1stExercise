@@ -547,12 +547,12 @@ return (
           <Toolbar className={styles.container4}>
             <ToggleBtn
               icon={FaPlay}
-              label="Run Prediction1"
+              label="#1 Run Prediction"
               onToggle={handleRunPrediction1}
             />
             <ToggleBtn
               icon={FaPlay}
-              label="Run Prediction2"
+              label="#2 Run Prediction"
               onToggle={handleRunPrediction2}
             />
             <Separator />
