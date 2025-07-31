@@ -420,7 +420,7 @@ function HeatmapUploader() {
       html2canvas(heatmapRef.current, {
         width: heatmapRef.current.scrollWidth,
         height: heatmapRef.current.scrollHeight,
-        scale: 1,
+        scale: 2,
       }).then((canvas) => {
         const link = document.createElement("a");
         link.href = canvas.toDataURL("image/png");
@@ -487,7 +487,7 @@ function HeatmapUploader() {
         setViewMode(newView);
         setAuthError(null);
       } else {
-        setAuthError("Incorrect username or password. Access denied.");
+        setAuthError("Incorrect password. Access denied.");
       }
     } else {
       setViewMode(newView);
@@ -668,7 +668,7 @@ return (
   <Sidebar onGCIMSDataUpload={handleGCIMSDataUpload} />
     <div
       className={styles.card}
-      style={{borderRadius: "40px", backgroundColor: "#084072", marginLeft: "200px", cursor: "pointer"}}
+      style={{borderRadius: "30px", backgroundColor: "#fcfcfc", marginLeft: "150px", cursor: "pointer"}}
     >
       {heatmapData && heatmapDomain && (
         <>
@@ -724,20 +724,18 @@ return (
                   />
                 </Toolbar>
         {authError && <p style={{ color: "red" }}>{authError}</p>}
-        <div ref={heatmapRef} style={{display: "flex", height: "40rem", width: "75rem", backgroundColor: "#084072", fontSize: 19}}>
+        <div ref={heatmapRef} style={{display: "flex", height: "40rem", width: "79rem", backgroundColor: "#fcfcfc", fontSize: 19}}>
         <HeatmapVis
-          ref={heatmapRef}
           className={styles.container5}
           title={"GC_IMS Spectrum" + ": " +  titleName}
           abscissaParams={{ value: retentionTimes, label: "Retention time (s)" }}
+          ordinateParams={{ value: driftTimes, label: "Drift time (ms)" }}
           aspect="auto"
           showGrid={showGrid}
           colorMap={colorMap}
           dataArray={heatmapData}
           domain={heatmapDomain}
           invertColorMap={invertColorMap}
-          ordinateParams={{ value: driftTimes, label: "Drift time (ms)" }}
-          
           scaleType="linear"
           interactions={{
             selectToZoom: { modifierKey: "Shift" },
@@ -792,7 +790,6 @@ return (
               <div ref={imsSpectra} style={{display: "flex", height: "40rem", width: "75rem", backgroundColor: "#fcfcfc", fontSize: 19}}>
               <LineVis
                 className={styles.container6}
-                ref={imsSpectra}
                 dataArray={lineData}
                 domain={lineDomain}
                 scaleType={"linear"}
@@ -825,7 +822,7 @@ return (
         ) : viewMode === "chromSpectra" ? (
           <>
             <Toolbar className={styles.container4}>
-              
+
               <ToggleBtn
                 icon={FaTh}
                 label="Grid"
@@ -857,12 +854,13 @@ return (
                 onToggle={() => handleDownloadGcCSV()}
               >          
               </ToggleBtn>
-              <Separator />
+              
               <ToggleBtn
                 icon={FaSlidersH}
                 label="Change Polarity"
                 onToggle={(togglePolarity)}
-              />              
+              />         
+               
               </Toolbar>
               <div ref={chromGram} style={{display: "flex", height: "40rem", width: "76rem", backgroundColor: "#fcfcfc", fontSize: 19}}>
                 <LineVis

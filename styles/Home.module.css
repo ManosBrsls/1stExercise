@@ -55,9 +55,9 @@
 
 .card {
   align-items: center;
-  margin-top: "10rem";
+  margin-top: "15rem";
   width: "1650rem";
-  height: "35rem";
+  height: 45rem;
   flex-basis: 45%;
   padding: 1.5rem;
   text-align: left;
@@ -335,21 +335,22 @@
 .container5{
   overflow: visible;
   display: flex;
-  --h5w-colorBar-ticks--color:white;
+  --h5w-colorBar-ticks--color:rgb(0, 0, 0);
   --h5w-plotTitle--fontWeight: 20;
-  --h5w-tickLabels--color: white;
-  --h5w-ticks-color: white;
-  --h5w-tickLabels--color: #fcfcfc;
-  --h5w-axisLabels--color:#fcfcfc;
-  --h5w-grid--color: white;
+  --h5w-tickLabels--color: rgb(0, 0, 0);
+  --h5w-ticks-color: rgb(0, 0, 0);
+  --h5w-tickLabels--color: #000000;
+  --h5w-axisLabels--color:#000000;
+  --h5w-grid--color: rgb(0, 0, 0);
   --h5w-axisLabels--fontWeight: 100;
   --h5w-tooltip--bgColor: rgba(255, 255, 255, 0.9);
   --h5w-tickLabels--fontSize: 0.99em;
   --h5w-grid--opacity: 0.6;
-  --h5w-colorBar-ticks--color:white;
+  --h5w-colorBar-ticks--color:rgb(0, 0, 0);
   --h5w-colorBar-tickLabels--fontSize: 0.9em;
-  --h5w-colorBar-bounds--color: #ffffff;
+  --h5w-colorBar-bounds--color: #000000;
   --h5w-colorBar-bounds--fontSize: 0.7em;
+  
 }
 
 .container6{
