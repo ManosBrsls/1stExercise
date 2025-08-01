@@ -162,6 +162,7 @@ function HeatmapUploader() {
           transposedPoints.set(j, i, spectrumPoints.get(i, j));
         }
       }
+      console.log("TransposedPoints" ,transposedPoints)
 
       const numRows = transposedPoints.shape[0];
       const numCols = transposedPoints.shape[1];
@@ -180,6 +181,7 @@ function HeatmapUploader() {
           countPol1++;
         }
       }
+      console.log("Polarity Counts:", countPol0);
 
       const data0 = new Float32Array(countPol0 * numRows);
       const data1 = new Float32Array(countPol1 * numRows);
@@ -206,6 +208,7 @@ function HeatmapUploader() {
           colIndex1++;
         }
       }
+      console.log("Filtered Spectrum 0:", filteredSpectrum0);
 
 
       const driftTimes0 = [];
@@ -802,7 +805,7 @@ return (
               </div>
 
               <div style={{ marginTop: "8px" }}>
-                <label htmlFor="row-slider" style={{ color: "#fff", fontSize: 18 }}>
+                <label htmlFor="row-slider" style={{ color: "#000", fontSize: 18 }}>
                   Select Spectra Index:
                 </label>
                 <input
@@ -813,7 +816,7 @@ return (
                   value={selectedIndex}
                   onChange={handleImsSliderChange}
                 />
-                <span style={{ color: "#fff", marginLeft: "10px", fontSize: 20 }}>
+                <span style={{ color: "#000", marginLeft: "10px", fontSize: 20 }}>
                   {[selectedIndex]}
                 </span>
               </div>    
@@ -876,7 +879,7 @@ return (
                   />
               </div>
                 <div style={{ marginTop: "8px" }}>
-                  <label htmlFor="column-slider" style={{ color: "#fff" , fontSize: 18}}>
+                  <label htmlFor="column-slider" style={{ color: "#000" , fontSize: 18}}>
                     Select Spectra Index:
                   </label>
                   <input
@@ -887,7 +890,7 @@ return (
                     value={selectedGcIndex}
                     onChange={handleGcSliderChange}
                   />
-                  <span style={{ color: "#fff", marginLeft: "10px", fontSize: 20 }}>
+                  <span style={{ color: "#000", marginLeft: "10px", fontSize: 20 }}>
                     {(currentPolarity === 0 ? [selectedGcIndex] : [selectedGcIndex])} 
                   </span>
                 </div> 
