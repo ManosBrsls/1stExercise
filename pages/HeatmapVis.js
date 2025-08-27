@@ -164,6 +164,7 @@ function HeatmapUploader() {
           transposedPoints.set(j, i, spectrumPoints.get(i, j));
         }
       }
+      console.log("TransposedPoints" ,transposedPoints)
 
       console.log("Transposed Points:", transposedPoints);
 
@@ -184,6 +185,7 @@ function HeatmapUploader() {
           countPol1++;
         }
       }
+      console.log("Polarity Counts:", countPol0);
 
       const data0 = new Float32Array(countPol0 * numRows);
       const data1 = new Float32Array(countPol1 * numRows);
@@ -210,6 +212,7 @@ function HeatmapUploader() {
           colIndex1++;
         }
       }
+      console.log("Filtered Spectrum 0:", filteredSpectrum0);
 
 
       const driftTimes0 = [];
@@ -868,6 +871,7 @@ return (
                   ordinateLabel="Ion Current (pA)"
                 />
               </div>
+<<<<<<< HEAD
 
               <div style={{ marginTop: "8px" }}>
                 <label htmlFor="column-slider" style={{ color: "#000", fontSize: 18 }}>
@@ -895,6 +899,27 @@ return (
           ) : null}
         </>
       )}
+=======
+                <div style={{ marginTop: "8px" }}>
+                  <label htmlFor="column-slider" style={{ color: "#000" , fontSize: 18}}>
+                    Select Spectra Index:
+                  </label>
+                  <input
+                    id="column-slider"
+                    type="range"
+                    min="0"
+                    max={(currentPolarity === 0 ? driftTimes0?.length : driftTimes1?.length) - 1 || 0}
+                    value={selectedGcIndex}
+                    onChange={handleGcSliderChange}
+                  />
+                  <span style={{ color: "#000", marginLeft: "10px", fontSize: 20 }}>
+                    {(currentPolarity === 0 ? [selectedGcIndex] : [selectedGcIndex])} 
+                  </span>
+                </div> 
+        </>             
+        ) : viewMode === "null" ()}</>  
+        )}   
+>>>>>>> 6e87ab986a328cb39549b42999765b11d334db0e
     </div>
   </div>
 );

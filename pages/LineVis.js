@@ -628,7 +628,7 @@ return (
               scaleType="linear"
               curveType="OnlyLine"
               showGrid={showGrid1}
-              title={titleName}
+              title={"IMS Spectrum" + ": " +  titleName}
               abscissaParams={{ value: driftTimes0, label: "Drift Time (msec)" }}
               ordinateLabel="Ion Current pA"
             />
@@ -641,7 +641,7 @@ return (
                 scaleType="linear"
                 curveType="OnlyLine"
                 showGrid={showGrid2}
-                title={titleName2}
+                title={"IMS Spectrum" + ": " +  titleName2}
                 abscissaParams={{ value: driftTimes2, label: "Drift Time (msec)" }}
                 ordinateLabel="Ion Current pA"
               />
