@@ -58,6 +58,9 @@ function IMSLineCharts() {
   const [showGrid2, setShowGrid2] = useState(false);
 
   const imsSpectraRef = useRef(null);
+  
+
+  const PASSWORD = "expert_mode_TechBiot_2025";
 
 
 
@@ -136,7 +139,7 @@ function IMSLineCharts() {
 
   const handleIMSDataSelect = async (buffer, chartNumber, filename) => {
     try{
-    console.log("Processing file:", filename);
+    
     await h5wasmReady;
     const filePath = `/tmp/${filename}`;
     FS.writeFile(filePath, new Uint8Array(buffer));
@@ -404,6 +407,14 @@ const handleIMSDataUpload = (filename, buffer) => {
   };
 
 const handleDownloadLineData1 = () => {
+  // Ask for password before downloading
+  const enteredPassword = prompt("Enter password to download CSV 1:");
+
+  if (enteredPassword !== PASSWORD) {
+    alert("❌ Incorrect password. Download canceled.");
+    return;
+  }
+
   if (!lineData1 || !driftTimes0) return;
 
   let csv = "Drift Time (ms),Ion Current (pA)\n";
@@ -421,6 +432,14 @@ const handleDownloadLineData1 = () => {
 };
 
 const handleDownloadLineData2 = () => {
+  // Ask for password before downloading
+  const enteredPassword = prompt("Enter password to download CSV 2:");
+
+  if (enteredPassword !== PASSWORD) {
+    alert("❌ Incorrect password. Download canceled.");
+    return;
+  }
+
   if (!lineData2 || !driftTimes2) return;
 
   let csv = "Drift Time (ms),Ion Current (pA)\n";
@@ -475,24 +494,41 @@ const handleRunPrediction1 = async () => {
 };
 
 useEffect(() => {
-  if (predictionResult?.prediction > -1 ) {
+  if (!predictionResult) return; // ⛔ No response yet, stop here
+
+  if (predictionResult.red_alert) {
+    // === RED ALERT ===
     Swal.fire({
       title: "⚠ ALERT ⚠",
       html: `
         <div style="text-align: left;">
-          <p><strong>Message:</strong> ${predictionResult.message}</p>
-          <p><strong>Prediction:</strong> ${predictionResult.prediction}</p>
-          <p><strong>Confidence:</strong> ${predictionResult.confidence !== null ? (predictionResult.confidence * 100).toFixed(2) + "%" : "N/A"}</p>
           <p><strong>Note:</strong> ${predictionResult.note}</p>
-          <p><strong>Red Alert:</strong> ${predictionResult.red_alert ? "🚨 YES" : "❌ NO"}</p>
+          <p><strong>Red Alert:</strong> 🚨 YES</p>
         </div>
       `,
-      icon: predictionResult.red_alert ? "error" : "info",
+      icon: "error",
       background: "#000",
       color: "#fff",
       confirmButtonText: "OK",
-      confirmButtonColor: predictionResult.red_alert ? "#ff0000" : "#3085d6",
-      timer: 1000000000, // practically never auto-closes
+      confirmButtonColor: "#ff0000",
+      timer: 1000000000,
+    });
+  } else {
+    // === ONLY NOTE WITH BLUE INFO ICON ===
+    Swal.fire({
+      title: "Information",
+      html: `
+        <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+          <span style="font-size: 22px;">ℹ️</span>
+          <span style="font-size: 16px;"><strong>Note:</strong> ${predictionResult.note}</span>
+        </div>
+      `,
+      icon: "info",
+      background: "#000",
+      color: "#fff",
+      confirmButtonColor: "#3085d6",
+      confirmButtonText: "OK",
+      timer: 1000000000,
     });
   }
 }, [predictionResult]);
@@ -541,60 +577,38 @@ return (
   <div className={styles.container2}>
     <Sidebar onIMSDataUpload={handleIMSDataUpload} onIMSDataSelect={handleIMSDataSelect} />
 
-    <div className={styles.card} style={{ borderRadius: "40px", backgroundColor: "#fcfcfc", marginLeft: "200px", cursor: "pointer" }}>
-      {lineData1 && lineDomain1 && driftTimes0 && (
+    <div
+      className={styles.card}
+      style={{
+        borderRadius: "40px",
+        backgroundColor: "#fcfcfc",
+        marginLeft: "200px",
+        cursor: "pointer"
+      }}
+    >
+      {/* Show message until all main data for chart 1 is ready */}
+      {!lineData1 || !lineDomain1 || !driftTimes0 ? (
+        <div style={{ textAlign: "center", padding: "3rem", fontSize: "1.5rem", color: "#555" }}>
+          📂 Please upload your IMS files for visualization.
+        </div>
+      ) : (
         <>
           <Toolbar className={styles.container4}>
-            <ToggleBtn
-              icon={FaPlay}
-              label="#1 Run Prediction"
-              onToggle={handleRunPrediction1}
-            />
-            <ToggleBtn
-              icon={FaPlay}
-              label="#2 Run Prediction"
-              onToggle={handleRunPrediction2}
-            />
+            <ToggleBtn icon={FaPlay} label="#1 Run Prediction" onToggle={handleRunPrediction1} />
+            <ToggleBtn icon={FaPlay} label="#2 Run Prediction" onToggle={handleRunPrediction2} />
             <Separator />
-            <ToggleBtn
-              icon={FaTh}
-              label="Grid 1"
-              onToggle={() => setShowGrid1(!showGrid1)}
-            />
-            <ToggleBtn
-              icon={FaTh}
-              label="Grid 2"
-              onToggle={() => setShowGrid2(!showGrid2)}
-            />
+            <ToggleBtn icon={FaTh} label="Grid 1" onToggle={() => setShowGrid1(!showGrid1)} />
+            <ToggleBtn icon={FaTh} label="Grid 2" onToggle={() => setShowGrid2(!showGrid2)} />
             <Separator />
-            <ToggleBtn
-              icon={FaSlidersH}
-              label="Change Polarity Chart 1"
-              onToggle={() => togglePolarity()}
-            />
-            <ToggleBtn
-              icon={FaSlidersH}
-              label="Change Polarity Chart 2"
-              onToggle={() => togglePolarity2()}
-            />
+            <ToggleBtn icon={FaSlidersH} label="Change Polarity Chart 1" onToggle={togglePolarity} />
+            <ToggleBtn icon={FaSlidersH} label="Change Polarity Chart 2" onToggle={togglePolarity2} />
             <Separator />
-            <ToggleBtn
-              icon={FaCamera}
-              label="Snap Shot "
-              onToggle={() => handleSnapshotIMS1()}
-            />
+            <ToggleBtn icon={FaCamera} label="Snap Shot" onToggle={handleSnapshotIMS1} />
             <Separator />
-            <ToggleBtn
-              icon={FaDownload}
-              label="Download CSV 1"
-              onToggle={handleDownloadLineData1}
-            />
-            <ToggleBtn
-              icon={FaDownload}
-              label="Download CSV 2"
-              onToggle={handleDownloadLineData2}
-            />
+            <ToggleBtn icon={FaDownload} label="Download CSV 1" onToggle={handleDownloadLineData1} />
+            <ToggleBtn icon={FaDownload} label="Download CSV 2" onToggle={handleDownloadLineData2} />
           </Toolbar>
+
           <div
             ref={imsSpectraRef}
             style={{
@@ -603,7 +617,7 @@ return (
               height: "40rem",
               width: "75rem",
               backgroundColor: "#fcfcfc",
-              fontSize: 19,
+              fontSize: 19
             }}
           >
             <LineVis
@@ -634,7 +648,14 @@ return (
             )}
           </div>
 
-          <div style={{ display: "flex", alignItems: "auto", gap: "360px", marginTop: "20px" }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "auto",
+              gap: "360px",
+              marginTop: "20px"
+            }}
+          >
             <div>
               <label htmlFor="column-slider" style={{ color: "#000", fontSize: 18 }}>
                 Select Spectra 1 Index:
@@ -645,12 +666,16 @@ return (
                     id="column-slider"
                     type="range"
                     min="0"
-                    max={(currentPolarity === 0 ? dataArray0?.shape[1] : dataArray1?.shape[1]) - 1 || 0}
+                    max={
+                      (currentPolarity === 0
+                        ? dataArray0?.shape[1]
+                        : dataArray1?.shape[1]) - 1 || 0
+                    }
                     value={selectedIndex}
                     onChange={handleImsSliderChange}
                   />
                   <span style={{ color: "#000", marginLeft: "10px", fontSize: 20 }}>
-                    {[selectedIndex]} 
+                    {[selectedIndex]}
                   </span>
                 </>
               )}
@@ -658,7 +683,7 @@ return (
 
             <div>
               <label htmlFor="column-slider2" style={{ color: "#000", fontSize: 18 }}>
-                 Select Spectra 2 Index:
+                Select Spectra 2 Index:
               </label>
               {dataArray2 && (
                 <>
@@ -671,11 +696,10 @@ return (
                     onChange={handleSlider2}
                   />
                   <span style={{ color: "#000", marginLeft: "10px", fontSize: 20 }}>
-                    {[selectedIndex2]} 
+                    {[selectedIndex2]}
                   </span>
                 </>
               )}
-
             </div>
           </div>
         </>

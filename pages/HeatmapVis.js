@@ -63,7 +63,7 @@ function HeatmapUploader() {
   
   
   const correctCredentials = {
-    password: "123",
+    password: "expert_mode_TechBiot_2025",
   };
 
   const togglePolarity = () => {
@@ -122,10 +122,10 @@ function HeatmapUploader() {
   const handleGCIMSDataUpload = async (filename, buffer) => {
 
     try {
-      // await configure({ memorySize: 2 ** 28 });
+      
       await h5wasmReady;
 
-      // Mount the buffer into the WASM virtual filesystem
+      
       const filePath = `/tmp/${filename}`;
       const data = new Uint8Array(buffer);
       FS.writeFile(filePath, data);
@@ -135,6 +135,7 @@ function HeatmapUploader() {
       setTitleName(filename);
 
       const pointsDataset = h5File.get("spectrumPoints");
+      // console.log("metadata:", JSON.stringify(pointsDataset.metadata, null, 2));
       const metadaDataset = h5File.get("spectrumMetadata");
       const headerDataset = h5File.get("spectrumHeader");
 
@@ -142,6 +143,7 @@ function HeatmapUploader() {
       const spectrumMetadata = ndarray(metadaDataset.value, metadaDataset.shape);
       const spectrumPoints = ndarray(pointsDataset.value, pointsDataset.shape);
 
+      console.log("spectrumHeader", spectrumPoints);
       const slope1 = spectrumHeader.data[0][9];
       const offset1 = spectrumHeader.data[0][10];
       const slope2 = spectrumHeader.data[0][11];
@@ -162,6 +164,8 @@ function HeatmapUploader() {
           transposedPoints.set(j, i, spectrumPoints.get(i, j));
         }
       }
+
+      console.log("Transposed Points:", transposedPoints);
 
       const numRows = transposedPoints.shape[0];
       const numCols = transposedPoints.shape[1];
@@ -522,7 +526,7 @@ function HeatmapUploader() {
   const link = document.createElement("a");
   const retentionLabel = retentionArr[selectedIndex].toFixed(3);
   link.href = URL.createObjectURL(blob);
-  link.setAttribute("download", `ims_spectrum_retention_${retentionLabel}s.csv`);
+  link.setAttribute("download", `ims_spectrum.csv`);
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
@@ -561,7 +565,7 @@ function HeatmapUploader() {
   const link = document.createElement("a");
   const driftLabel = driftArr?.[selectedGcIndex]?.toFixed(3);
   link.href = URL.createObjectURL(blob);
-  link.setAttribute("download", `gc_spectrum_drift_${driftLabel}ms.csv`);
+  link.setAttribute("download", `gc_spectrum.csv`);
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
@@ -571,7 +575,7 @@ function HeatmapUploader() {
 
 const handleDownload = () => {
   const enteredCode = prompt("Enter access code:");
-  if (enteredCode !== "123") {
+  if (enteredCode !== "expert_mode_TechBiot_2025") {
     alert("Incorrect code. Access denied.");
     return;
   }
@@ -614,7 +618,7 @@ const handleRunPrediction1 = async () => {
   const pollarity = currentPolarity // Replace with your actual retention index state
 
   try {
-    const response = await fetch("http://127.0.0.1:8000/api/predict/gcims/dpm-model", {
+    const response = await fetch("http://127.0.0.1:8000/api/predict/gcims/bwa-model", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -640,169 +644,171 @@ const handleRunPrediction1 = async () => {
 
 
 useEffect(() => {
-  if (predictionResult?.prediction > -1 ) {
+  if (!predictionResult) return; // ⛔ No response yet, stop here
+
+  if (predictionResult.red_alert) {
+    // === RED ALERT ===
     Swal.fire({
       title: "⚠ ALERT ⚠",
       html: `
         <div style="text-align: left;">
-          <p><strong>Message:</strong> ${predictionResult.message}</p>
-          <p><strong>Prediction:</strong> ${predictionResult.prediction}</p>
-          <p><strong>Confidence:</strong> ${predictionResult.confidence !== null ? (predictionResult.confidence * 100).toFixed(2) + "%" : "N/A"}</p>
           <p><strong>Note:</strong> ${predictionResult.note}</p>
-          <p><strong>Red Alert:</strong> ${predictionResult.red_alert ? "🚨 YES" : "❌ NO"}</p>
+          <p><strong>Red Alert:</strong> 🚨 YES</p>
         </div>
       `,
-      icon: predictionResult.red_alert ? "error" : "info",
+      icon: "error",
       background: "#000",
       color: "#fff",
       confirmButtonText: "OK",
-      confirmButtonColor: predictionResult.red_alert ? "#ff0000" : "#3085d6",
-      timer: 1000000000, // practically never auto-closes
+      confirmButtonColor: "#ff0000",
+      timer: 1000000000,
+    });
+  } else {
+    // === ONLY NOTE WITH BLUE INFO ICON ===
+    Swal.fire({
+      title: "Information",
+      html: `
+        <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+          <span style="font-size: 22px;">ℹ️</span>
+          <span style="font-size: 16px;"><strong>Note:</strong> ${predictionResult.note}</span>
+        </div>
+      `,
+      icon: "info",
+      background: "#000",
+      color: "#fff",
+      confirmButtonColor: "#3085d6",
+      confirmButtonText: "OK",
+      timer: 1000000000,
     });
   }
 }, [predictionResult]);
 
 
 return (
-<div className={styles.container2}>
-  <Sidebar onGCIMSDataUpload={handleGCIMSDataUpload} />
+  <div className={styles.container2}>
+    <Sidebar onGCIMSDataUpload={handleGCIMSDataUpload} />
     <div
       className={styles.card}
-      style={{borderRadius: "30px", backgroundColor: "#fcfcfc", marginLeft: "150px", cursor: "pointer"}}
+      style={{
+        borderRadius: "30px",
+        backgroundColor: "#fcfcfc",
+        marginLeft: "150px",
+        cursor: "pointer"
+      }}
     >
-      {heatmapData && heatmapDomain && (
-        <>
-        {viewMode === "heatmap" ? (
-          <>
-                <Toolbar className={styles.container4}>
-                  <ToggleBtn
-                    icon={FaPlay}
-                    label="Run Prediction"
-                    onToggle={handleRunPrediction1}
-                  />                  
-                  <ColorMapSelector
-                    className={styles.container4}
-                    onInversionChange={() => setInvertColorMap(!invertColorMap)}
-                    onValueChange={setColorMap}
-                    value={colorMap}
-                  />
-                  <Separator />
-                  <ToggleBtn
-                    icon={FaCamera}
-                    label="Snap Shot"
-                    onToggle={() => handleSnapshot()}
-                  >
-                  </ToggleBtn>
-                  <Separator />
-                  <ToggleBtn
-                    icon={FaTh}
-                    label="Grid"
-                    onToggle={() => setShowGrid(!showGrid)}
-                  />
-                  <Separator />
-                  <ToggleBtn
-                    icon={FaChartArea}
-                    label="IMS Spectra"
-                    onToggle={() => handleViewChange("imsSpectra")}
-                  />
-                  <ToggleBtn
-                    icon={FaChartLine}
-                    label="Chrom Spectra"
-                    onToggle={() => handleViewChange("chromSpectra")}
-                  />
-                  <Separator />
-                  <ToggleBtn
-                    icon={FaDownload}
-                    label="Download Heatmap CSV"
-                    onToggle={(handleDownload)}
-                  />
-                  <Separator />
-                  <ToggleBtn
-                    icon={FaSlidersH}
-                    label="Change Polarity"
-                    onToggle={(togglePolarity)}
-                  />
-                </Toolbar>
-        {authError && <p style={{ color: "red" }}>{authError}</p>}
-        <div ref={heatmapRef} style={{display: "flex", height: "40rem", width: "79rem", backgroundColor: "#fcfcfc", fontSize: 19}}>
-        <HeatmapVis
-          className={styles.container5}
-          title={"GC_IMS Spectrum" + ": " +  titleName}
-          abscissaParams={{ value: retentionTimes, label: "Retention time (s)" }}
-          ordinateParams={{ value: driftTimes, label: "Drift time (ms)" }}
-          aspect="auto"
-          showGrid={showGrid}
-          colorMap={colorMap}
-          dataArray={heatmapData}
-          domain={heatmapDomain}
-          invertColorMap={invertColorMap}
-          scaleType="linear"
-          interactions={{
-            selectToZoom: { modifierKey: "Shift" },
-            xAxisZoom: false,
-            yAxisZoom: false,
-          }}
-        />
+      {!heatmapData || !heatmapDomain ? (
+        <div style={{ textAlign: "center", padding: "3rem", fontSize: "1.5rem", color: "#555" }}>
+          📂 Please upload your GC-IMS file for visualization.
         </div>
-        </>
-      ) : viewMode === "imsSpectra" ? (
+      ) : (
         <>
-          <Toolbar className={styles.container4}>
-            
-              <ToggleBtn
-                icon={FaCamera}
-                label="Snap Shot"
-                onToggle={() => handleSnapshotIMS()}
-              >
-              </ToggleBtn>
-              <Separator />
-              <ToggleBtn
-                icon={FaTh}
-                label="Grid"
-                onToggle={() => setShowImsGrid(!showImsGrid)}
-              />
-              <Separator />
-              <ToggleBtn
-                icon={FaMap}
-                label="Heatmap View"
-                onToggle={() => setViewMode("heatmap")}
-              />
-      
-              <ToggleBtn
-                icon={FaChartLine}
-                label="Chrom Spectra"
-                onToggle={() => setViewMode("chromSpectra")}
-              />
-              <Separator />
-              <ToggleBtn
-                icon={FaDownload}
-                label="Download CSV"
-                onToggle={() => handleDownloadImsCSV()}
-              >          
-              </ToggleBtn>
-              <Separator />
-              <ToggleBtn
-                icon={FaSlidersH}
-                label="Change Polarity"
-                onToggle={(togglePolarity)}
-              />
+          {viewMode === "heatmap" ? (
+            <>
+              <Toolbar className={styles.container4}>
+                <ToggleBtn icon={FaPlay} label="Run Prediction" onToggle={handleRunPrediction1} />
+                <ColorMapSelector
+                  className={styles.container4}
+                  onInversionChange={() => setInvertColorMap(!invertColorMap)}
+                  onValueChange={setColorMap}
+                  value={colorMap}
+                />
+                <Separator />
+                <ToggleBtn icon={FaCamera} label="Snap Shot" onToggle={() => handleSnapshot()} />
+                <Separator />
+                <ToggleBtn icon={FaTh} label="Grid" onToggle={() => setShowGrid(!showGrid)} />
+                <Separator />
+                <ToggleBtn
+                  icon={FaChartArea}
+                  label="IMS Spectra"
+                  onToggle={() => handleViewChange("imsSpectra")}
+                />
+                <ToggleBtn
+                  icon={FaChartLine}
+                  label="Chrom Spectra"
+                  onToggle={() => handleViewChange("chromSpectra")}
+                />
+                <Separator />
+                <ToggleBtn icon={FaDownload} label="Download Heatmap CSV" onToggle={handleDownload} />
+                <Separator />
+                <ToggleBtn icon={FaSlidersH} label="Change Polarity" onToggle={togglePolarity} />
               </Toolbar>
-              <div ref={imsSpectra} style={{display: "flex", height: "40rem", width: "75rem", backgroundColor: "#fcfcfc", fontSize: 19}}>
-              <LineVis
-                className={styles.container6}
-                dataArray={lineData}
-                domain={lineDomain}
-                scaleType={"linear"}
-                curveType="OnlyLine"
-                showGrid={showImsGrid}
-                title={"IMS Graph" + ": " + titleName}
-                abscissaParams={{ value: driftTimes, label: "Drift Time (ms)" }}
-                ordinateLabel="Ion Current pA"
-              />
+
+              {authError && <p style={{ color: "red" }}>{authError}</p>}
+
+              <div
+                ref={heatmapRef}
+                style={{
+                  display: "flex",
+                  height: "40rem",
+                  width: "79rem",
+                  backgroundColor: "#fcfcfc",
+                  fontSize: 19
+                }}
+              >
+                <HeatmapVis
+                  className={styles.container5}
+                  title={"GC_IMS Spectrum" + ": " + titleName}
+                  abscissaParams={{ value: retentionTimes, label: "Retention time (s)" }}
+                  ordinateParams={{ value: driftTimes, label: "Drift time (ms)" }}
+                  aspect="auto"
+                  showGrid={showGrid}
+                  colorMap={colorMap}
+                  dataArray={heatmapData}
+                  domain={heatmapDomain}
+                  invertColorMap={invertColorMap}
+                  scaleType="linear"
+                  interactions={{
+                    selectToZoom: { modifierKey: "Shift" },
+                    xAxisZoom: false,
+                    yAxisZoom: false
+                  }}
+                />
+              </div>
+            </>
+          ) : viewMode === "imsSpectra" ? (
+            <>
+              <Toolbar className={styles.container4}>
+                <ToggleBtn icon={FaCamera} label="Snap Shot" onToggle={() => handleSnapshotIMS()} />
+                <Separator />
+                <ToggleBtn icon={FaTh} label="Grid" onToggle={() => setShowImsGrid(!showImsGrid)} />
+                <Separator />
+                <ToggleBtn icon={FaMap} label="Heatmap View" onToggle={() => setViewMode("heatmap")} />
+                <ToggleBtn
+                  icon={FaChartLine}
+                  label="Chrom Spectra"
+                  onToggle={() => setViewMode("chromSpectra")}
+                />
+                <Separator />
+                <ToggleBtn icon={FaDownload} label="Download CSV" onToggle={handleDownloadImsCSV} />
+                
+                <ToggleBtn icon={FaSlidersH} label="Change Polarity" onToggle={togglePolarity} />
+              </Toolbar>
+
+              <div
+                ref={imsSpectra}
+                style={{
+                  display: "flex",
+                  height: "40rem",
+                  width: "75rem",
+                  backgroundColor: "#fcfcfc",
+                  fontSize: 19
+                }}
+              >
+                <LineVis
+                  className={styles.container6}
+                  dataArray={lineData}
+                  domain={lineDomain}
+                  scaleType={"linear"}
+                  curveType="OnlyLine"
+                  showGrid={showImsGrid}
+                  title={"IMS Graph" + ": " + titleName}
+                  abscissaParams={{ value: driftTimes, label: "Drift Time (ms)" }}
+                  ordinateLabel="Ion Current pA"
+                />
               </div>
 
               <div style={{ marginTop: "8px" }}>
-                <label htmlFor="row-slider" style={{ color: "#fff", fontSize: 18 }}>
+                <label htmlFor="row-slider" style={{ color: "#000", fontSize: 18 }}>
                   Select Spectra Index:
                 </label>
                 <input
@@ -813,56 +819,39 @@ return (
                   value={selectedIndex}
                   onChange={handleImsSliderChange}
                 />
-                <span style={{ color: "#fff", marginLeft: "10px", fontSize: 20 }}>
+                <span style={{ color: "#000", marginLeft: "10px", fontSize: 20 }}>
                   {[selectedIndex]}
                 </span>
-              </div>    
-
-        </>
-        ) : viewMode === "chromSpectra" ? (
-          <>
-            <Toolbar className={styles.container4}>
-
-              <ToggleBtn
-                icon={FaTh}
-                label="Grid"
-                onToggle={() => setShowGrid(!showGrid)}
-              />
-             <Separator />
-              <ToggleBtn
-                icon={FaCamera}
-                label="Snap Shot"
-                onToggle={() => handleSnapshotGC()}
-              >
-              </ToggleBtn>
-              <Separator />
-              <ToggleBtn
-                icon={FaMap}
-                label="Heatmap View"
-                onToggle={() => setViewMode("heatmap")}
-              />
-           
-              <ToggleBtn
-                icon={FaChartArea}
-                label="IMS Spectra"
-                onToggle={() => setViewMode("imsSpectra")}
-              />
-              <Separator />
-              <ToggleBtn
-                icon={FaDownload}
-                label="Download CSV"
-                onToggle={() => handleDownloadGcCSV()}
-              >          
-              </ToggleBtn>
-              
-              <ToggleBtn
-                icon={FaSlidersH}
-                label="Change Polarity"
-                onToggle={(togglePolarity)}
-              />         
-               
+              </div>
+            </>
+          ) : viewMode === "chromSpectra" ? (
+            <>
+              <Toolbar className={styles.container4}>
+                <ToggleBtn icon={FaTh} label="Grid" onToggle={() => setShowGrid(!showGrid)} />
+                <Separator />
+                <ToggleBtn icon={FaCamera} label="Snap Shot" onToggle={() => handleSnapshotGC()} />
+                <Separator />
+                <ToggleBtn icon={FaMap} label="Heatmap View" onToggle={() => setViewMode("heatmap")} />
+                <ToggleBtn
+                  icon={FaChartArea}
+                  label="IMS Spectra"
+                  onToggle={() => setViewMode("imsSpectra")}
+                />
+                <Separator />
+                <ToggleBtn icon={FaDownload} label="Download CSV" onToggle={handleDownloadGcCSV} />
+                <ToggleBtn icon={FaSlidersH} label="Change Polarity" onToggle={togglePolarity} />
               </Toolbar>
-              <div ref={chromGram} style={{display: "flex", height: "40rem", width: "76rem", backgroundColor: "#fcfcfc", fontSize: 19}}>
+
+              <div
+                ref={chromGram}
+                style={{
+                  display: "flex",
+                  height: "40rem",
+                  width: "76rem",
+                  backgroundColor: "#fcfcfc",
+                  fontSize: 19
+                }}
+              >
                 <LineVis
                   className={styles.container6}
                   dataArray={gcSpectrumData}
@@ -871,33 +860,44 @@ return (
                   curveType="OnlyLine"
                   showGrid={showGrid}
                   title={"GC_IMS Graph" + ": " + titleName}
-                  abscissaParams={{ value: currentPolarity === 0 ? retentionTimes0 : retentionTimes1, label: "Retention Time (s)" }}
+                  abscissaParams={{
+                    value:
+                      currentPolarity === 0 ? retentionTimes0 : retentionTimes1,
+                    label: "Retention Time (s)"
+                  }}
                   ordinateLabel="Ion Current (pA)"
-                  />
+                />
               </div>
-                <div style={{ marginTop: "8px" }}>
-                  <label htmlFor="column-slider" style={{ color: "#fff" , fontSize: 18}}>
-                    Select Spectra Index:
-                  </label>
-                  <input
-                    id="column-slider"
-                    type="range"
-                    min="0"
-                    max={(currentPolarity === 0 ? driftTimes0?.length : driftTimes1?.length) - 1 || 0}
-                    value={selectedGcIndex}
-                    onChange={handleGcSliderChange}
-                  />
-                  <span style={{ color: "#fff", marginLeft: "10px", fontSize: 20 }}>
-                    {(currentPolarity === 0 ? [selectedGcIndex] : [selectedGcIndex])} 
-                  </span>
-                </div> 
-        </>             
-        ) : viewMode === "null" ()}</>  
-        )}   
+
+              <div style={{ marginTop: "8px" }}>
+                <label htmlFor="column-slider" style={{ color: "#000", fontSize: 18 }}>
+                  Select Spectra Index:
+                </label>
+                <input
+                  id="column-slider"
+                  type="range"
+                  min="0"
+                  max={
+                    (currentPolarity === 0
+                      ? driftTimes0?.length
+                      : driftTimes1?.length) - 1 || 0
+                  }
+                  value={selectedGcIndex}
+                  onChange={handleGcSliderChange}
+                />
+                <span style={{ color: "#000", marginLeft: "10px", fontSize: 20 }}>
+                  {currentPolarity === 0
+                    ? [selectedGcIndex]
+                    : [selectedGcIndex]}
+                </span>
+              </div>
+            </>
+          ) : null}
+        </>
+      )}
     </div>
   </div>
-
-  );
+);
 }
 
 
