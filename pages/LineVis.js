@@ -462,11 +462,22 @@ const handleRunPrediction1 = async () => {
     return;
   }
 
-  const fileName =titleName;
+  const fileName = titleName;
   const index = selectedIndex;
-  const pollarity = currentPolarity // Replace with your actual retention index state
-  
+  const pollarity = currentPolarity;
+
   try {
+    // Show loading modal
+    Swal.fire({
+      title: "Running Prediction...",
+      text: "Please wait while we process your request.",
+      allowOutsideClick: false,
+      allowEscapeKey: false,
+      didOpen: () => {
+        Swal.showLoading();
+      },
+    });
+
     const response = await fetch("http://127.0.0.1:8000/api/predict/ims/dpm-model", {
       method: "POST",
       headers: {
@@ -485,11 +496,17 @@ const handleRunPrediction1 = async () => {
 
     const result = await response.json();
     setPredictionResult(result);
-    
-    
+
+    // Close loading after success
+    Swal.close();
+
   } catch (error) {
     console.error("Prediction request failed:", error);
-    alert("Failed to run prediction. See console for details.");
+    Swal.fire({
+      title: "Error",
+      text: "Failed to run prediction. See console for details.",
+      icon: "error",
+    });
   }
 };
 
@@ -533,18 +550,28 @@ useEffect(() => {
   }
 }, [predictionResult]);
 
-
 const handleRunPrediction2 = async () => {
-  if (!titleName) {
+  if (!titleName2) {
     alert("Please upload a file first.");
     return;
   }
 
-  const fileName =titleName2;
+  const fileName = titleName2;
   const index = selectedIndex2;
-  const pollarity = currentPolarity2 
-  
+  const pollarity = currentPolarity2;
+
   try {
+    // Show loading modal
+    Swal.fire({
+      title: "Running Prediction...",
+      text: "Please wait while we process your request.",
+      allowOutsideClick: false,
+      allowEscapeKey: false,
+      didOpen: () => {
+        Swal.showLoading();
+      },
+    });
+
     const response = await fetch("http://127.0.0.1:8000/api/predict/ims/dpm-model", {
       method: "POST",
       headers: {
@@ -562,12 +589,18 @@ const handleRunPrediction2 = async () => {
     }
 
     const result = await response.json();
-    
     setPredictionResult(result);
+
+    // Close loading after success
+    Swal.close();
 
   } catch (error) {
     console.error("Prediction request failed:", error);
-    alert("Failed to run prediction. See console for details.");
+    Swal.fire({
+      title: "Error",
+      text: "Failed to run prediction. See console for details.",
+      icon: "error",
+    });
   }
 };
 

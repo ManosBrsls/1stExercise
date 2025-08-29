@@ -135,7 +135,7 @@ function HeatmapUploader() {
       setTitleName(filename);
 
       const pointsDataset = h5File.get("spectrumPoints");
-      // console.log("metadata:", JSON.stringify(pointsDataset.metadata, null, 2));
+      
       const metadaDataset = h5File.get("spectrumMetadata");
       const headerDataset = h5File.get("spectrumHeader");
 
@@ -143,7 +143,7 @@ function HeatmapUploader() {
       const spectrumMetadata = ndarray(metadaDataset.value, metadaDataset.shape);
       const spectrumPoints = ndarray(pointsDataset.value, pointsDataset.shape);
 
-      console.log("spectrumHeader", spectrumPoints);
+     
       const slope1 = spectrumHeader.data[0][9];
       const offset1 = spectrumHeader.data[0][10];
       const slope2 = spectrumHeader.data[0][11];
@@ -165,7 +165,7 @@ function HeatmapUploader() {
         }
       }
 
-      console.log("Transposed Points:", transposedPoints);
+      
 
       const numRows = transposedPoints.shape[0];
       const numCols = transposedPoints.shape[1];
@@ -610,14 +610,31 @@ const handleDownload = () => {
 
 const handleRunPrediction1 = async () => {
   if (!titleName) {
-    alert("Please upload a file first.");
+    Swal.fire({
+      icon: "warning",
+      title: "No File Uploaded",
+      text: "Please upload a file first.",
+      confirmButtonColor: "#3085d6"
+    });
     return;
   }
 
-  const fileName =titleName;
-  const pollarity = currentPolarity // Replace with your actual retention index state
+  const fileName = titleName;
+  const pollarity = currentPolarity;
 
   try {
+    // === SHOW SWEETALERT LOADING MODAL ===
+    Swal.fire({
+      title: "Running Prediction...",
+      html: "Please wait while we process your data.",
+      allowOutsideClick: false,
+      allowEscapeKey: false,
+      didOpen: () => {
+        Swal.showLoading();
+      }
+    });
+
+    // === SEND POST REQUEST ===
     const response = await fetch("http://127.0.0.1:8000/api/predict/gcims/bwa-model", {
       method: "POST",
       headers: {
@@ -636,9 +653,19 @@ const handleRunPrediction1 = async () => {
     const result = await response.json();
     setPredictionResult(result);
 
+    // === CLOSE LOADING MODAL ON SUCCESS ===
+    Swal.close();
+
   } catch (error) {
     console.error("Prediction request failed:", error);
-    alert("Failed to run prediction. See console for details.");
+
+    // === CLOSE LOADING MODAL AND SHOW ERROR ===
+    Swal.fire({
+      icon: "error",
+      title: "Prediction Failed",
+      text: "An error occurred while running prediction. Please check the console for details.",
+      confirmButtonColor: "#d33"
+    });
   }
 };
 
