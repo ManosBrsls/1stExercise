@@ -516,11 +516,14 @@ useEffect(() => {
   if (predictionResult.red_alert) {
     // === RED ALERT ===
     Swal.fire({
-      title: "⚠ ALERT ⚠",
       html: `
         <div style="text-align: left;">
-          <p><strong>Note:</strong> ${predictionResult.note}</p>
-          <p><strong>Red Alert:</strong> 🚨 YES</p>
+          <p style="font-size: 35px; margin-bottom: 10px;">
+            <strong>Note:</strong> ${predictionResult.note}
+          </p>
+          <p style="font-size: 27px; margin-top: 5px;">
+            <strong>Red Alert:</strong> 🚨 YES
+          </p>
         </div>
       `,
       icon: "error",
@@ -531,13 +534,13 @@ useEffect(() => {
       timer: 1000000000,
     });
   } else {
-    // === ONLY NOTE WITH BLUE INFO ICON ===
+    
     Swal.fire({
-      title: "Information",
       html: `
-        <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
-          <span style="font-size: 22px;">ℹ️</span>
-          <span style="font-size: 16px;"><strong>Note:</strong> ${predictionResult.note}</span>
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;">
+          <span style="font-size: 35px; text-align: center;">
+            <strong>Note:</strong> ${predictionResult.note}
+          </span>
         </div>
       `,
       icon: "info",

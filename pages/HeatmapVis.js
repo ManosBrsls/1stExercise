@@ -679,8 +679,12 @@ useEffect(() => {
       title: "⚠ ALERT ⚠",
       html: `
         <div style="text-align: left;">
-          <p><strong>Note:</strong> ${predictionResult.note}</p>
-          <p><strong>Red Alert:</strong> 🚨 YES</p>
+          <p style="font-size: 35px; margin-bottom: 10px;">
+            <strong>Note:</strong> ${predictionResult.note}
+          </p>
+          <p style="font-size: 27px; margin-top: 5px;">
+            <strong>Red Alert:</strong> 🚨 YES
+          </p>
         </div>
       `,
       icon: "error",
@@ -695,9 +699,10 @@ useEffect(() => {
     Swal.fire({
       title: "Information",
       html: `
-        <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
-          <span style="font-size: 22px;">ℹ️</span>
-          <span style="font-size: 16px;"><strong>Note:</strong> ${predictionResult.note}</span>
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;">
+          <span style="font-size: 35px; text-align: center;">
+            <strong>Note:</strong> ${predictionResult.note}
+          </span>
         </div>
       `,
       icon: "info",
@@ -789,6 +794,20 @@ return (
                     xAxisZoom: false,
                     yAxisZoom: false
                   }}
+                  annotations={[
+                    {
+                      x: retentionTimes[50],  // Example: Retention time index 50
+                      y: driftTimes[120],     // Example: Drift time index 120
+                      label: "High Intensity Region",
+                      color: "red",
+                    },
+                    {
+                      x: retentionTimes[150],
+                      y: driftTimes[250],
+                      label: "Anomaly Detected",
+                      color: "orange",
+                    }
+                  ]}                  
                 />
               </div>
             </>
