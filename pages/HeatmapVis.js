@@ -881,8 +881,8 @@ return (
                   <rect
                     x="5"    // X position of square
                     y="5"    // Y position of square
-                    width="20"  // Width of square
-                    height="20" // Height of square
+                    width="15"  // Width of square
+                    height="15" // Height of square
                     fill="transparent" // or 'white' to fill
                     stroke="white"     // stroke color
                     strokeWidth="2"
