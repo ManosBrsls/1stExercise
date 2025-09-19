@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import ndarray from "ndarray";
 import Swal from "sweetalert2";
-import { HeatmapVis, getDomain, Toolbar, ColorMapSelector,  Separator, ToggleBtn, LineVis } from "@h5web/lib";
+import { HeatmapVis, getDomain, Toolbar, ColorMapSelector,  Separator, ToggleBtn, LineVis, DefaultInteractions, Annotation } from "@h5web/lib";
 import { h5wasmReady, FS, File, configure } from "h5wasm";
 import "@h5web/lib/dist/styles.css";
 import Sidebar from "./posts/Sidebar";
@@ -68,6 +68,17 @@ function HeatmapUploader() {
 
   const togglePolarity = () => {
     const newPol = currentPolarity === 0 ? 1 : 0;
+    const oldPolarityLabel = currentPolarity === 0 ? "NEGATIVE" : "POSITIVE";
+    const newPolarityLabel = newPol === 0 ? "NEGATIVE" : "POSITIVE"; 
+  
+    Swal.fire({
+      icon: "info",
+      title: `Polarity Changed to ${newPolarityLabel}`,
+      timer: 1500, // Auto-close after 1.5 seconds
+      showConfirmButton: false,
+      timerProgressBar: true,
+    });     
+
     setCurrentPolarity(newPol);
 
     if (newPol === 0) {
@@ -478,25 +489,42 @@ function HeatmapUploader() {
   };
 
 
-    const handleViewChange = (newView) => {
-    if (!passwordEntered) {
-     
-      const enteredPassword = prompt("Enter your password:");
+const handleViewChange = async (newView) => {
+  if (!passwordEntered) {
+    const { value: enteredPassword } = await Swal.fire({
+      title: 'Please enter your password',
+      input: 'password',  
+      inputPlaceholder: 'password',
+      inputAttributes: {
+        autocapitalize: 'off',
+        autocorrect: 'off'
+      },
+      showCancelButton: true,
+      confirmButtonText: 'Submit',
+      background: '#000',
+      color: '#fff',
+    });
 
-      if (
-       
-        enteredPassword === correctCredentials.password
-      ) {
+    if (enteredPassword) {
+      if (enteredPassword === correctCredentials.password) {
         setPasswordEntered(true);
         setViewMode(newView);
         setAuthError(null);
       } else {
-        setAuthError("Incorrect password. Access denied.");
+        setAuthError('Incorrect password. Access denied.');
+        Swal.fire({
+          icon: 'error',
+          title: 'Access Denied',
+          text: 'Incorrect password. Please try again.',
+          timer: 2000,
+          showConfirmButton: false
+        });
       }
-    } else {
-      setViewMode(newView);
     }
-  };
+  } else {
+    setViewMode(newView);
+  }
+};
 
 
 
@@ -530,6 +558,15 @@ function HeatmapUploader() {
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
+
+  Swal.fire({
+    icon: 'success',
+    title: '✅ Download started!',
+    timer: 1500,
+    showConfirmButton: false,
+    background: '#000',
+    color: '#fff',
+  });
 };
 
   const handleChromSliderChange = (event) => {
@@ -569,6 +606,15 @@ function HeatmapUploader() {
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
+
+  Swal.fire({
+    icon: 'success',
+    title: '✅ Download started!',
+    timer: 1500,
+    showConfirmButton: false,
+    background: '#000',
+    color: '#fff',
+  });
 };
 
 
@@ -605,6 +651,15 @@ const handleDownload = () => {
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
+
+    Swal.fire({
+      icon: 'success',
+      title: '✅ Download started!',
+      timer: 1500,
+      showConfirmButton: false,
+      background: '#000',
+      color: '#fff',
+    });
 };
 
 
@@ -793,22 +848,49 @@ return (
                     selectToZoom: { modifierKey: "Shift" },
                     xAxisZoom: false,
                     yAxisZoom: false
-                  }}
-                  annotations={[
-                    {
-                      x: retentionTimes[50],  // Example: Retention time index 50
-                      y: driftTimes[120],     // Example: Drift time index 120
-                      label: "High Intensity Region",
-                      color: "red",
-                    },
-                    {
-                      x: retentionTimes[150],
-                      y: driftTimes[250],
-                      label: "Anomaly Detected",
-                      color: "orange",
-                    }
-                  ]}                  
-                />
+                  }}              
+                >
+                <DefaultInteractions />
+                <Annotation
+                  x={100}
+                  y={4}
+                >
+                  <p
+                    style={{
+                      color: 'white',
+                      margin: 0
+                    }}
+                  >
+                    <strong>TMP</strong> (100, 4)
+                  </p>
+                  <svg
+                    fill="transparent"
+                    height="30"
+                    stroke="white"
+                    strokeWidth={2}
+                    style={{
+                      left: 0,
+                      overflow: 'visible',
+                      position: 'absolute',
+                      top: 0,
+                      transform: 'translate(-50%, -50%)',
+                      zIndex: -1
+                    }}
+                    width="30"
+                  >
+                  <rect
+                    x="5"    // X position of square
+                    y="5"    // Y position of square
+                    width="20"  // Width of square
+                    height="20" // Height of square
+                    fill="transparent" // or 'white' to fill
+                    stroke="white"     // stroke color
+                    strokeWidth="2"
+                
+                    />
+                  </svg>
+                </Annotation>
+                </HeatmapVis>               
               </div>
             </>
           ) : viewMode === "imsSpectra" ? (

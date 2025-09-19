@@ -66,6 +66,18 @@ function IMSLineCharts() {
 
     const togglePolarity = () => {
     const newPol = currentPolarity === 0 ? 1 : 0;
+
+    const newPolarityLabel = newPol === 0 ? "NEGATIVE" : "POSITIVE"; 
+  
+    Swal.fire({
+      icon: "info",
+      title: `Polarity Changed to ${newPolarityLabel} chart #1`,
+      timer: 1500, 
+      showConfirmButton: false,
+      timerProgressBar: true,
+    }); 
+
+
     setCurrentPolarity(newPol);
 
     const dataArr = newPol === 0 ? dataArray0 : dataArray1;
@@ -86,6 +98,18 @@ function IMSLineCharts() {
 
     const togglePolarity2 = () => {
     const newPol = currentPolarity2 === 0 ? 1 : 0;
+    
+    
+    const newPolarityLabel = newPol === 0 ? "NEGATIVE" : "POSITIVE"; 
+  
+    Swal.fire({
+      icon: "info",
+      title: `Polarity Changed to ${newPolarityLabel} chart #2`,
+      timer: 1500, 
+      showConfirmButton: false,
+      timerProgressBar: true,
+    });     
+    
     setCurrentPolarity2(newPol);
 
     const dataArr = newPol === 0 ? dataArray2 : dataArray3;
@@ -385,7 +409,6 @@ const handleIMSDataUpload = (filename, buffer) => {
 
 };
 
-
   const handleSnapshotIMS1 = () => {
     if (imsSpectraRef.current) {
       const originalOverflow = imsSpectraRef.current.style.overflow;
@@ -406,15 +429,50 @@ const handleIMSDataUpload = (filename, buffer) => {
     }
   };
 
-const handleDownloadLineData1 = () => {
-  // Ask for password before downloading
-  const enteredPassword = prompt("Enter password to download CSV 1:");
+const handleDownloadLineData1 = async () => {
+  // Ask for password with SweetAlert2 (hidden input)
+  const { value: enteredPassword } = await Swal.fire({
+    title: 'Enter password to download CSV #1',
+    input: 'password', // <== hides characters automatically
+    inputPlaceholder: 'Password',
+    inputAttributes: {
+      autocapitalize: 'off',
+      autocorrect: 'off'
+    },
+    showCancelButton: true,
+    confirmButtonText: 'Download',
+    background: '#000',
+    color: '#fff',
+  });
 
-  if (enteredPassword !== PASSWORD) {
-    alert("❌ Incorrect password. Download canceled.");
+  // If user cancels or enters nothing
+  if (!enteredPassword) {
+    Swal.fire({
+      icon: 'info',
+      title: 'Download canceled',
+      timer: 1500,
+      showConfirmButton: false,
+      background: '#000',
+      color: '#fff',
+    });
     return;
   }
 
+  // Check password
+  if (enteredPassword !== PASSWORD) {
+    Swal.fire({
+      icon: 'error',
+      title: '❌ Incorrect password',
+      text: 'Download canceled.',
+      timer: 2000,
+      showConfirmButton: false,
+      background: '#000',
+      color: '#fff',
+    });
+    return;
+  }
+
+  // If password is correct, continue download
   if (!lineData1 || !driftTimes0) return;
 
   let csv = "Drift Time (ms),Ion Current (pA)\n";
@@ -429,17 +487,63 @@ const handleDownloadLineData1 = () => {
   link.href = URL.createObjectURL(blob);
   link.download = "line_data_chart1.csv";
   link.click();
+
+  // Optional success message
+  Swal.fire({
+    icon: 'success',
+    title: '✅ Download started!',
+    timer: 1500,
+    showConfirmButton: false,
+    background: '#000',
+    color: '#fff',
+  });
 };
 
-const handleDownloadLineData2 = () => {
-  // Ask for password before downloading
-  const enteredPassword = prompt("Enter password to download CSV 2:");
 
-  if (enteredPassword !== PASSWORD) {
-    alert("❌ Incorrect password. Download canceled.");
+const handleDownloadLineData2 = async () => {
+  // Ask for password with SweetAlert2 (hidden input)
+  const { value: enteredPassword } = await Swal.fire({
+    title: 'Enter password to download CSV #2',
+    input: 'password', // <== hides characters automatically
+    inputPlaceholder: 'Password',
+    inputAttributes: {
+      autocapitalize: 'off',
+      autocorrect: 'off'
+    },
+    showCancelButton: true,
+    confirmButtonText: 'Download',
+    background: '#000',
+    color: '#fff',
+  });
+
+  // If user cancels or enters nothing
+  if (!enteredPassword) {
+    Swal.fire({
+      icon: 'info',
+      title: 'Download canceled',
+      timer: 1500,
+      showConfirmButton: false,
+      background: '#000',
+      color: '#fff',
+    });
     return;
   }
 
+  // Check password
+  if (enteredPassword !== PASSWORD) {
+    Swal.fire({
+      icon: 'error',
+      title: '❌ Incorrect password',
+      text: 'Download canceled.',
+      timer: 2000,
+      showConfirmButton: false,
+      background: '#000',
+      color: '#fff',
+    });
+    return;
+  }
+
+  // If password is correct, continue download
   if (!lineData2 || !driftTimes2) return;
 
   let csv = "Drift Time (ms),Ion Current (pA)\n";
@@ -454,7 +558,18 @@ const handleDownloadLineData2 = () => {
   link.href = URL.createObjectURL(blob);
   link.download = "line_data_chart2.csv";
   link.click();
+
+  // Optional success message
+  Swal.fire({
+    icon: 'success',
+    title: '✅ Download started!',
+    timer: 1500,
+    showConfirmButton: false,
+    background: '#000',
+    color: '#fff',
+  });
 };
+
 
 const handleRunPrediction1 = async () => {
   if (!titleName) {

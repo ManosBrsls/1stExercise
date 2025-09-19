@@ -8,27 +8,24 @@ import IMSUploadButton from '../ImsUploadButton';
 import styles from "../../styles/Home.module.css";
 import GCIMSUploadButton from '../GcImsUploadButton';
 
-
-const Sidebar = ({ onIMSDataSelect, onGCIMSDataUpload  }) => {
-  
+const Sidebar = ({ onIMSDataSelect, onGCIMSDataUpload }) => {
   const [gcimsDatasets, setGcimsDatasets] = useState({});
   const [imsDatasets, setImsDatasets] = useState({});
   const [isIMSVisible, setIMSVisible] = useState(false);
   const [isGCIMSVisible, setGCIMSVisible] = useState(false);
   const [sidebarWidth, setSidebarWidth] = useState('auto');
 
-  // Ref to measure the dropdown content width
   const gcImsDropdownRef = useRef(null);
 
+  // Auto-resize sidebar width to fit the longest dropdown content
   useEffect(() => {
-    // Adjust sidebar width based on content when GC IMS dropdown is visible
-    if (isGCIMSVisible && gcImsDropdownRef.current) {
+    if ((isGCIMSVisible || isIMSVisible) && gcImsDropdownRef.current) {
       const dropdownWidth = gcImsDropdownRef.current.scrollWidth;
-      setSidebarWidth(Math.max(150, dropdownWidth + 20) + 'px'); // Ensure min width of 150px
+      setSidebarWidth(Math.max(200, dropdownWidth + 40) + 'px'); // min 200px, add padding
     } else {
-      setSidebarWidth('auto'); // Reset to auto when dropdown is closed
+      setSidebarWidth('auto');
     }
-  }, [isGCIMSVisible, gcimsDatasets]);
+  }, [isGCIMSVisible, isIMSVisible, gcimsDatasets, imsDatasets]);
 
   // Handler for IMS file uploads
   const handleIMSUpload = (filename, buffer) => {
@@ -36,18 +33,12 @@ const Sidebar = ({ onIMSDataSelect, onGCIMSDataUpload  }) => {
       ...prev,
       [filename]: buffer,
     }));
-    // Optionally, pass the updated file list to a parent component
-    // onGCIMSDataSelect(Object.keys(gcimsDatasets)); // if needed
   };
 
   const handleIMSDatasetClick = (filename, chartNumber) => {
     const buffer = imsDatasets[filename];
-    // Call the parent's GC IMS selection handler.
-    // You might want to pass additional info such as the chart number.
     onIMSDataSelect(buffer, chartNumber, filename);
   };
-
-
 
   const handleIMSClick = () => {
     setIMSVisible(!isIMSVisible);
@@ -86,20 +77,20 @@ const Sidebar = ({ onIMSDataSelect, onGCIMSDataUpload  }) => {
                 <span style={dropdownTextStyle}>Upload File</span>
                 <IMSUploadButton onUpload={handleIMSUpload} />
               </a>
-              {/* List uploaded GC IMS files for selection */}
+              {/* List uploaded IMS files */}
               {Object.keys(imsDatasets).map((filename) => (
                 <div key={filename}>
                   <a
                     className={styles.dropdownItem}
                     onClick={() => handleIMSDatasetClick(filename, 1)}
                   >
-                    <span style={dropdownTextStyle}>{filename} - Chart 1</span>
+                    <span style={fileNameLabelStyle}>{filename} - Chart 1</span>
                   </a>
                   <a
                     className={styles.dropdownItem}
                     onClick={() => handleIMSDatasetClick(filename, 2)}
                   >
-                    <span style={dropdownTextStyle}>{filename} - Chart 2</span>
+                    <span style={fileNameLabelStyle}>{filename} - Chart 2</span>
                   </a>
                 </div>
               ))}
@@ -131,9 +122,10 @@ const Sidebar = ({ onIMSDataSelect, onGCIMSDataUpload  }) => {
   );
 };
 
+// styles
 const sidebarStyle = {
-  minWidth: '150px',
-  maxWidth: '300px',
+  minWidth: '200px',
+  maxWidth: '200px', 
   height: '100vh',
   background: 'linear-gradient(135deg, #4c4c4c, #111)',
   padding: '5px',
@@ -147,7 +139,7 @@ const sidebarStyle = {
 const linkStyle = {
   color: '#fff',
   textDecoration: 'none',
-  fontSize: '18px',
+  fontSize: '20px',
   fontWeight: 'bold',
   display: 'flex',
   alignItems: 'center',
@@ -157,14 +149,23 @@ const linkStyle = {
 };
 
 const iconStyle = {
-  marginRight: '8px',
-  fontSize: "78px"
+  marginRight: '6px',
+  fontSize: '120px',
 };
 
 const dropdownTextStyle = {
   flexGrow: 1,
   display: 'flex',
   alignItems: 'center',
+};
+
+// new style for filenames
+const fileNameLabelStyle = {
+  whiteSpace: 'normal',    // allow wrapping
+  wordBreak: 'break-all',  // break long strings
+  display: 'block',        // block for wrapping
+  maxWidth: '100%',
+  color: '#fff',
 };
 
 const dropdownIconStyle = {
@@ -177,3 +178,4 @@ const dropdownIconStyle = {
 };
 
 export default Sidebar;
+
