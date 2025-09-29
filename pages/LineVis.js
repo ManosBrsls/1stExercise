@@ -8,6 +8,7 @@ import html2canvas from "html2canvas";
 import { FaCamera, FaDownload, FaTh, FaSlidersH, FaPlay } from "react-icons/fa";
 import Sidebar from "./posts/Sidebar";
 import styles from "../styles/Home.module.css";
+import domtoimage from "dom-to-image-more";
 import "@h5web/lib/dist/styles.css";
 
 function IMSLineCharts() {
@@ -409,25 +410,31 @@ const handleIMSDataUpload = (filename, buffer) => {
 
 };
 
-  const handleSnapshotIMS1 = () => {
-    if (imsSpectraRef.current) {
-      const originalOverflow = imsSpectraRef.current.style.overflow;
-      imsSpectraRef.current.style.overflow = "visible";
-
-      html2canvas(imsSpectraRef.current, {
-        width: imsSpectraRef.current.scrollWidth,
-        height: imsSpectraRef.current.scrollHeight,
-        scale: 1,
-      }).then((canvas) => {
+const handleSnapshotIMS1 = () => {
+  if (imsSpectraRef.current) {
+    const node = imsSpectraRef.current;
+    const scale = 2;
+    domtoimage.toPng(node, {
+      width: node.offsetWidth * scale,
+      height: node.offsetHeight * scale,
+      style: {
+        transform: `scale(${scale})`,
+        transformOrigin: "top left",
+        width: `${node.offsetWidth}px`,
+        height: `${node.offsetHeight}px`
+      }
+    })
+      .then((dataUrl) => {
         const link = document.createElement("a");
-        link.href = canvas.toDataURL("image/png");
-        link.download = "Ims_Spectra_screenshot.png";
+        link.href = dataUrl;
+        link.download = "IMS_Spectra_screenshot.png";
         link.click();
-
-        imsSpectraRef.current.style.overflow = originalOverflow;
+      })
+      .catch((error) => {
+        console.error("Snapshot failed:", error);
       });
-    }
-  };
+  }
+};
 
 const handleDownloadLineData1 = async () => {
   // Ask for password with SweetAlert2 (hidden input)
@@ -725,15 +732,59 @@ const handleRunPrediction2 = async () => {
 
 
 return (
-  <div className={styles.container2}>
+  <div className={styles.container2} style={{ display: "flex", flexDirection: "row", alignItems: "flex-start" }}>
     <Sidebar onIMSDataUpload={handleIMSDataUpload} onIMSDataSelect={handleIMSDataSelect} />
+
+    {/* Show polarity tags only after data is loaded */}
+    {(lineData1 && lineDomain1 && driftTimes0) && (
+      <div style={{
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "flex-start",
+        alignItems: "flex-start",
+        gap: "10px",
+        marginLeft: "10px",
+        marginTop: "30px",
+        minWidth: "160px"
+      }}>
+        <span
+          style={{
+            padding: "6px 14px",
+            borderRadius: "14px",
+            background: currentPolarity === 0 ? "#ff4081" : "#007bff",
+            color: "#fff",
+            fontWeight: "bold",
+            fontSize: "1rem",
+            marginBottom: "6px",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.08)"
+          }}
+        >
+          Chart 1 Polarity: {currentPolarity === 0 ? "NEGATIVE" : "POSITIVE"}
+        </span>
+        {lineData2 && (
+          <span
+            style={{
+              padding: "6px 14px",
+              borderRadius: "14px",
+              background: currentPolarity2 === 0 ? "#ff4081" : "#007bff",
+              color: "#fff",
+              fontWeight: "bold",
+              fontSize: "1rem",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.08)"
+            }}
+          >
+            Chart 2 Polarity: {currentPolarity2 === 0 ? "NEGATIVE" : "POSITIVE"}
+          </span>
+        )}
+      </div>
+    )}
 
     <div
       className={styles.card}
       style={{
         borderRadius: "40px",
         backgroundColor: "#fcfcfc",
-        marginLeft: "200px",
+        marginLeft: "20px",
         cursor: "pointer"
       }}
     >
@@ -771,6 +822,7 @@ return (
               fontSize: 19
             }}
           >
+            {/* Polarity tags inside the card removed */}
             <LineVis
               className={styles.container6}
               dataArray={lineData1}
@@ -782,7 +834,8 @@ return (
               title={"IMS Spectrum" + ": " +  titleName}
               abscissaParams={{ value: driftTimes0, label: "Drift Time (msec)" }}
               ordinateLabel="Ion Current pA"
-            />
+            >
+            </LineVis>
             {lineData2 && lineDomain2 && driftTimes2 && (
               <LineVis
                 className={styles.container7}
@@ -795,7 +848,8 @@ return (
                 title={"IMS Spectrum" + ": " +  titleName2}
                 abscissaParams={{ value: driftTimes2, label: "Drift Time (msec)" }}
                 ordinateLabel="Ion Current pA"
-              />
+              >
+              </LineVis>
             )}
           </div>
 

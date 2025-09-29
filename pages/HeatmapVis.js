@@ -10,6 +10,7 @@ import styles from "../styles/Home.module.css";
 import { FaCamera, FaChartArea, FaDownload, FaMap, FaTh, FaChartLine, FaSlidersH, FaPlay} from "react-icons/fa";
 import "@fortawesome/fontawesome-svg-core/styles.css";
 import html2canvas from "html2canvas";
+import domtoimage from "dom-to-image-more";
 
 
 function HeatmapUploader() {
@@ -427,66 +428,85 @@ function HeatmapUploader() {
 
 
 
-    const handleSnapshot = () => {
-    if (heatmapRef.current) {
-      const originalOverflow = heatmapRef.current.style.overflow;
-      heatmapRef.current.style.overflow = "visible";
-
-      html2canvas(heatmapRef.current, {
-        width: heatmapRef.current.scrollWidth,
-        height: heatmapRef.current.scrollHeight,
-        scale: 2,
-      }).then((canvas) => {
+const handleSnapshot = () => {
+  if (heatmapRef.current) {
+    const node = heatmapRef.current;
+    // Set your desired scale factor (e.g., 2 for 2x resolution)
+    const scale = 2;
+    domtoimage.toPng(node, {
+      width: node.offsetWidth * scale,
+      height: node.offsetHeight * scale,
+      style: {
+        transform: `scale(${scale})`,
+        transformOrigin: "top left",
+        width: `${node.offsetWidth}px`,
+        height: `${node.offsetHeight}px`
+      }
+    })
+      .then((dataUrl) => {
         const link = document.createElement("a");
-        link.href = canvas.toDataURL("image/png");
-        link.download = "heatmap_screenshot.png";
+        link.href = dataUrl;
+        link.download = "Heatmap_screenshot.png";
         link.click();
-
-        heatmapRef.current.style.overflow = originalOverflow;
+      })
+      .catch((error) => {
+        console.error("Snapshot failed:", error);
       });
-    }
-  };
+  }
+};
 
 
-    const handleSnapshotIMS = () => {
-    if (imsSpectra.current) {
-      const originalOverflow = imsSpectra.current.style.overflow;
-      imsSpectra.current.style.overflow = "visible";
-
-      html2canvas(imsSpectra.current, {
-        width: imsSpectra.current.scrollWidth,
-        height: imsSpectra.current.scrollHeight,
-        scale: 1,
-      }).then((canvas) => {
+const handleSnapshotIMS = () => {
+  if (imsSpectra.current) {
+    const node = imsSpectra.current;
+    const scale = 2;
+    domtoimage.toPng(node, {
+      width: node.offsetWidth * scale,
+      height: node.offsetHeight * scale,
+      style: {
+        transform: `scale(${scale})`,
+        transformOrigin: "top left",
+        width: `${node.offsetWidth}px`,
+        height: `${node.offsetHeight}px`
+      }
+    })
+      .then((dataUrl) => {
         const link = document.createElement("a");
-        link.href = canvas.toDataURL("image/png");
-        link.download = "Ims_Spectra_screenshot.png";
+        link.href = dataUrl;
+        link.download = "IMS_Spectra_screenshot.png";
         link.click();
-
-        imsSpectra.current.style.overflow = originalOverflow;
+      })
+      .catch((error) => {
+        console.error("Snapshot failed:", error);
       });
-    }
-  };
+  }
+};
 
-  const handleSnapshotGC = () => {
-    if (chromGram.current) {
-      const originalOverflow = chromGram.current.style.overflow;
-      chromGram.current.style.overflow = "visible";
-
-      html2canvas(chromGram.current, {
-        width: chromGram.current.scrollWidth,
-        height: chromGram.current.scrollHeight,
-        scale: 1,
-      }).then((canvas) => {
+const handleSnapshotGC = () => {
+  if (chromGram.current) {
+    const node = chromGram.current;
+    const scale = 2;
+    domtoimage.toPng(node, {
+      width: node.offsetWidth * scale,
+      height: node.offsetHeight * scale,
+      style: {
+        transform: `scale(${scale})`,
+        transformOrigin: "top left",
+        width: `${node.offsetWidth}px`,
+        height: `${node.offsetHeight}px`
+      }
+    })
+      .then((dataUrl) => {
         const link = document.createElement("a");
-        link.href = canvas.toDataURL("image/png");
-        link.download = "GC_Spectra_screenshot.png";
+        link.href = dataUrl;
+        link.download = "Chrom_Spectra_screenshot.png";
         link.click();
-
-        chromGram.current.style.overflow = originalOverflow;
+      })
+      .catch((error) => {
+        console.error("Snapshot failed:", error);
       });
-    }
-  };
+  }
+};
 
 
 const handleViewChange = async (newView) => {
@@ -850,46 +870,6 @@ return (
                     yAxisZoom: false
                   }}              
                 >
-                <DefaultInteractions />
-                <Annotation
-                  x={100}
-                  y={4}
-                >
-                  <p
-                    style={{
-                      color: 'white',
-                      margin: 0
-                    }}
-                  >
-                    <strong>TMP</strong> (100, 4)
-                  </p>
-                  <svg
-                    fill="transparent"
-                    height="30"
-                    stroke="white"
-                    strokeWidth={2}
-                    style={{
-                      left: 0,
-                      overflow: 'visible',
-                      position: 'absolute',
-                      top: 0,
-                      transform: 'translate(-50%, -50%)',
-                      zIndex: -1
-                    }}
-                    width="30"
-                  >
-                  <rect
-                    x="5"    // X position of square
-                    y="5"    // Y position of square
-                    width="15"  // Width of square
-                    height="15" // Height of square
-                    fill="transparent" // or 'white' to fill
-                    stroke="white"     // stroke color
-                    strokeWidth="2"
-                
-                    />
-                  </svg>
-                </Annotation>
                 </HeatmapVis>               
               </div>
             </>
