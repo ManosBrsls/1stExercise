@@ -53,12 +53,24 @@
   margin-top: 3rem;
 }
 
+.centerScreen {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh; /* Full viewport height */
+  width: 100vw;      /* Full viewport width */
+}
+
 .card {
   align-items: center;
+  align-content: center;
+  justify-content: center;
+  
   margin-top: "15rem";
   width: "1650rem";
   height: 45rem;
   flex-basis: 45%;
+   max-width: 90vw;
   padding: 1.5rem;
   text-align: left;
   /* color: inherit; */

@@ -3,13 +3,13 @@ import React, { useState, useRef, useEffect } from "react";
 import Swal from "sweetalert2";
 import { File, FS, h5wasmReady } from "h5wasm";
 import ndarray from "ndarray";
-import { getDomain, LineVis, Toolbar, ToggleBtn, Separator } from "@h5web/lib";
-import html2canvas from "html2canvas";
+import { getDomain, LineVis, Toolbar, ToggleBtn, Separator, Overlay, Tooltip } from "@h5web/lib";
 import { FaCamera, FaDownload, FaTh, FaSlidersH, FaPlay } from "react-icons/fa";
 import Sidebar from "./posts/Sidebar";
 import styles from "../styles/Home.module.css";
 import domtoimage from "dom-to-image-more";
 import "@h5web/lib/dist/styles.css";
+
 
 function IMSLineCharts() {
   const [titleName, setTitleName] = useState("GC-IMS Heatmap");
@@ -732,53 +732,19 @@ const handleRunPrediction2 = async () => {
 
 
 return (
-  <div className={styles.container2} style={{ display: "flex", flexDirection: "row", alignItems: "flex-start" }}>
+  <div     className={styles.container2}
+    style={{
+      display: "flex",
+      flexDirection: "row",
+      alignItems: "center", // vertically center children
+      height: "100vh",      // full viewport height
+      width: "100vw"
+    }}
+  >
     <Sidebar onIMSDataUpload={handleIMSDataUpload} onIMSDataSelect={handleIMSDataSelect} />
-
-    {/* Show polarity tags only after data is loaded */}
-    {(lineData1 && lineDomain1 && driftTimes0) && (
-      <div style={{
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "flex-start",
-        alignItems: "flex-start",
-        gap: "10px",
-        marginLeft: "10px",
-        marginTop: "30px",
-        minWidth: "160px"
-      }}>
-        <span
-          style={{
-            padding: "6px 14px",
-            borderRadius: "14px",
-            background: currentPolarity === 0 ? "#ff4081" : "#007bff",
-            color: "#fff",
-            fontWeight: "bold",
-            fontSize: "1rem",
-            marginBottom: "6px",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.08)"
-          }}
-        >
-          Chart 1 Polarity: {currentPolarity === 0 ? "NEGATIVE" : "POSITIVE"}
-        </span>
-        {lineData2 && (
-          <span
-            style={{
-              padding: "6px 14px",
-              borderRadius: "14px",
-              background: currentPolarity2 === 0 ? "#ff4081" : "#007bff",
-              color: "#fff",
-              fontWeight: "bold",
-              fontSize: "1rem",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.08)"
-            }}
-          >
-            Chart 2 Polarity: {currentPolarity2 === 0 ? "NEGATIVE" : "POSITIVE"}
-          </span>
-        )}
-      </div>
-    )}
-
+    <div
+      className={styles.centerScreen}
+    >
     <div
       className={styles.card}
       style={{
@@ -822,7 +788,6 @@ return (
               fontSize: 19
             }}
           >
-            {/* Polarity tags inside the card removed */}
             <LineVis
               className={styles.container6}
               dataArray={lineData1}
@@ -835,6 +800,29 @@ return (
               abscissaParams={{ value: driftTimes0, label: "Drift Time (msec)" }}
               ordinateLabel="Ion Current pA"
             >
+            <Overlay
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: '100%',
+                width: '100%',
+                pointerEvents: 'none', // lets pointer events through
+                background: 'none' // removes background
+              }}
+            >
+            <div
+              style={{
+                textAlign: 'center',
+                fontSize: '1.3rem',
+                fontWeight: 'bold',
+                color: currentPolarity === 0 ? "#ff0000" : "#007bff",
+                background: 'none'
+              }}
+            >
+              Chart 1 Polarity: <br /> {currentPolarity === 0 ? "NEGATIVE" : "POSITIVE"}
+            </div>
+            </Overlay>
             </LineVis>
             {lineData2 && lineDomain2 && driftTimes2 && (
               <LineVis
@@ -849,6 +837,29 @@ return (
                 abscissaParams={{ value: driftTimes2, label: "Drift Time (msec)" }}
                 ordinateLabel="Ion Current pA"
               >
+            <Overlay
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: '100%',
+                width: '100%',
+                pointerEvents: 'none', // lets pointer events through
+                background: 'none' // removes background
+              }}
+            >
+            <div
+              style={{
+                textAlign: 'center',
+                fontSize: '1.3rem',
+                fontWeight: 'bold',
+                color: currentPolarity2 === 0 ? "#ff0000" : "#007bff",
+                background: 'none'
+              }}
+            >
+              Chart 2 Polarity: <br /> {currentPolarity2 === 0 ? "NEGATIVE" : "POSITIVE"}
+            </div>
+            </Overlay>                
               </LineVis>
             )}
           </div>
@@ -909,6 +920,7 @@ return (
           </div>
         </>
       )}
+      </div>
     </div>
   </div>
 );
