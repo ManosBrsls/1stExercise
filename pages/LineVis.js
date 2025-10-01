@@ -729,8 +729,6 @@ const handleRunPrediction2 = async () => {
   }
 };
 
-
-
 return (
   <div     className={styles.container2}
     style={{
@@ -803,8 +801,8 @@ return (
             <Overlay
               style={{
                 display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
+                alignItems: 'right',
+                justifyContent: 'right',
                 height: '100%',
                 width: '100%',
                 pointerEvents: 'none', // lets pointer events through
@@ -820,7 +818,7 @@ return (
                 background: 'none'
               }}
             >
-              Chart 1 Polarity: <br /> {currentPolarity === 0 ? "NEGATIVE" : "POSITIVE"}
+              Chart 1 Polarity <br /> {currentPolarity === 0 ? "NEGATIVE" : "POSITIVE"}
             </div>
             </Overlay>
             </LineVis>
@@ -840,8 +838,8 @@ return (
             <Overlay
               style={{
                 display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
+                alignItems: 'right',
+                justifyContent: 'right',
                 height: '100%',
                 width: '100%',
                 pointerEvents: 'none', // lets pointer events through
@@ -857,7 +855,7 @@ return (
                 background: 'none'
               }}
             >
-              Chart 2 Polarity: <br /> {currentPolarity2 === 0 ? "NEGATIVE" : "POSITIVE"}
+              Chart 2 Polarity <br /> {currentPolarity2 === 0 ? "NEGATIVE" : "POSITIVE"}
             </div>
             </Overlay>                
               </LineVis>
