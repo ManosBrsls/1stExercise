@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import ndarray from "ndarray";
 import Swal from "sweetalert2";
-import { HeatmapVis, getDomain, Toolbar, ColorMapSelector,  Separator, ToggleBtn, LineVis, DefaultInteractions, Annotation } from "@h5web/lib";
+import { HeatmapVis, getDomain, Toolbar, ColorMapSelector,  Separator, ToggleBtn, LineVis, Overlay } from "@h5web/lib";
 import { h5wasmReady, FS, File, configure } from "h5wasm";
 import "@h5web/lib/dist/styles.css";
 import Sidebar from "./posts/Sidebar";
@@ -792,16 +792,28 @@ useEffect(() => {
 
 
 return (
-  <div className={styles.container2}>
+  <div className={styles.container2}
+      style={{
+      display: "flex",
+      flexDirection: "row",
+      alignItems: "center", // vertically center children
+      height: "100vh",      // full viewport height
+      width: "100vw"
+    }}
+  >
     <Sidebar onGCIMSDataUpload={handleGCIMSDataUpload} />
+    <div
+      className={styles.centerScreen}
+    >
     <div
       className={styles.card}
       style={{
-        borderRadius: "30px",
+        borderRadius: "40px",
         backgroundColor: "#fcfcfc",
-        marginLeft: "150px",
+        marginLeft: "20px",
         cursor: "pointer"
       }}
+      
     >
       {!heatmapData || !heatmapDomain ? (
         <div style={{ textAlign: "center", padding: "3rem", fontSize: "1.5rem", color: "#555" }}>
@@ -870,7 +882,30 @@ return (
                     yAxisZoom: false
                   }}              
                 >
-                </HeatmapVis>               
+              <Overlay
+                style={{
+                  display: 'flex',
+                  alignItems: 'top',
+                  justifyContent: 'center',
+                  height: '100%',
+                  width: '100%',
+                  pointerEvents: 'none', // lets pointer events through
+                  background: 'none' // removes background
+                }}
+            >
+            <div
+              style={{
+                textAlign: 'center',
+                fontSize: '1.3rem',
+                fontWeight: 'bold',
+                color: currentPolarity === 0 ? "#000000" : "#00ff00",
+                background: 'none'
+              }}
+            >
+              Chart 1 Polarity <br /> {currentPolarity === 0 ? "NEGATIVE" : "POSITIVE"}
+            </div>
+            </Overlay>
+            </HeatmapVis>               
               </div>
             </>
           ) : viewMode === "imsSpectra" ? (
@@ -912,7 +947,31 @@ return (
                   title={"IMS Graph" + ": " + titleName}
                   abscissaParams={{ value: driftTimes, label: "Drift Time (ms)" }}
                   ordinateLabel="Ion Current pA"
-                />
+                >
+                <Overlay
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'right',
+                    height: '100%',
+                    width: '100%',
+                    pointerEvents: 'none', // lets pointer events through
+                    background: 'none' // removes background
+                  }}
+                >
+                <div
+                  style={{
+                    textAlign: 'center',
+                    fontSize: '1.3rem',
+                    fontWeight: 'bold',
+                    color: currentPolarity === 0 ? "#ff0000" : "#007bff",
+                    background: 'none'
+                  }}
+                >
+                  Chart 1 Polarity <br /> {currentPolarity === 0 ? "NEGATIVE" : "POSITIVE"}
+                </div>
+                </Overlay>                  
+              </LineVis>
               </div>
 
               <div style={{ marginTop: "8px" }}>
@@ -974,7 +1033,31 @@ return (
                     label: "Retention Time (s)"
                   }}
                   ordinateLabel="Ion Current (pA)"
-                />
+                >
+                <Overlay
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'right',
+                    height: '100%',
+                    width: '100%',
+                    pointerEvents: 'none', // lets pointer events through
+                    background: 'none' // removes background
+                  }}
+                >
+                <div
+                  style={{
+                    textAlign: 'center',
+                    fontSize: '1.3rem',
+                    fontWeight: 'bold',
+                    color: currentPolarity === 0 ? "#ff0000" : "#007bff",
+                    background: 'none'
+                  }}
+                >
+                  Chart 1 Polarity <br /> {currentPolarity === 0 ? "NEGATIVE" : "POSITIVE"}
+                </div>
+                </Overlay>                
+                </LineVis>
               </div>
 
               <div style={{ marginTop: "8px" }}>
@@ -1003,6 +1086,7 @@ return (
           ) : null}
         </>
       )}
+      </div>
     </div>
   </div>
 );

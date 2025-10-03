@@ -801,7 +801,7 @@ return (
             <Overlay
               style={{
                 display: 'flex',
-                alignItems: 'right',
+                alignItems: 'center',
                 justifyContent: 'right',
                 height: '100%',
                 width: '100%',
@@ -838,7 +838,7 @@ return (
             <Overlay
               style={{
                 display: 'flex',
-                alignItems: 'right',
+                alignItems: 'center',
                 justifyContent: 'right',
                 height: '100%',
                 width: '100%',
