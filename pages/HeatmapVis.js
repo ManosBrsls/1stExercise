@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import ndarray from "ndarray";
 import Swal from "sweetalert2";
-import { HeatmapVis, getDomain, Toolbar, ColorMapSelector,  Separator, ToggleBtn, LineVis, Overlay } from "@h5web/lib";
+import { HeatmapVis, getDomain, Toolbar, ColorMapSelector,  Separator, ToggleBtn, LineVis, Overlay, Annotation } from "@h5web/lib";
 import { h5wasmReady, FS, File, configure } from "h5wasm";
 import "@h5web/lib/dist/styles.css";
 import Sidebar from "./posts/Sidebar";
@@ -682,6 +682,7 @@ const handleDownload = () => {
     });
 };
 
+const [predictions, setPredictions] = useState([]);
 
 const handleRunPrediction1 = async () => {
   if (!titleName) {
@@ -696,6 +697,7 @@ const handleRunPrediction1 = async () => {
 
   const fileName = titleName;
   const pollarity = currentPolarity;
+  
 
   try {
     // === SHOW SWEETALERT LOADING MODAL ===
@@ -726,7 +728,7 @@ const handleRunPrediction1 = async () => {
     }
 
     const result = await response.json();
-    setPredictionResult(result);
+    setPredictions(result.points || []);
 
     // === CLOSE LOADING MODAL ON SUCCESS ===
     Swal.close();
@@ -905,6 +907,23 @@ return (
               Chart 1 Polarity <br /> {currentPolarity === 0 ? "NEGATIVE" : "POSITIVE"}
             </div>
             </Overlay>
+            {predictions.map((p, i) => (
+              <Annotation
+                key={i}
+                x={p.x}
+                y={p.y}
+                style={{
+                  background: 'rgba(255,255,255,0.8)',
+                  borderRadius: '4px',
+                  padding: '2px 5px',
+                  fontSize: '0.85rem',
+                  fontWeight: '600',
+                  color: '#222'
+                }}
+              >
+                {p.name}
+              </Annotation>
+            ))}
             </HeatmapVis>               
               </div>
             </>
