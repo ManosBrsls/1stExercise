@@ -633,47 +633,135 @@ const handleRunPrediction1 = async () => {
 };
 
 useEffect(() => {
-  if (!predictionResult) return; // ⛔ No response yet, stop here
+  if (!predictionResult) return;
 
-  if (predictionResult.red_alert) {
-    // === RED ALERT ===
-    Swal.fire({
-      html: `
-        <div style="text-align: left;">
-          <p style="font-size: 35px; margin-bottom: 10px;">
-            <strong>Note:</strong> ${predictionResult.note}
-          </p>
-          <p style="font-size: 27px; margin-top: 5px;">
-            <strong>Red Alert:</strong> 🚨 YES
-          </p>
+  const {
+    note,
+    red_alert,
+    cas_number,
+    ghs_label,
+    pictogram_url,
+    nfpa
+  } = predictionResult;
+
+  // Build NFPA 704 display if data exists
+  const nfpaHTML = nfpa
+    ? `
+      <div style="display: flex; align-items: center; justify-content: center; margin-top: 10px;">
+        <div style="display: grid; grid-template-columns: repeat(3, 40px); transform: rotate(45deg);">
+          
+          <!-- Health (Blue, left) -->
+          <div style="
+            grid-column: 1; grid-row: 2;
+            background: #0047ab;
+            color: #fff;
+            font-weight: bold;
+            text-align: center;
+            justify-content: center;
+            line-height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          ">
+            <span style="transform: rotate(-45deg); display: inline-block;">${nfpa.health ?? ""}</span>
+          </div>
+
+          <!-- Flammability (Red, top) -->
+          <div style="
+            grid-column: 1; grid-row: 1;
+            background: #ff0000;
+            color: #fff;
+            font-weight: bold;
+            text-align: center;
+            justify-content: center;
+            line-height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          ">
+            <span style="transform: rotate(-45deg); display: inline-block;">${nfpa.flammability ?? ""}</span>
+          </div>
+
+          <!-- Instability (Yellow, right) -->
+          <div style="
+            grid-column: 2; grid-row: 1;
+            background: #ffff00;
+            color: #000;
+            font-weight: bold;
+            text-align: center;
+            justify-content: center;
+            line-height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          ">
+            <span style="transform: rotate(-45deg); display: inline-block;">${nfpa.instability ?? ""}</span>
+          </div>
+
+          <!-- Special (White, bottom) -->
+          <div style="
+            grid-column: 2; grid-row: 2;
+            background: #fff;
+            color: #000;
+            font-weight: bold;
+            text-align: center;
+            justify-content: center;
+            line-height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #000;
+          ">
+            <span style="transform: rotate(-45deg); display: inline-block;">${nfpa.special ?? "W"}</span>
+          </div>
+
         </div>
-      `,
-      icon: "error",
-      background: "#000",
-      color: "#fff",
-      confirmButtonText: "OK",
-      confirmButtonColor: "#ff0000",
-      timer: 1000000000,
-    });
-  } else {
-    
-    Swal.fire({
-      html: `
-        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;">
-          <span style="font-size: 35px; text-align: center;">
-            <strong>Note:</strong> ${predictionResult.note}
-          </span>
-        </div>
-      `,
-      icon: "info",
-      background: "#000",
-      color: "#fff",
-      confirmButtonColor: "#3085d6",
-      confirmButtonText: "OK",
-      timer: 1000000000,
-    });
-  }
+      </div>
+    `
+    : "";
+
+  // Build pictogram if available
+const pictogramHTML = pictogram_url
+  ? `
+    <div style="
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 10px;
+      justify-content: flex-start;
+    ">
+      <div style="font-weight: bold; min-width: 140px;">Pictogram:</div>
+      <img 
+        src="${pictogram_url}" 
+        alt="GHS pictogram" 
+        style="align-items: center; width: 70px; height: 70px; object-fit: contain;   padding: 4px;" 
+      />
+    </div>
+  `
+  : "";
+
+  // === Base popup styling ===
+  const baseHTML = `
+    <div style="text-align: left; font-size: 20px; display: flex; flex-direction: column; gap: 10px;">
+      <p><strong>Note:</strong> ${note}</p>
+      ${cas_number ? `<p><strong>CAS Number:</strong> ${cas_number}</p>` : ""}
+      ${ghs_label ? `<p><strong>GHS Labelling:</strong> ${ghs_label}</p>` : ""}
+      ${pictogramHTML}
+      ${nfpaHTML}
+    </div>
+  `;
+
+  Swal.fire({
+    html: baseHTML,
+    icon: red_alert ? "error" : "info",
+    background: "#000",
+    color: "#fff",
+    confirmButtonColor: red_alert ? "#ff0000" : "#3085d6",
+    confirmButtonText: "OK",
+    timer: 1000000000
+  });
 }, [predictionResult]);
+
 
 const handleRunPrediction2 = async () => {
   if (!titleName2) {

@@ -453,3 +453,51 @@
   font-weight: bold;
   color: orange;
 }
+
+.logoContainer2 {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 5px;
+}
+
+.logo2 {
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.cardsContainer2 {
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+  gap: 10px;
+  flex-wrap: wrap;
+  
+}
+
+.card2 {
+  background-color: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  width: 400px;
+  text-align: center;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card2:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+}
+
+.card2 h2 {
+  color: #004b87;
+  margin-bottom: 10px;
+  font-size: 1.3rem;
+}
+
+.card2 p {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: #333;
+}
