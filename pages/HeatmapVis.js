@@ -826,7 +826,7 @@ return (
           {viewMode === "heatmap" ? (
             <>
               <Toolbar className={styles.container4}>
-                <ToggleBtn icon={FaPlay} label="Run Prediction" onToggle={handleRunPrediction1} />
+                <ToggleBtn icon={FaPlay} label="Automated data analysis" onToggle={handleRunPrediction1} />
                 <ColorMapSelector
                   className={styles.container4}
                   onInversionChange={() => setInvertColorMap(!invertColorMap)}

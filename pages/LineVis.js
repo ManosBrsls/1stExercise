@@ -15,6 +15,7 @@ function IMSLineCharts() {
   const [titleName, setTitleName] = useState("GC-IMS Heatmap");
   const [titleName2, setTitleName2] = useState("GC-IMS Heatmap");
   const [predictionResult, setPredictionResult] = useState(null);
+  const [scanNumber, setScanNumber] = useState(0);
 
   const [dataArray2, setDataArray2] = useState(null); // file 2, polarity 0
   const [dataArray3, setDataArray3] = useState(null); // file 2, polarity 1
@@ -618,6 +619,7 @@ const handleRunPrediction1 = async () => {
 
     const result = await response.json();
     setPredictionResult(result);
+    setScanNumber(prev => prev + 1);
 
     // Close loading after success
     Swal.close();
@@ -638,129 +640,180 @@ useEffect(() => {
   const {
     note,
     red_alert,
+    orange_alert,
     cas_number,
-    ghs_label,
+    accuracy,
     pictogram_url,
     nfpa
   } = predictionResult;
 
-  // Build NFPA 704 display if data exists
-  const nfpaHTML = nfpa
-    ? `
-      <div style="display: flex; align-items: center; justify-content: center; margin-top: 10px;">
-        <div style="display: grid; grid-template-columns: repeat(3, 40px); transform: rotate(45deg);">
-          
-          <!-- Health (Blue, left) -->
-          <div style="
-            grid-column: 1; grid-row: 2;
-            background: #0047ab;
-            color: #fff;
-            font-weight: bold;
-            text-align: center;
-            justify-content: center;
-            line-height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-          ">
-            <span style="transform: rotate(-45deg); display: inline-block;">${nfpa.health ?? ""}</span>
-          </div>
-
-          <!-- Flammability (Red, top) -->
-          <div style="
-            grid-column: 1; grid-row: 1;
-            background: #ff0000;
-            color: #fff;
-            font-weight: bold;
-            text-align: center;
-            justify-content: center;
-            line-height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-          ">
-            <span style="transform: rotate(-45deg); display: inline-block;">${nfpa.flammability ?? ""}</span>
-          </div>
-
-          <!-- Instability (Yellow, right) -->
-          <div style="
-            grid-column: 2; grid-row: 1;
-            background: #ffff00;
-            color: #000;
-            font-weight: bold;
-            text-align: center;
-            justify-content: center;
-            line-height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-          ">
-            <span style="transform: rotate(-45deg); display: inline-block;">${nfpa.instability ?? ""}</span>
-          </div>
-
-          <!-- Special (White, bottom) -->
-          <div style="
-            grid-column: 2; grid-row: 2;
-            background: #fff;
-            color: #000;
-            font-weight: bold;
-            text-align: center;
-            justify-content: center;
-            line-height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 1px solid #000;
-          ">
-            <span style="transform: rotate(-45deg); display: inline-block;">${nfpa.special ?? "W"}</span>
-          </div>
-
-        </div>
-      </div>
-    `
-    : "";
-
-  // Build pictogram if available
-const pictogramHTML = pictogram_url
-  ? `
-    <div style="
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-top: 10px;
-      justify-content: flex-start;
-    ">
-      <div style="font-weight: bold; min-width: 140px;">Pictogram:</div>
-      <img 
-        src="${pictogram_url}" 
-        alt="GHS pictogram" 
-        style="align-items: center; width: 70px; height: 70px; object-fit: contain;   padding: 4px;" 
-      />
-    </div>
-  `
-  : "";
-
-  // === Base popup styling ===
-  const baseHTML = `
-    <div style="text-align: left; font-size: 20px; display: flex; flex-direction: column; gap: 10px;">
-      <p><strong>Note:</strong> ${note}</p>
-      ${cas_number ? `<p><strong>CAS Number:</strong> ${cas_number}</p>` : ""}
-      ${ghs_label ? `<p><strong>GHS Labelling:</strong> ${ghs_label}</p>` : ""}
-      ${pictogramHTML}
-      ${nfpaHTML}
-    </div>
-  `;
+  // ====== DATE + TIME ======
+  const now = new Date();
+  const dateStr = now.toLocaleDateString("en-GB");
+  const timeStr = now.toLocaleTimeString("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit"
+  });
 
   Swal.fire({
-    html: baseHTML,
-    icon: red_alert ? "error" : "info",
-    background: "#000",
-    color: "#fff",
-    confirmButtonColor: red_alert ? "#ff0000" : "#3085d6",
+    html: `
+      <div style="
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 25px;
+        font-family: Arial, sans-serif;
+        position: relative;
+      ">
+
+        <!-- TOP RIGHT DATE + TIME + SCAN -->
+        <div style="
+          position: absolute;
+          top: 0;
+          right: 10px;
+          text-align: right;
+          font-size: 16px;
+          line-height: 1.3;
+        ">
+          Scan ${scanNumber}
+          <br>${dateStr}
+          <br>${timeStr}
+        </div>
+
+        <!-- ICON (red/orange/green) -->
+        ${
+          red_alert
+            ? `
+              <!-- RED TRIANGLE WARNING -->
+              <div style="margin-top: 10px;">
+                <svg width="95" height="95" viewBox="0 0 100 100" style="display:block;margin:0 auto;">
+                  <path d="M50 5 L95 85 H5 Z" fill="#c00000" stroke="#c00000" stroke-width="4" />
+                  <line x1="50" y1="28" x2="50" y2="55"
+                        stroke="white" stroke-width="10" stroke-linecap="round" />
+                  <circle cx="50" cy="72" r="7" fill="white"/>
+                </svg>
+              </div>
+            `
+            : orange_alert
+              ? `
+                <!-- ORANGE TRIANGLE WARNING -->
+                <div style="margin-top: 10px;">
+                  <svg width="95" height="95" viewBox="0 0 100 100" style="display:block;margin:0 auto;">
+                    <path d="M50 5 L95 85 H5 Z" fill="#ff9900" stroke="#ff9900" stroke-width="4" />
+                    <line x1="50" y1="28" x2="50" y2="55"
+                          stroke="white" stroke-width="10" stroke-linecap="round" />
+                    <circle cx="50" cy="72" r="7" fill="white"/>
+                  </svg>
+                </div>
+              `
+              : `
+                <!-- GREEN INFO -->
+                <div style="margin-top: 10px;">
+                  <svg width="95" height="95" viewBox="0 0 100 100" style="display:block;margin:0 auto;">
+                    <circle cx="50" cy="50" r="45" fill="#00aa00" />
+                    <text x="50" y="63" text-anchor="middle"
+                          font-size="55" font-weight="bold"
+                          fill="white" font-family="Arial">i</text>
+                  </svg>
+                </div>
+              `
+        }
+
+        <!-- NOTE -->
+        <div style="
+          font-size: 36px;
+          font-weight: bold;
+          text-align: center;
+        ">
+          ${note}
+        </div>
+
+        <!-- CAS + Accuracy -->
+        <div style="
+          width: 100%;
+          max-width: 420px;
+          font-size: 18px;
+          text-align: left;
+        ">
+          ${cas_number ? `N° CAS : <b>${cas_number}</b><br>` : ""}
+          ${accuracy ? `${accuracy} % accuracy` : ""}
+        </div>
+
+        <!-- Pictogram -->
+        ${
+          pictogram_url
+            ? `
+          <img 
+            src="${pictogram_url}"
+            style="width: 150px; height: 150px; padding: 6px;"
+          />
+        `
+            : ""
+        }
+
+        <!-- NFPA (hidden for orange alert) -->
+        ${
+          !orange_alert && nfpa
+            ? `
+          <div style="display: flex; align-items: center; justify-content: center; margin-top: 25px;">
+            <div style="
+              display: grid;
+              grid-template-columns: repeat(3, 50px);
+              transform: rotate(45deg);
+              margin-left: 35px;
+            ">
+              <div style="grid-column: 1; grid-row: 2; background: #0047ab; color: #fff;
+                font-size: 20px; font-weight: bold; display: flex; align-items: center;
+                justify-content: center; line-height: 50px;">
+                <span style="transform: rotate(-45deg);">${nfpa.health ?? ""}</span>
+              </div>
+              <div style="grid-column: 1; grid-row: 1; background: #ff0000; color: #fff;
+                font-size: 20px; font-weight: bold; display: flex; align-items: center;
+                justify-content: center; line-height: 50px;">
+                <span style="transform: rotate(-45deg);">${nfpa.flammability ?? ""}</span>
+              </div>
+              <div style="grid-column: 2; grid-row: 1; background: #ffff00; color: #000;
+                font-size: 20px; font-weight: bold; display: flex; align-items: center;
+                justify-content: center; line-height: 50px;">
+                <span style="transform: rotate(-45deg);">${nfpa.instability ?? ""}</span>
+              </div>
+              <div style="grid-column: 2; grid-row: 2; background: #fff; border: 2px solid #000;
+                color: #000; font-size: 20px; font-weight: bold; display: flex;
+                align-items: center; justify-content: center; line-height: 50px;">
+                <span style="transform: rotate(-45deg);">${nfpa.special ?? ""}</span>
+              </div>
+            </div>
+          </div>
+        `
+            : ""
+        }
+
+      </div>
+    `,
+
+    showConfirmButton: true,
     confirmButtonText: "OK",
-    timer: 1000000000
+
+    background: "#d9d9d9",
+
+    didOpen: () => {
+      const popup = Swal.getPopup();
+
+      popup.style.border = red_alert
+        ? "8px solid red"
+        : orange_alert
+        ? "8px solid #ff9900"
+        : "8px solid #00aa00";
+
+      popup.style.borderRadius = "25px";
+      popup.style.boxShadow = "none";
+      popup.style.padding = "20px 20px 30px 20px";
+      popup.style.maxWidth = "600px";
+    }
   });
-}, [predictionResult]);
+  
+}, [predictionResult, scanNumber]);
+
 
 
 const handleRunPrediction2 = async () => {
@@ -817,6 +870,8 @@ const handleRunPrediction2 = async () => {
   }
 };
 
+
+
 return (
   <div     className={styles.container2}
     style={{
@@ -848,8 +903,8 @@ return (
       ) : (
         <>
           <Toolbar className={styles.container4}>
-            <ToggleBtn icon={FaPlay} label="#1 Run Prediction" onToggle={handleRunPrediction1} />
-            <ToggleBtn icon={FaPlay} label="#2 Run Prediction" onToggle={handleRunPrediction2} />
+            <ToggleBtn icon={FaPlay} label="#1 Automated data analysis" onToggle={handleRunPrediction1} />
+            <ToggleBtn icon={FaPlay} label="#2 Automated data analysis" onToggle={handleRunPrediction2} />
             <Separator />
             <ToggleBtn icon={FaTh} label="Grid 1" onToggle={() => setShowGrid1(!showGrid1)} />
             <ToggleBtn icon={FaTh} label="Grid 2" onToggle={() => setShowGrid2(!showGrid2)} />
