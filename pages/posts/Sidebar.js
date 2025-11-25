@@ -8,7 +8,7 @@ import IMSUploadButton from '../ImsUploadButton';
 import styles from "../../styles/Home.module.css";
 import GCIMSUploadButton from '../GcImsUploadButton';
 
-const Sidebar = ({ onIMSDataSelect, onGCIMSDataUpload }) => {
+const Sidebar = ({ onIMSDataSelect, onGCIMSDataUpload, imsUploadRef }) => {
   const [gcimsDatasets, setGcimsDatasets] = useState({});
   const [imsDatasets, setImsDatasets] = useState({});
   const [isIMSVisible, setIMSVisible] = useState(false);
@@ -17,11 +17,10 @@ const Sidebar = ({ onIMSDataSelect, onGCIMSDataUpload }) => {
 
   const gcImsDropdownRef = useRef(null);
 
-  // Auto-resize sidebar width to fit the longest dropdown content
   useEffect(() => {
     if ((isGCIMSVisible || isIMSVisible) && gcImsDropdownRef.current) {
       const dropdownWidth = gcImsDropdownRef.current.scrollWidth;
-      setSidebarWidth(Math.max(200, dropdownWidth + 40) + 'px'); // min 200px, add padding
+      setSidebarWidth(Math.max(200, dropdownWidth + 40) + 'px');
     } else {
       setSidebarWidth('auto');
     }
@@ -40,17 +39,13 @@ const Sidebar = ({ onIMSDataSelect, onGCIMSDataUpload }) => {
     onIMSDataSelect(buffer, chartNumber, filename);
   };
 
-  const handleIMSClick = () => {
-    setIMSVisible(!isIMSVisible);
-  };
-
-  const handleGCIMSClick = () => {
-    setGCIMSVisible(!isGCIMSVisible);
-  };
+  const handleIMSClick = () => setIMSVisible(!isIMSVisible);
+  const handleGCIMSClick = () => setGCIMSVisible(!isGCIMSVisible);
 
   return (
     <div style={{ ...sidebarStyle, width: sidebarWidth }}>
       <h2 style={{ marginBottom: '1.5em', color: '#fff', textAlign: 'center' }}>TechBioT</h2>
+
       <ul style={{ listStyle: 'none', padding: 0 }}>
         <li className={styles.menuItemStyle}>
           <Link legacyBehavior href="/">
@@ -60,23 +55,36 @@ const Sidebar = ({ onIMSDataSelect, onGCIMSDataUpload }) => {
             </a>
           </Link>
         </li>
+
+        {/* ================= IMS MENU ================= */}
         <li className={styles.menuItemStyle} onClick={handleIMSClick}>
           <a style={linkStyle}>
             <FontAwesomeIcon icon={faChartLine} style={iconStyle} />
             IMS
           </a>
+
           {isIMSVisible && (
             <div className={styles.dropdownMenu} ref={gcImsDropdownRef}>
+              
+              {/* IMS Graph Link */}
               <Link legacyBehavior href="/LineVis">
                 <a className={styles.dropdownItem}>
                   <span style={dropdownTextStyle}>IMS Graph</span>
                   <FontAwesomeIcon icon={faChartLine} style={{ ...dropdownIconStyle, fontSize: '20px', width: '20px', height: '20px' }} />
                 </a>
               </Link>
+
+              {/* Upload Button — UPDATED WITH NEW REF */}
               <a className={styles.dropdownItem} onClick={(e) => e.stopPropagation()}>
                 <span style={dropdownTextStyle}>Upload File</span>
-                <IMSUploadButton onUpload={handleIMSUpload} />
+
+                {/* ref added here */}
+                <IMSUploadButton 
+                  ref={imsUploadRef}
+                  onUpload={handleIMSUpload}
+                />
               </a>
+
               {/* List uploaded IMS files */}
               {Object.keys(imsDatasets).map((filename) => (
                 <div key={filename}>
@@ -97,11 +105,14 @@ const Sidebar = ({ onIMSDataSelect, onGCIMSDataUpload }) => {
             </div>
           )}
         </li>
+
+        {/* ================= GC-IMS MENU ================= */}
         <li className={styles.menuItemStyle} onClick={handleGCIMSClick}>
           <a style={linkStyle}>
             <FontAwesomeIcon icon={faChartLine} style={iconStyle} />
             GC-IMS
           </a>
+
           {isGCIMSVisible && (
             <div className={styles.dropdownMenu} ref={gcImsDropdownRef}>
               <Link legacyBehavior href="/HeatmapVis">
@@ -110,6 +121,7 @@ const Sidebar = ({ onIMSDataSelect, onGCIMSDataUpload }) => {
                   <FontAwesomeIcon icon={faChartLine} style={{ ...dropdownIconStyle, fontSize: '20px', width: '20px', height: '20px' }} />
                 </a>
               </Link>
+
               <a className={styles.dropdownItem} onClick={(e) => e.stopPropagation()}>
                 <span style={dropdownTextStyle}>Upload File</span>
                 <GCIMSUploadButton onUpload={onGCIMSDataUpload} />
@@ -121,6 +133,7 @@ const Sidebar = ({ onIMSDataSelect, onGCIMSDataUpload }) => {
     </div>
   );
 };
+
 
 // styles
 const sidebarStyle = {

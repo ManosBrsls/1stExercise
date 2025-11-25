@@ -578,6 +578,7 @@ const handleDownloadLineData2 = async () => {
   });
 };
 
+const formattedScanNumber = scanNumber.toString().padStart(3, "0");
 
 const handleRunPrediction1 = async () => {
   if (!titleName) {
@@ -643,9 +644,14 @@ useEffect(() => {
     orange_alert,
     cas_number,
     accuracy,
+    message,
+    note2,
     pictogram_url,
-    nfpa
+    nfpa,
+    ghs_label
   } = predictionResult;
+
+  const isGreen = !red_alert && !orange_alert;
 
   // ====== DATE + TIME ======
   const now = new Date();
@@ -675,7 +681,7 @@ useEffect(() => {
           font-size: 16px;
           line-height: 1.3;
         ">
-          Scan ${scanNumber}
+          Scan ${formattedScanNumber}
           <br>${dateStr}
           <br>${timeStr}
         </div>
@@ -684,7 +690,6 @@ useEffect(() => {
         ${
           red_alert
             ? `
-              <!-- RED TRIANGLE WARNING -->
               <div style="margin-top: 10px;">
                 <svg width="95" height="95" viewBox="0 0 100 100" style="display:block;margin:0 auto;">
                   <path d="M50 5 L95 85 H5 Z" fill="#c00000" stroke="#c00000" stroke-width="4" />
@@ -696,7 +701,6 @@ useEffect(() => {
             `
             : orange_alert
               ? `
-                <!-- ORANGE TRIANGLE WARNING -->
                 <div style="margin-top: 10px;">
                   <svg width="95" height="95" viewBox="0 0 100 100" style="display:block;margin:0 auto;">
                     <path d="M50 5 L95 85 H5 Z" fill="#ff9900" stroke="#ff9900" stroke-width="4" />
@@ -707,7 +711,6 @@ useEffect(() => {
                 </div>
               `
               : `
-                <!-- GREEN INFO -->
                 <div style="margin-top: 10px;">
                   <svg width="95" height="95" viewBox="0 0 100 100" style="display:block;margin:0 auto;">
                     <circle cx="50" cy="50" r="45" fill="#00aa00" />
@@ -728,63 +731,92 @@ useEffect(() => {
           ${note}
         </div>
 
-        <!-- CAS + Accuracy -->
-        <div style="
-          width: 100%;
-          max-width: 420px;
-          font-size: 18px;
-          text-align: left;
-        ">
-          ${cas_number ? `N° CAS : <b>${cas_number}</b><br>` : ""}
-          ${accuracy ? `${accuracy} % accuracy` : ""}
-        </div>
-
-        <!-- Pictogram -->
+        <!-- ONLY GREEN ALERT: note2 + message + accuracy -->
         ${
-          pictogram_url
+          isGreen
             ? `
-          <img 
-            src="${pictogram_url}"
-            style="width: 150px; height: 150px; padding: 6px;"
-          />
-        `
+              <div style="font-size: 20px; text-align:center; max-width:420px;">
+                ${note2 ? `<div><b>${note2}</b></div>` : ""}
+                ${message ? `<div style="margin-top:10px;">${message}</div>` : ""}
+                ${accuracy ? `<div style="margin-top:10px;">Accuracy: <b>${accuracy}%</b></div>` : ""}
+              </div>
+            `
             : ""
         }
 
-        <!-- NFPA (hidden for orange alert) -->
+        <!-- RED/ORANGE ALERT CONTENT -->
         ${
-          !orange_alert && nfpa
+          !isGreen
             ? `
-          <div style="display: flex; align-items: center; justify-content: center; margin-top: 25px;">
-            <div style="
-              display: grid;
-              grid-template-columns: repeat(3, 50px);
-              transform: rotate(45deg);
-              margin-left: 35px;
-            ">
-              <div style="grid-column: 1; grid-row: 2; background: #0047ab; color: #fff;
-                font-size: 20px; font-weight: bold; display: flex; align-items: center;
-                justify-content: center; line-height: 50px;">
-                <span style="transform: rotate(-45deg);">${nfpa.health ?? ""}</span>
+              <div style="
+                width: 100%;
+                max-width: 420px;
+                font-size: 18px;
+                text-align: left;
+              ">
+                ${cas_number ? `N° CAS : <b>${cas_number}</b><br>` : ""}
+                ${accuracy ? `${accuracy} % accuracy` : ""}
               </div>
-              <div style="grid-column: 1; grid-row: 1; background: #ff0000; color: #fff;
-                font-size: 20px; font-weight: bold; display: flex; align-items: center;
-                justify-content: center; line-height: 50px;">
-                <span style="transform: rotate(-45deg);">${nfpa.flammability ?? ""}</span>
-              </div>
-              <div style="grid-column: 2; grid-row: 1; background: #ffff00; color: #000;
-                font-size: 20px; font-weight: bold; display: flex; align-items: center;
-                justify-content: center; line-height: 50px;">
-                <span style="transform: rotate(-45deg);">${nfpa.instability ?? ""}</span>
-              </div>
-              <div style="grid-column: 2; grid-row: 2; background: #fff; border: 2px solid #000;
-                color: #000; font-size: 20px; font-weight: bold; display: flex;
-                align-items: center; justify-content: center; line-height: 50px;">
-                <span style="transform: rotate(-45deg);">${nfpa.special ?? ""}</span>
-              </div>
-            </div>
-          </div>
-        `
+
+              <!-- Pictogram + GHS label -->
+              ${
+                pictogram_url
+                  ? `
+                    <div style="text-align:center;">
+                      <img 
+                        src="${pictogram_url}"
+                        style="width: 150px; height: 150px; padding: 6px;"
+                      />
+
+                      ${
+                        ghs_label
+                          ? `<div style="font-size: 20px; font-weight: bold; margin-top: 8px;">
+                               ${ghs_label}
+                             </div>`
+                          : ""
+                      }
+                    </div>
+                  `
+                  : ""
+              }
+
+              <!-- NFPA (excluded for green alert) -->
+              ${
+                nfpa
+                  ? `
+                    <div style="display: flex; align-items: center; justify-content: center; margin-top: 25px;">
+                      <div style="
+                        display: grid;
+                        grid-template-columns: repeat(3, 50px);
+                        transform: rotate(45deg);
+                        margin-left: 35px;
+                      ">
+                        <div style="grid-column: 1; grid-row: 2; background: #0047ab; color: #fff;
+                          font-size: 20px; font-weight: bold; display: flex; align-items: center;
+                          justify-content: center; line-height: 50px;">
+                          <span style="transform: rotate(-45deg);">${nfpa.health ?? ""}</span>
+                        </div>
+                        <div style="grid-column: 1; grid-row: 1; background: #ff0000; color: #fff;
+                          font-size: 20px; font-weight: bold; display: flex; align-items: center;
+                          justify-content: center; line-height: 50px;">
+                          <span style="transform: rotate(-45deg);">${nfpa.flammability ?? ""}</span>
+                        </div>
+                        <div style="grid-column: 2; grid-row: 1; background: #ffff00; color: #000;
+                          font-size: 20px; font-weight: bold; display: flex; align-items: center;
+                          justify-content: center; line-height: 50px;">
+                          <span style="transform: rotate(-45deg);">${nfpa.instability ?? ""}</span>
+                        </div>
+                        <div style="grid-column: 2; grid-row: 2; background: #fff; border: 2px solid #000;
+                          color: #000; font-size: 20px; font-weight: bold; display: flex;
+                          align-items: center; justify-content: center; line-height: 50px;">
+                          <span style="transform: rotate(-45deg);">${nfpa.special ?? ""}</span>
+                        </div>
+                      </div>
+                    </div>
+                  `
+                  : ""
+              }
+            `
             : ""
         }
 
@@ -813,6 +845,9 @@ useEffect(() => {
   });
   
 }, [predictionResult, scanNumber]);
+
+
+
 
 
 
@@ -870,10 +905,10 @@ const handleRunPrediction2 = async () => {
   }
 };
 
-
+const imsUploadRef = useRef(null);
 
 return (
-  <div     className={styles.container2}
+  <div  className={styles.container2}
     style={{
       display: "flex",
       flexDirection: "row",
@@ -882,7 +917,7 @@ return (
       width: "100vw"
     }}
   >
-    <Sidebar onIMSDataUpload={handleIMSDataUpload} onIMSDataSelect={handleIMSDataSelect} />
+    <Sidebar onIMSDataUpload={handleIMSDataUpload} onIMSDataSelect={handleIMSDataSelect} imsUploadRef={imsUploadRef}/>
     <div
       className={styles.centerScreen}
     >
@@ -894,6 +929,7 @@ return (
         marginLeft: "20px",
         cursor: "pointer"
       }}
+      onClick={() => imsUploadRef.current?.openFileDialog()}
     >
       {/* Show message until all main data for chart 1 is ready */}
       {!lineData1 || !lineDomain1 || !driftTimes0 ? (

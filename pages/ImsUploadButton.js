@@ -1,15 +1,22 @@
 "use client";
 
-import React from 'react';
+import React, { forwardRef, useRef } from "react";
 
+const IMSUploadButton = forwardRef(({ onUpload }, ref) => {
+  const fileInputRef = useRef(null);
 
+  // Expose the openFileDialog() method to parents
+  React.useImperativeHandle(ref, () => ({
+    openFileDialog() {
+      fileInputRef.current?.click();
+    }
+  }));
 
-const IMSUploadButton = ({ onUpload }) => {
   const handleUpload = (event) => {
     const files = Array.from(event.target.files);
     files.forEach((file) => {
       const reader = new FileReader();
-      reader.onloadend = function(evt) {
+      reader.onloadend = function (evt) {
         const buffer = evt.target.result;
         onUpload(file.name, buffer);
       };
@@ -17,40 +24,28 @@ const IMSUploadButton = ({ onUpload }) => {
     });
   };
 
-  const handleButtonClick = () => {
-    document.getElementById('gcims-uploadfile').click();
-  };
-
   return (
     <div>
       <input
-        style={{ display: 'none' }}
-        type="file"
         id="gcims-uploadfile"
-        accept=".hdf5, .h5"
-        multiple
+        type="file"
+        ref={fileInputRef}
+        style={{ display: "none" }}
         onChange={handleUpload}
       />
+
       <button
+        onClick={() => fileInputRef.current.click()}
         style={{
-          backgroundColor: '#e7e7e7',
-          borderRadius: 15,
-          padding: 6,
-          textAlign: 'center',
-          marginLeft: '10px',
-          marginTop: '15px',
-          fontSize: 10,
-          fontWeight: 'bold',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
+          padding: "6px 12px",
+          borderRadius: "6px",
+          cursor: "pointer",
         }}
-        onClick={handleButtonClick}
       >
         Upload
       </button>
     </div>
   );
-};
+});
 
 export default IMSUploadButton;
