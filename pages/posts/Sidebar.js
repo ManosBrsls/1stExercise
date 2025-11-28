@@ -27,12 +27,21 @@ const Sidebar = ({ onIMSDataSelect, onGCIMSDataUpload, imsUploadRef }) => {
   }, [isGCIMSVisible, isIMSVisible, gcimsDatasets, imsDatasets]);
 
   // Handler for IMS file uploads
-  const handleIMSUpload = (filename, buffer) => {
-    setImsDatasets((prev) => ({
+const handleIMSUpload = (filename, buffer, totalCount) => {
+  setImsDatasets((prev) => {
+    const updated = {
       ...prev,
       [filename]: buffer,
-    }));
-  };
+    };
+
+    // AUTO-PLOT if ONLY ONE FILE is uploaded
+    if (Object.keys(updated).length === 1 && totalCount === 1) {
+      onIMSDataSelect(buffer, 1, filename);
+    }
+
+    return updated;
+  });
+};
 
   const handleIMSDatasetClick = (filename, chartNumber) => {
     const buffer = imsDatasets[filename];
@@ -44,7 +53,7 @@ const Sidebar = ({ onIMSDataSelect, onGCIMSDataUpload, imsUploadRef }) => {
 
   return (
     <div style={{ ...sidebarStyle, width: sidebarWidth }}>
-      <h2 style={{ marginBottom: '1.5em', color: '#fff', textAlign: 'center' }}>TechBioT</h2>
+      <h2 style={{ marginBottom: '1.5em', color: '#fff', textAlign: 'center' }}>TeChBioT</h2>
 
       <ul style={{ listStyle: 'none', padding: 0 }}>
         <li className={styles.menuItemStyle}>
@@ -191,4 +200,3 @@ const dropdownIconStyle = {
 };
 
 export default Sidebar;
-

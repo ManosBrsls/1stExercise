@@ -19,12 +19,17 @@ export default function Home() {
             <Image
               src="/Techbiot final large1.ai_page-0001.jpg"
               alt="Logo"
-              width={630}
-              height={400}
+              width={530}
+              height={330}
               className={styles.logo}
             />
           </div>
-
+          <div className={styles.lodMessage}>
+            <p>
+              <strong>Warning:</strong> The average LOD determined for a list of selected CWA is 0.26 pptv,
+              and for BWA at 10¹² CFU. Under this concentration, identification is not accurate.
+            </p>
+          </div>
           <div className={styles.cardsContainer2}>
             <div className={styles.card2}>
               <h2>Ion Mobility Spectrometry (IMS)</h2>

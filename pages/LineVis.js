@@ -6,6 +6,7 @@ import ndarray from "ndarray";
 import { getDomain, LineVis, Toolbar, ToggleBtn, Separator, Overlay, Tooltip } from "@h5web/lib";
 import { FaCamera, FaDownload, FaTh, FaSlidersH, FaPlay } from "react-icons/fa";
 import Sidebar from "./posts/Sidebar";
+import IMSUploadButton from "./ImsUploadButton";
 import styles from "../styles/Home.module.css";
 import domtoimage from "dom-to-image-more";
 import "@h5web/lib/dist/styles.css";
@@ -15,6 +16,7 @@ function IMSLineCharts() {
   const [titleName, setTitleName] = useState("GC-IMS Heatmap");
   const [titleName2, setTitleName2] = useState("GC-IMS Heatmap");
   const [predictionResult, setPredictionResult] = useState(null);
+  const [predictionResult2, setPredictionResult2] = useState(null);
   const [scanNumber, setScanNumber] = useState(0);
 
   const [dataArray2, setDataArray2] = useState(null); // file 2, polarity 0
@@ -435,7 +437,20 @@ const handleSnapshotIMS1 = () => {
         console.error("Snapshot failed:", error);
       });
   }
+}
+
+const pictogramMap = {
+  GHS01: "/pictograms/GHS01.png",
+  GHS02: "/pictograms/GHS02.png",
+  GHS03: "/pictograms/GHS03.png",
+  GHS04: "/pictograms/GHS04.png",
+  GHS05: "/pictograms/GHS05.png",
+  GHS06: "/pictograms/GHS06.png",
+  GHS07: "/pictograms/GHS07.png",
+  GHS08: "/pictograms/GHS08.png",
+  GHS09: "/pictograms/GHS09.png",
 };
+
 
 const handleDownloadLineData1 = async () => {
   // Ask for password with SweetAlert2 (hidden input)
@@ -638,20 +653,29 @@ const handleRunPrediction1 = async () => {
 useEffect(() => {
   if (!predictionResult) return;
 
+
   const {
     note,
     red_alert,
     orange_alert,
     cas_number,
-    accuracy,
+    confidence,
     message,
-    note2,
-    pictogram_url,
+    pictogram_code,
     nfpa,
     ghs_label
   } = predictionResult;
 
   const isGreen = !red_alert && !orange_alert;
+
+
+  let pictogramList = [];
+
+  if (Array.isArray(pictogram_code)) {
+    pictogramList = pictogram_code;
+  } else if (typeof pictogram_code === "string") {
+    pictogramList = pictogram_code.split(",").map(id => id.trim());
+  }
 
   // ====== DATE + TIME ======
   const now = new Date();
@@ -731,14 +755,14 @@ useEffect(() => {
           ${note}
         </div>
 
-        <!-- ONLY GREEN ALERT: note2 + message + accuracy -->
+        <!-- ONLY GREEN ALERT: note + message + confidence -->
         ${
           isGreen
             ? `
               <div style="font-size: 20px; text-align:center; max-width:420px;">
-                ${note2 ? `<div><b>${note2}</b></div>` : ""}
+               
                 ${message ? `<div style="margin-top:10px;">${message}</div>` : ""}
-                ${accuracy ? `<div style="margin-top:10px;">Accuracy: <b>${accuracy}%</b></div>` : ""}
+                ${confidence ? `<div style="margin-top:10px;">Confidence: <b>${confidence}%</b></div>` : ""}
               </div>
             `
             : ""
@@ -755,30 +779,46 @@ useEffect(() => {
                 text-align: left;
               ">
                 ${cas_number ? `N° CAS : <b>${cas_number}</b><br>` : ""}
-                ${accuracy ? `${accuracy} % accuracy` : ""}
+                ${confidence  ? `${confidence} % confidence` : ""}
               </div>
 
               <!-- Pictogram + GHS label -->
-              ${
-                pictogram_url
-                  ? `
-                    <div style="text-align:center;">
-                      <img 
-                        src="${pictogram_url}"
-                        style="width: 150px; height: 150px; padding: 6px;"
-                      />
+${
+  pictogramList.length > 0
+    ? `
+      <div style="text-align:center; margin-top: 15px;">
 
-                      ${
-                        ghs_label
-                          ? `<div style="font-size: 20px; font-weight: bold; margin-top: 8px;">
-                               ${ghs_label}
-                             </div>`
-                          : ""
-                      }
-                    </div>
-                  `
-                  : ""
-              }
+        <div style="
+          display:flex;
+          justify-content:center;
+          gap:20px;
+          flex-wrap:wrap;
+        ">
+          ${pictogramList
+            .map(id => {
+              const src = pictogramMap[id] ?? "";
+              return `
+                <img 
+                  src="${src}" 
+                  style="width: 150px; height: 150px; padding: 6px;"
+                />
+              `;
+            })
+            .join("")}
+        </div>
+
+        ${
+          ghs_label
+            ? `<div style="font-size: 20px; font-weight: bold; margin-top: 12px;">
+                 ${ghs_label}
+               </div>`
+            : ""
+        }
+
+      </div>
+    `
+    : ""
+}
 
               <!-- NFPA (excluded for green alert) -->
               ${
@@ -890,7 +930,8 @@ const handleRunPrediction2 = async () => {
     }
 
     const result = await response.json();
-    setPredictionResult(result);
+    setPredictionResult2(result);
+    setScanNumber(prev => prev + 1);
 
     // Close loading after success
     Swal.close();
@@ -905,6 +946,243 @@ const handleRunPrediction2 = async () => {
   }
 };
 
+useEffect(() => {
+  if (!predictionResult2) return;
+
+
+  const {
+    note,
+    red_alert,
+    orange_alert,
+    cas_number,
+    confidence,
+    message,
+    note2,
+    pictogram_id,
+    nfpa,
+    ghs_label
+  } = predictionResult2;
+
+  const isGreen = !red_alert && !orange_alert;
+
+
+  let pictogramList = [];
+
+  if (Array.isArray(pictogram_id)) {
+    pictogramList = pictogram_id;
+  } else if (typeof pictogram_id === "string") {
+    pictogramList = pictogram_id.split(",").map(id => id.trim());
+  }
+
+  // ====== DATE + TIME ======
+  const now = new Date();
+  const dateStr = now.toLocaleDateString("en-GB");
+  const timeStr = now.toLocaleTimeString("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit"
+  });
+
+  Swal.fire({
+    html: `
+      <div style="
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 25px;
+        font-family: Arial, sans-serif;
+        position: relative;
+      ">
+
+        <!-- TOP RIGHT DATE + TIME + SCAN -->
+        <div style="
+          position: absolute;
+          top: 0;
+          right: 10px;
+          text-align: right;
+          font-size: 16px;
+          line-height: 1.3;
+        ">
+          Scan ${formattedScanNumber}
+          <br>${dateStr}
+          <br>${timeStr}
+        </div>
+
+        <!-- ICON (red/orange/green) -->
+        ${
+          red_alert
+            ? `
+              <div style="margin-top: 10px;">
+                <svg width="95" height="95" viewBox="0 0 100 100" style="display:block;margin:0 auto;">
+                  <path d="M50 5 L95 85 H5 Z" fill="#c00000" stroke="#c00000" stroke-width="4" />
+                  <line x1="50" y1="28" x2="50" y2="55"
+                        stroke="white" stroke-width="10" stroke-linecap="round" />
+                  <circle cx="50" cy="72" r="7" fill="white"/>
+                </svg>
+              </div>
+            `
+            : orange_alert
+              ? `
+                <div style="margin-top: 10px;">
+                  <svg width="95" height="95" viewBox="0 0 100 100" style="display:block;margin:0 auto;">
+                    <path d="M50 5 L95 85 H5 Z" fill="#ff9900" stroke="#ff9900" stroke-width="4" />
+                    <line x1="50" y1="28" x2="50" y2="55"
+                          stroke="white" stroke-width="10" stroke-linecap="round" />
+                    <circle cx="50" cy="72" r="7" fill="white"/>
+                  </svg>
+                </div>
+              `
+              : `
+                <div style="margin-top: 10px;">
+                  <svg width="95" height="95" viewBox="0 0 100 100" style="display:block;margin:0 auto;">
+                    <circle cx="50" cy="50" r="45" fill="#00aa00" />
+                    <text x="50" y="63" text-anchor="middle"
+                          font-size="55" font-weight="bold"
+                          fill="white" font-family="Arial">i</text>
+                  </svg>
+                </div>
+              `
+        }
+
+        <!-- NOTE -->
+        <div style="
+          font-size: 36px;
+          font-weight: bold;
+          text-align: center;
+        ">
+          ${note}
+        </div>
+
+        <!-- ONLY GREEN ALERT: note2 + message + confidence -->
+        ${
+          isGreen
+            ? `
+              <div style="font-size: 20px; text-align:center; max-width:420px;">
+                ${note2 ? `<div><b>${note2}</b></div>` : ""}
+                ${message ? `<div style="margin-top:10px;">${message}</div>` : ""}
+                ${confidence ? `<div style="margin-top:10px;">Confidence: <b>${confidence}%</b></div>` : ""}
+              </div>
+            `
+            : ""
+        }
+
+        <!-- RED/ORANGE ALERT CONTENT -->
+        ${
+          !isGreen
+            ? `
+              <div style="
+                width: 100%;
+                max-width: 420px;
+                font-size: 18px;
+                text-align: left;
+              ">
+                ${cas_number ? `N° CAS : <b>${cas_number}</b><br>` : ""}
+                ${confidence  ? `${confidence} % confidence` : ""}
+              </div>
+
+              <!-- Pictogram + GHS label -->
+${
+  pictogramList.length > 0
+    ? `
+      <div style="text-align:center; margin-top: 15px;">
+
+        <div style="
+          display:flex;
+          justify-content:center;
+          gap:20px;
+          flex-wrap:wrap;
+        ">
+          ${pictogramList
+            .map(id => {
+              const src = pictogramMap[id] ?? "";
+              return `
+                <img 
+                  src="${src}" 
+                  style="width: 150px; height: 150px; padding: 6px;"
+                />
+              `;
+            })
+            .join("")}
+        </div>
+
+        ${
+          ghs_label
+            ? `<div style="font-size: 20px; font-weight: bold; margin-top: 12px;">
+                 ${ghs_label}
+               </div>`
+            : ""
+        }
+
+      </div>
+    `
+    : ""
+}
+
+              <!-- NFPA (excluded for green alert) -->
+              ${
+                nfpa
+                  ? `
+                    <div style="display: flex; align-items: center; justify-content: center; margin-top: 25px;">
+                      <div style="
+                        display: grid;
+                        grid-template-columns: repeat(3, 50px);
+                        transform: rotate(45deg);
+                        margin-left: 35px;
+                      ">
+                        <div style="grid-column: 1; grid-row: 2; background: #0047ab; color: #fff;
+                          font-size: 20px; font-weight: bold; display: flex; align-items: center;
+                          justify-content: center; line-height: 50px;">
+                          <span style="transform: rotate(-45deg);">${nfpa.health ?? ""}</span>
+                        </div>
+                        <div style="grid-column: 1; grid-row: 1; background: #ff0000; color: #fff;
+                          font-size: 20px; font-weight: bold; display: flex; align-items: center;
+                          justify-content: center; line-height: 50px;">
+                          <span style="transform: rotate(-45deg);">${nfpa.flammability ?? ""}</span>
+                        </div>
+                        <div style="grid-column: 2; grid-row: 1; background: #ffff00; color: #000;
+                          font-size: 20px; font-weight: bold; display: flex; align-items: center;
+                          justify-content: center; line-height: 50px;">
+                          <span style="transform: rotate(-45deg);">${nfpa.instability ?? ""}</span>
+                        </div>
+                        <div style="grid-column: 2; grid-row: 2; background: #fff; border: 2px solid #000;
+                          color: #000; font-size: 20px; font-weight: bold; display: flex;
+                          align-items: center; justify-content: center; line-height: 50px;">
+                          <span style="transform: rotate(-45deg);">${nfpa.special ?? ""}</span>
+                        </div>
+                      </div>
+                    </div>
+                  `
+                  : ""
+              }
+            `
+            : ""
+        }
+
+      </div>
+    `,
+
+    showConfirmButton: true,
+    confirmButtonText: "OK",
+
+    background: "#d9d9d9",
+
+    didOpen: () => {
+      const popup = Swal.getPopup();
+
+      popup.style.border = red_alert
+        ? "8px solid red"
+        : orange_alert
+        ? "8px solid #ff9900"
+        : "8px solid #00aa00";
+
+      popup.style.borderRadius = "25px";
+      popup.style.boxShadow = "none";
+      popup.style.padding = "20px 20px 30px 20px";
+      popup.style.maxWidth = "600px";
+    }
+  });
+  
+}, [predictionResult2, scanNumber]);
+
 const imsUploadRef = useRef(null);
 
 return (
@@ -918,6 +1196,11 @@ return (
     }}
   >
     <Sidebar onIMSDataUpload={handleIMSDataUpload} onIMSDataSelect={handleIMSDataSelect} imsUploadRef={imsUploadRef}/>
+      <IMSUploadButton
+        ref={imsUploadRef}
+        onUpload={handleIMSDataUpload}
+        style={{ display: "none" }}
+      />
     <div
       className={styles.centerScreen}
     >
@@ -929,30 +1212,50 @@ return (
         marginLeft: "20px",
         cursor: "pointer"
       }}
-      onClick={() => imsUploadRef.current?.openFileDialog()}
+  
     >
       {/* Show message until all main data for chart 1 is ready */}
       {!lineData1 || !lineDomain1 || !driftTimes0 ? (
         <div style={{ textAlign: "center", padding: "3rem", fontSize: "1.5rem", color: "#555" }}>
+          <span style={{ textDecoration: 'underline', cursor: 'pointer' }}
+            onClick={() => imsUploadRef.current?.openFileDialog()}
+            >
           📂 Please upload your IMS files for visualization.
+          </span>
         </div>
       ) : (
         <>
-          <Toolbar className={styles.container4}>
-            <ToggleBtn icon={FaPlay} label="#1 Automated data analysis" onToggle={handleRunPrediction1} />
-            <ToggleBtn icon={FaPlay} label="#2 Automated data analysis" onToggle={handleRunPrediction2} />
-            <Separator />
-            <ToggleBtn icon={FaTh} label="Grid 1" onToggle={() => setShowGrid1(!showGrid1)} />
-            <ToggleBtn icon={FaTh} label="Grid 2" onToggle={() => setShowGrid2(!showGrid2)} />
-            <Separator />
-            <ToggleBtn icon={FaSlidersH} label="Change Polarity Chart 1" onToggle={togglePolarity} />
-            <ToggleBtn icon={FaSlidersH} label="Change Polarity Chart 2" onToggle={togglePolarity2} />
-            <Separator />
-            <ToggleBtn icon={FaCamera} label="Snap Shot" onToggle={handleSnapshotIMS1} />
-            <Separator />
-            <ToggleBtn icon={FaDownload} label="Download CSV 1" onToggle={handleDownloadLineData1} />
-            <ToggleBtn icon={FaDownload} label="Download CSV 2" onToggle={handleDownloadLineData2} />
-          </Toolbar>
+<Toolbar className={styles.container4}>
+  <ToggleBtn icon={FaPlay} label="#1 Automated data analysis" onToggle={handleRunPrediction1} />
+  
+  {lineData2 && lineDomain2 && driftTimes2 && (
+    <ToggleBtn icon={FaPlay} label="#2 Automated data analysis" onToggle={handleRunPrediction2} />
+  )}
+
+  <Separator />
+  <ToggleBtn icon={FaTh} label="Grid 1" onToggle={() => setShowGrid1(!showGrid1)} />
+
+  {lineData2 && lineDomain2 && driftTimes2 && (
+    <ToggleBtn icon={FaTh} label="Grid 2" onToggle={() => setShowGrid2(!showGrid2)} />
+  )}
+
+  <Separator />
+  <ToggleBtn icon={FaSlidersH} label="Change Polarity Chart 1" onToggle={togglePolarity} />
+
+  {lineData2 && lineDomain2 && driftTimes2 && (
+    <ToggleBtn icon={FaSlidersH} label="Change Polarity Chart 2" onToggle={togglePolarity2} />
+  )}
+
+  <Separator />
+  <ToggleBtn icon={FaCamera} label="Snap Shot" onToggle={handleSnapshotIMS1} />
+
+  <Separator />
+  <ToggleBtn icon={FaDownload} label="Download CSV 1" onToggle={handleDownloadLineData1} />
+
+  {lineData2 && lineDomain2 && driftTimes2 && (
+    <ToggleBtn icon={FaDownload} label="Download CSV 2" onToggle={handleDownloadLineData2} />
+  )}
+</Toolbar>
 
           <div
             ref={imsSpectraRef}
@@ -975,7 +1278,7 @@ return (
               showGrid={showGrid1}
               title={"IMS Spectrum" + ": " +  titleName}
               abscissaParams={{ value: driftTimes0, label: "Drift Time (msec)" }}
-              ordinateLabel="Ion Current pA"
+              ordinateLabel="Ion Current (pA)"
             >
             <Overlay
               style={{
@@ -1012,7 +1315,7 @@ return (
                 showGrid={showGrid2}
                 title={"IMS Spectrum" + ": " +  titleName2}
                 abscissaParams={{ value: driftTimes2, label: "Drift Time (msec)" }}
-                ordinateLabel="Ion Current pA"
+                ordinateLabel="Ion Current (pA)"
               >
             <Overlay
               style={{

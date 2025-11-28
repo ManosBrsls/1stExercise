@@ -38,7 +38,7 @@ const GCIMSUploadButton = ({ onUpload }) => {
           padding: 6,
           textAlign: 'center',
           marginLeft: '10px',
-          marginTop: '15px',
+          marginTop: '5px',
           fontSize: 10,
           fontWeight: 'bold',
           display: 'flex',

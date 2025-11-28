@@ -11,6 +11,7 @@ import { FaCamera, FaChartArea, FaDownload, FaMap, FaTh, FaChartLine, FaSlidersH
 import "@fortawesome/fontawesome-svg-core/styles.css";
 import html2canvas from "html2canvas";
 import domtoimage from "dom-to-image-more";
+import GCIMSUploadButton from "./GcImsUploadButton";
 
 
 function HeatmapUploader() {
@@ -21,6 +22,7 @@ function HeatmapUploader() {
   const [heatmapDomain, setHeatmapDomain] = useState(null);
   const [retentionTimes, setRetentionTimes] = useState([null]);
   const [driftTimes, setDriftTimes] = useState([null]);
+  const [scanNumber, setScanNumber] = useState(0);
  
   const [invertColorMap, setInvertColorMap] = useState(false);
 
@@ -682,8 +684,12 @@ const handleDownload = () => {
     });
 };
 
+const pictoram_map ={ 
+  GHS09: "/pictograms/GHS09.png",
+}
 const [predictions, setPredictions] = useState([]);
-
+const formattedScanNumber = scanNumber.toString().padStart(3, "0");
+ 
 const handleRunPrediction1 = async () => {
   if (!titleName) {
     Swal.fire({
@@ -694,11 +700,11 @@ const handleRunPrediction1 = async () => {
     });
     return;
   }
-
+ 
   const fileName = titleName;
   const pollarity = currentPolarity;
-  
-
+ 
+ 
   try {
     // === SHOW SWEETALERT LOADING MODAL ===
     Swal.fire({
@@ -710,7 +716,7 @@ const handleRunPrediction1 = async () => {
         Swal.showLoading();
       }
     });
-
+ 
     // === SEND POST REQUEST ===
     const response = await fetch("http://127.0.0.1:8000/api/predict/gcims/bwa-model", {
       method: "POST",
@@ -722,20 +728,22 @@ const handleRunPrediction1 = async () => {
         polarity: pollarity
       })
     });
-
+ 
     if (!response.ok) {
       throw new Error(`Server error: ${response.status}`);
     }
-
+ 
     const result = await response.json();
-    setPredictions(result.points || []);
-
+    // setPredictions(result.points || []);
+    setPredictionResult(result);
+    setScanNumber(prev => prev + 1);
+ 
     // === CLOSE LOADING MODAL ON SUCCESS ===
     Swal.close();
-
+ 
   } catch (error) {
     console.error("Prediction request failed:", error);
-
+ 
     // === CLOSE LOADING MODAL AND SHOW ERROR ===
     Swal.fire({
       icon: "error",
@@ -745,52 +753,158 @@ const handleRunPrediction1 = async () => {
     });
   }
 };
-
-
+ 
 useEffect(() => {
-  if (!predictionResult) return; // ⛔ No response yet, stop here
-
-  if (predictionResult.red_alert) {
-    // === RED ALERT ===
-    Swal.fire({
-      title: "⚠ ALERT ⚠",
-      html: `
-        <div style="text-align: left;">
-          <p style="font-size: 35px; margin-bottom: 10px;">
-            <strong>Note:</strong> ${predictionResult.note}
-          </p>
-          <p style="font-size: 27px; margin-top: 5px;">
-            <strong>Red Alert:</strong> 🚨 YES
-          </p>
+  if (!predictionResult) return;
+ 
+  const {
+    note,
+    message,
+    confidence,
+    red_alert,
+    pictogram_code,
+    ghs_label,
+    risk_group
+  } = predictionResult;
+ 
+  const isGreen = !red_alert;
+ 
+  // Date + time
+  const now = new Date();
+  const dateStr = now.toLocaleDateString("en-GB");
+  const timeStr = now.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+ 
+  Swal.fire({
+    html: `
+      <div style="display:flex; flex-direction:column; align-items:center; position:relative; padding-top:20px;">
+ 
+        <!-- Right-side date/time -->
+        <div style="
+          position:absolute;
+          top:5px;
+          right:15px;
+          text-align:right;
+          font-size:17px;">
+          Scan ${formattedScanNumber}<br>${dateStr}<br>${timeStr}
         </div>
-      `,
-      icon: "error",
-      background: "#000",
-      color: "#fff",
-      confirmButtonText: "OK",
-      confirmButtonColor: "#ff0000",
-      timer: 1000000000,
-    });
-  } else {
-    // === ONLY NOTE WITH BLUE INFO ICON ===
-    Swal.fire({
-      title: "Information",
-      html: `
-        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;">
-          <span style="font-size: 35px; text-align: center;">
-            <strong>Note:</strong> ${predictionResult.note}
-          </span>
+ 
+        <!-- ALERT ICON -->
+        ${
+          red_alert
+            ? `
+              <svg width="95" height="95" viewBox="0 0 100 100">
+                <path d="M50 5 L95 85 H5 Z" fill="#c00000" stroke="#c00000" stroke-width="4" />
+                <line x1="50" y1="28" x2="50" y2="55"
+                      stroke="white" stroke-width="10" stroke-linecap="round" />
+                <circle cx="50" cy="72" r="7" fill="white"/>
+              </svg>
+            `
+            : `
+              <svg width="95" height="95" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="45" fill="#00aa00" />
+                <text x="50" y="63" text-anchor="middle"
+                      font-size="55" font-weight="bold" fill="white">i</text>
+              </svg>
+            `
+        }
+ 
+        <!-- NOTE (big and bold) -->
+        <div style="font-size:38px; font-weight:bold; margin-top:10px;">
+          ${note}
         </div>
-      `,
-      icon: "info",
-      background: "#000",
-      color: "#fff",
-      confirmButtonColor: "#3085d6",
-      confirmButtonText: "OK",
-      timer: 1000000000,
-    });
-  }
-}, [predictionResult]);
+ 
+        <!-- GREEN ALERT CONTENT -->
+        ${
+          isGreen
+            ? `
+              <div style="font-size:20px; text-align:center; margin-top:20px;">
+                ${message ? `<div style="margin-top:10px;">${message}</div>` : ""}
+                ${
+                  confidence
+                    ? `<div style="margin-top:10px;">Accuracy: <b>${confidence}%</b></div>`
+                    : ""
+                }
+              </div>
+ 
+              <!-- RISK GROUP BOX -->
+              <div style="
+                margin-top:40px;
+                padding:10px 25px;
+                border:4px solid #00aa00;
+                border-radius:10px;
+                font-size:26px;
+                font-weight:bold;">
+                ${risk_group}
+              </div>
+ 
+              <div style="font-size:20px; margin-top:15px;">
+                Non pathogenic biological agent
+              </div>
+            `
+            : ""
+        }
+ 
+<!-- RED ALERT CONTENT -->
+${
+  red_alert
+    ? `
+      <div style="margin-top:20px; font-size:20px; text-align:center;">
+        ${confidence ? `<div>${confidence}% confidence</div>` : ""}
+      </div>
+ 
+      <!-- Pictogram + GHS LABEL -->
+      ${
+        pictogram_code
+          ? `
+            <div style="margin-top:30px; text-align:center;">
+              <img src="${pictoram_map[pictogram_code]}" style="width:150px; height:150px;" />
+              ${
+                ghs_label
+                  ? `<div style="font-size:22px; font-weight:bold; margin-top:10px;">${ghs_label}</div>`
+                  : ""
+              }
+            </div>
+          `
+          : ""
+      }
+ 
+      <!-- RED RISK GROUP BOX -->
+      <div style="
+        margin-top:40px;
+        padding:10px 25px;
+        border:4px solid #c00000;
+        border-radius:10px;
+        font-size:26px;
+        font-weight:bold;
+        text-align:center;
+      ">
+        ${risk_group}
+      </div>
+ 
+      <div style="font-size:20px; margin-top:15px;">
+        Pathogenic biological agent
+      </div>
+    `
+    : ""
+}
+ 
+      </div>
+    `,
+    showConfirmButton: true,
+    confirmButtonText: "OK",
+    background: "#e5e5e5",
+ 
+    didOpen: () => {
+      const popup = Swal.getPopup();
+      popup.style.border = red_alert
+        ? "8px solid red"
+        : "8px solid #00aa00";
+ 
+      popup.style.borderRadius = "25px";
+      popup.style.maxWidth = "600px";
+    }
+  });
+}, [predictionResult, scanNumber]);
 
 
 return (
@@ -819,7 +933,15 @@ return (
     >
       {!heatmapData || !heatmapDomain ? (
         <div style={{ textAlign: "center", padding: "3rem", fontSize: "1.5rem", color: "#555" }}>
-          📂 Please upload your GC-IMS file for visualization.
+          <span
+            style={{ textDecoration: 'underline', cursor: 'pointer' }}
+            onClick={() => document.getElementById('gcims-uploadfile').click()}
+          >
+            📂 Please upload your GC-IMS file for visualization.
+          </span>
+          <div style={{display: 'none'}}>
+           <GCIMSUploadButton onUpload={handleGCIMSDataUpload}/>
+          </div>
         </div>
       ) : (
         <>
@@ -995,7 +1117,7 @@ return (
 
               <div style={{ marginTop: "8px" }}>
                 <label htmlFor="row-slider" style={{ color: "#000", fontSize: 18 }}>
-                  Select Spectra Index:
+                  Select Retention Time:
                 </label>
                 <input
                   id="row-slider"
@@ -1081,7 +1203,7 @@ return (
 
               <div style={{ marginTop: "8px" }}>
                 <label htmlFor="column-slider" style={{ color: "#000", fontSize: 18 }}>
-                  Select Spectra Index:
+                  Select Drift Time:
                 </label>
                 <input
                   id="column-slider"
