@@ -1134,7 +1134,7 @@ return (
           >
             <div>
               <label htmlFor="column-slider" style={{ color: "#000", fontSize: 18 }}>
-                Select Spectra 1 Index:
+                Select Measurement Time #1:
               </label>
               {dataArray0 && (
                 <>
@@ -1159,7 +1159,7 @@ return (
 
             <div>
               <label htmlFor="column-slider2" style={{ color: "#000", fontSize: 18 }}>
-                Select Spectra 2 Index:
+                Select Measurement Time #2:
               </label>
               {dataArray2 && (
                 <>
