@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect } from "react";
 import ndarray from "ndarray";
 import Swal from "sweetalert2";
 import { HeatmapVis, getDomain, Toolbar, ColorMapSelector,  Separator, ToggleBtn, LineVis, Overlay, Annotation } from "@h5web/lib";
-import { h5wasmReady, FS, File, configure } from "h5wasm";
+import * as h5wasm from "h5wasm";
 import "@h5web/lib/dist/styles.css";
 import Sidebar from "./posts/Sidebar";
 import styles from "../styles/Home.module.css";
@@ -12,10 +12,11 @@ import "@fortawesome/fontawesome-svg-core/styles.css";
 import html2canvas from "html2canvas";
 import domtoimage from "dom-to-image-more";
 import GCIMSUploadButton from "./GcImsUploadButton";
+import { API_URL } from "../config";
 
 
 function HeatmapUploader() {
-
+  const { File, FS } = h5wasm;
   const [titleName, setTitleName] = useState("GC-IMS Heatmap");
   const [predictionResult, setPredictionResult] = useState(null);
   const [heatmapData, setHeatmapData] = useState(null);
@@ -137,14 +138,13 @@ function HeatmapUploader() {
 
     try {
       
-      await h5wasmReady;
+        await h5wasm.ready;
 
-      
-      const filePath = `/tmp/${filename}`;
-      const data = new Uint8Array(buffer);
-      FS.writeFile(filePath, data);
-      // Now open the file using its path
-      const h5File = new File(filePath, "r");
+        const filePath = `/tmp/${filename}`;
+        const data = new Uint8Array(buffer);
+        FS.writeFile(filePath, data);
+
+        const h5File = new File(filePath, "r");
 
       setTitleName(filename);
 
@@ -718,16 +718,16 @@ const handleRunPrediction1 = async () => {
     });
  
     // === SEND POST REQUEST ===
-    const response = await fetch("http://127.0.0.1:8000/api/predict/gcims/bwa-model", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        file_name: fileName,
-        polarity: pollarity
-      })
-    });
+      const response = await fetch(`${API_URL}/api/predict/gcims/bwa-model`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          file_name: fileName,
+          polarity: pollarity
+        })
+      });
  
     if (!response.ok) {
       throw new Error(`Server error: ${response.status}`);
@@ -756,28 +756,29 @@ const handleRunPrediction1 = async () => {
  
 useEffect(() => {
   if (!predictionResult) return;
- 
+
   const {
     note,
     message,
     confidence,
-    red_alert,
     pictogram_code,
     ghs_label,
     risk_group
   } = predictionResult;
- 
-  const isGreen = !red_alert;
- 
+
+  // NEW LOGIC
+  const isRed = Number(risk_group) > 1;
+  const isGreen = !isRed;
+
   // Date + time
   const now = new Date();
   const dateStr = now.toLocaleDateString("en-GB");
   const timeStr = now.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
- 
+
   Swal.fire({
     html: `
       <div style="display:flex; flex-direction:column; align-items:center; position:relative; padding-top:20px;">
- 
+
         <!-- Right-side date/time -->
         <div style="
           position:absolute;
@@ -787,10 +788,10 @@ useEffect(() => {
           font-size:17px;">
           Scan ${formattedScanNumber}<br>${dateStr}<br>${timeStr}
         </div>
- 
+
         <!-- ALERT ICON -->
         ${
-          red_alert
+          isRed
             ? `
               <svg width="95" height="95" viewBox="0 0 100 100">
                 <path d="M50 5 L95 85 H5 Z" fill="#c00000" stroke="#c00000" stroke-width="4" />
@@ -807,12 +808,12 @@ useEffect(() => {
               </svg>
             `
         }
- 
+
         <!-- NOTE (big and bold) -->
         <div style="font-size:38px; font-weight:bold; margin-top:10px;">
           ${note}
         </div>
- 
+
         <!-- GREEN ALERT CONTENT -->
         ${
           isGreen
@@ -825,7 +826,7 @@ useEffect(() => {
                     : ""
                 }
               </div>
- 
+
               <!-- RISK GROUP BOX -->
               <div style="
                 margin-top:40px;
@@ -834,72 +835,72 @@ useEffect(() => {
                 border-radius:10px;
                 font-size:26px;
                 font-weight:bold;">
-                ${risk_group}
+                <b>Risk Group ${risk_group}<b>
               </div>
- 
+
               <div style="font-size:20px; margin-top:15px;">
                 Non pathogenic biological agent
               </div>
             `
             : ""
         }
- 
-<!-- RED ALERT CONTENT -->
-${
-  red_alert
-    ? `
-      <div style="margin-top:20px; font-size:20px; text-align:center;">
-        ${confidence ? `<div>${confidence}% confidence</div>` : ""}
-      </div>
- 
-      <!-- Pictogram + GHS LABEL -->
-      ${
-        pictogram_code
-          ? `
-            <div style="margin-top:30px; text-align:center;">
-              <img src="${pictoram_map[pictogram_code]}" style="width:150px; height:150px;" />
+
+        <!-- RED ALERT CONTENT -->
+        ${
+          isRed
+            ? `
+              <div style="margin-top:20px; font-size:20px; text-align:center;">
+                ${confidence ? `<div>${confidence}% confidence</div>` : ""}
+              </div>
+
+              <!-- Pictogram + GHS LABEL -->
               ${
-                ghs_label
-                  ? `<div style="font-size:22px; font-weight:bold; margin-top:10px;">${ghs_label}</div>`
+                pictogram_code
+                  ? `
+                    <div style="margin-top:30px; text-align:center;">
+                      <img src="${pictoram_map[pictogram_code]}" style="width:150px; height:150px;" />
+                      ${
+                        ghs_label
+                          ? `<div style="font-size:22px; font-weight:bold; margin-top:10px;">${ghs_label}</div>`
+                          : ""
+                      }
+                    </div>
+                  `
                   : ""
               }
-            </div>
-          `
-          : ""
-      }
- 
-      <!-- RED RISK GROUP BOX -->
-      <div style="
-        margin-top:40px;
-        padding:10px 25px;
-        border:4px solid #c00000;
-        border-radius:10px;
-        font-size:26px;
-        font-weight:bold;
-        text-align:center;
-      ">
-        ${risk_group}
-      </div>
- 
-      <div style="font-size:20px; margin-top:15px;">
-        Pathogenic biological agent
-      </div>
-    `
-    : ""
-}
- 
+
+              <!-- RED RISK GROUP BOX -->
+              <div style="
+                margin-top:40px;
+                padding:10px 25px;
+                border:4px solid #c00000;
+                border-radius:10px;
+                font-size:26px;
+                font-weight:bold;
+                text-align:center;
+              ">
+                <b>Risk group ${risk_group} </b>
+              </div>
+
+              <div style="font-size:20px; margin-top:15px;">
+                Pathogenic biological agent
+              </div>
+            `
+            : ""
+        }
+
       </div>
     `,
     showConfirmButton: true,
     confirmButtonText: "OK",
     background: "#e5e5e5",
- 
+
     didOpen: () => {
       const popup = Swal.getPopup();
-      popup.style.border = red_alert
+      popup.style.border = isRed
         ? "8px solid red"
         : "8px solid #00aa00";
- 
+
       popup.style.borderRadius = "25px";
       popup.style.maxWidth = "600px";
     }
@@ -1087,7 +1088,7 @@ return (
                   showGrid={showImsGrid}
                   title={"IMS Graph" + ": " + titleName}
                   abscissaParams={{ value: driftTimes, label: "Drift Time (ms)" }}
-                  ordinateLabel="Ion Current pA"
+                  ordinateLabel="Ion Current (pA)"
                 >
                 <Overlay
                   style={{
