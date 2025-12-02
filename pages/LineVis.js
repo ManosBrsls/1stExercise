@@ -661,18 +661,20 @@ useEffect(() => {
   if (!predictionResult) return;
 
   const {
+    prediction,
     note,
     cas_number,
     confidence,
     message,
     pictogram_code,
     nfpa,
-    ghs_label
+    ghs_label,
+    index,
   } = predictionResult;
 
   // ======= ALERT LOGIC =======
-  const criticalNotes = ["TMP", "TEP", "DMMP", "DEMP"];
-  const finalRedAlert = criticalNotes.includes(note); // red if note matches
+  const criticalNotes = ["TMP", "TEP", "DMMP", "DEMP", "Tabun (GA)"];
+  const finalRedAlert = criticalNotes.includes(prediction); // red if note matches
   const isGreen = !finalRedAlert; // green otherwise
 
   let pictogramList = [];
@@ -734,7 +736,8 @@ useEffect(() => {
           finalRedAlert
             ? `<div style="width: 100%; max-width: 420px; font-size: 18px; text-align: left;">
                  ${cas_number ? `N° CAS : <b>${cas_number}</b><br>` : ""}
-                 ${confidence ? `${confidence} % confidence` : ""}
+                 ${prediction} detect at time ${index} minute with  ${confidence ? `${mul_confidence1}  confidence.` : ""}
+
                </div>
                ${pictogramList.length > 0
                  ? `<div style="text-align:center; margin-top: 15px;">
@@ -845,20 +848,21 @@ useEffect(() => {
   if (!predictionResult2) return;
 
   const {
+    prediction,
     note,
     cas_number,
     confidence,
     message,
     pictogram_code,
     nfpa,
-    ghs_label
+    ghs_label,
+    index,
   } = predictionResult2;
 
   // ======= ALERT LOGIC =======
-  const criticalNotes = ["TMP", "TEP", "DMMP", "DEMP"];
-  const finalRedAlert = criticalNotes.includes(note); // red if note matches
+  const criticalNotes = ["TMP", "TEP", "DMMP", "DEMP", "Tabun (GA)"];
+  const finalRedAlert = criticalNotes.includes(prediction); // red if note matches
   const isGreen = !finalRedAlert; // green otherwise
-  const mul_confidence2 = (confidence * 100)
 
   let pictogramList = [];
   if (Array.isArray(pictogram_code)) {
@@ -866,6 +870,7 @@ useEffect(() => {
   } else if (typeof pictogram_code === "string") {
     pictogramList = pictogram_code.split(",").map(id => id.trim());
   }
+  const mul_confidence2 = (confidence * 100)
 
   // ===== DATE + TIME =====
   const now = new Date();
@@ -918,7 +923,8 @@ useEffect(() => {
           finalRedAlert
             ? `<div style="width: 100%; max-width: 420px; font-size: 18px; text-align: left;">
                  ${cas_number ? `N° CAS : <b>${cas_number}</b><br>` : ""}
-                 ${confidence ? `${confidence} % confidence` : ""}
+                 ${prediction} detect at time ${index} minute with  ${confidence ? `${mul_confidence2}  confidence.` : ""}
+
                </div>
                ${pictogramList.length > 0
                  ? `<div style="text-align:center; margin-top: 15px;">

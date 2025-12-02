@@ -766,7 +766,7 @@ useEffect(() => {
     red_alert
   } = predictionResult;
 
-  const mul_confidence = (confidence * 100)
+  const mul_confidence = Math.floor(confidence * 100) 
 
   // Determine alert type based on red_alert
   let alertColor = "#00aa00"; // default green
