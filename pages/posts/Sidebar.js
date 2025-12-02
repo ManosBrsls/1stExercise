@@ -119,14 +119,14 @@ const handleIMSUpload = (filename, buffer, totalCount) => {
         <li className={styles.menuItemStyle} onClick={handleGCIMSClick}>
           <a style={linkStyle}>
             <FontAwesomeIcon icon={faChartLine} style={iconStyle} />
-            GC-IMS
+            (Py-)GC-IMS
           </a>
 
           {isGCIMSVisible && (
             <div className={styles.dropdownMenu} ref={gcImsDropdownRef}>
               <Link legacyBehavior href="/HeatmapVis">
                 <a className={styles.dropdownItem}>
-                  <span style={dropdownTextStyle}>GC-IMS Graph</span>
+                  <span style={dropdownTextStyle}>(Py-)GC-IMS Graph</span>
                   <FontAwesomeIcon icon={faChartLine} style={{ ...dropdownIconStyle, fontSize: '20px', width: '20px', height: '20px' }} />
                 </a>
               </Link>
@@ -146,8 +146,8 @@ const handleIMSUpload = (filename, buffer, totalCount) => {
 
 // styles
 const sidebarStyle = {
-  minWidth: '200px',
-  maxWidth: '200px', 
+  minWidth: '208px',
+  maxWidth: '211px', 
   height: '100vh',
   background: 'linear-gradient(135deg, #4c4c4c, #111)',
   padding: '5px',

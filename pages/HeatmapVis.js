@@ -763,12 +763,21 @@ useEffect(() => {
     confidence,
     pictogram_code,
     ghs_label,
-    risk_group
+    red_alert
   } = predictionResult;
 
-  // NEW LOGIC
-  const isRed = Number(risk_group) > 1;
-  const isGreen = !isRed;
+  // Determine alert type based on red_alert
+  let alertColor = "#00aa00"; // default green
+  let isRed = false;
+  let isOrange = false;
+
+  if (red_alert === 2) {
+    alertColor = "orange";
+    isOrange = true;
+  } else if (red_alert === 3) {
+    alertColor = "#c00000";
+    isRed = true;
+  }
 
   // Date + time
   const now = new Date();
@@ -792,21 +801,23 @@ useEffect(() => {
         <!-- ALERT ICON -->
         ${
           isRed
-            ? `
-              <svg width="95" height="95" viewBox="0 0 100 100">
+            ? `<svg width="95" height="95" viewBox="0 0 100 100">
                 <path d="M50 5 L95 85 H5 Z" fill="#c00000" stroke="#c00000" stroke-width="4" />
                 <line x1="50" y1="28" x2="50" y2="55"
                       stroke="white" stroke-width="10" stroke-linecap="round" />
                 <circle cx="50" cy="72" r="7" fill="white"/>
-              </svg>
-            `
-            : `
-              <svg width="95" height="95" viewBox="0 0 100 100">
+              </svg>`
+            : isOrange
+            ? `<svg width="95" height="95" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="45" fill="orange" />
+                <text x="50" y="63" text-anchor="middle"
+                      font-size="55" font-weight="bold" fill="white">!</text>
+              </svg>`
+            : `<svg width="95" height="95" viewBox="0 0 100 100">
                 <circle cx="50" cy="50" r="45" fill="#00aa00" />
                 <text x="50" y="63" text-anchor="middle"
                       font-size="55" font-weight="bold" fill="white">i</text>
-              </svg>
-            `
+              </svg>`
         }
 
         <!-- NOTE (big and bold) -->
@@ -814,93 +825,45 @@ useEffect(() => {
           ${note}
         </div>
 
-        <!-- GREEN ALERT CONTENT -->
+        <!-- ALERT CONTENT -->
+        <div style="font-size:20px; text-align:center; margin-top:20px;">
+          ${message ? `<div style="margin-top:10px;">${message}</div>` : ""}
+          ${confidence ? `<div style="margin-top:10px;">Confidence: <b>${confidence}%</b></div>` : ""}
+        </div>
+
+        <!-- Pictogram + GHS LABEL -->
         ${
-          isGreen
-            ? `
-              <div style="font-size:20px; text-align:center; margin-top:20px;">
-                ${message ? `<div style="margin-top:10px;">${message}</div>` : ""}
-                ${
-                  confidence
-                    ? `<div style="margin-top:10px;">Accuracy: <b>${confidence}%</b></div>`
-                    : ""
-                }
-              </div>
-
-              <!-- RISK GROUP BOX -->
-              <div style="
-                margin-top:40px;
-                padding:10px 25px;
-                border:4px solid #00aa00;
-                border-radius:10px;
-                font-size:26px;
-                font-weight:bold;">
-                <b>Risk Group ${risk_group}<b>
-              </div>
-
-              <div style="font-size:20px; margin-top:15px;">
-                Non pathogenic biological agent
-              </div>
-            `
+          pictogram_code
+            ? `<div style="margin-top:30px; text-align:center;">
+                 <img src="${pictoram_map[pictogram_code]}" style="width:150px; height:150px;" />
+                 ${ghs_label ? `<div style="font-size:22px; font-weight:bold; margin-top:10px;">${ghs_label}</div>` : ""}
+               </div>`
             : ""
         }
 
-        <!-- RED ALERT CONTENT -->
-        ${
-          isRed
-            ? `
-              <div style="margin-top:20px; font-size:20px; text-align:center;">
-                ${confidence ? `<div>${confidence}% confidence</div>` : ""}
-              </div>
+        <!-- RISK GROUP BOX -->
+        <div style="
+          margin-top:40px;
+          padding:10px 25px;
+          border:4px solid ${alertColor};
+          border-radius:10px;
+          font-size:26px;
+          font-weight:bold;
+          text-align:center;">
+          <b>Risk Group ${red_alert}</b>
+        </div>
 
-              <!-- Pictogram + GHS LABEL -->
-              ${
-                pictogram_code
-                  ? `
-                    <div style="margin-top:30px; text-align:center;">
-                      <img src="${pictoram_map[pictogram_code]}" style="width:150px; height:150px;" />
-                      ${
-                        ghs_label
-                          ? `<div style="font-size:22px; font-weight:bold; margin-top:10px;">${ghs_label}</div>`
-                          : ""
-                      }
-                    </div>
-                  `
-                  : ""
-              }
-
-              <!-- RED RISK GROUP BOX -->
-              <div style="
-                margin-top:40px;
-                padding:10px 25px;
-                border:4px solid #c00000;
-                border-radius:10px;
-                font-size:26px;
-                font-weight:bold;
-                text-align:center;
-              ">
-                <b>Risk group ${risk_group} </b>
-              </div>
-
-              <div style="font-size:20px; margin-top:15px;">
-                Pathogenic biological agent
-              </div>
-            `
-            : ""
-        }
-
+        <div style="font-size:20px; margin-top:15px;">
+          ${isRed || isOrange ? "Pathogenic biological agent" : "Non pathogenic biological agent"}
+        </div>
       </div>
     `,
     showConfirmButton: true,
     confirmButtonText: "OK",
     background: "#e5e5e5",
-
     didOpen: () => {
       const popup = Swal.getPopup();
-      popup.style.border = isRed
-        ? "8px solid red"
-        : "8px solid #00aa00";
-
+      popup.style.border = `8px solid ${alertColor}`;
       popup.style.borderRadius = "25px";
       popup.style.maxWidth = "600px";
     }
@@ -938,7 +901,9 @@ return (
             style={{ textDecoration: 'underline', cursor: 'pointer' }}
             onClick={() => document.getElementById('gcims-uploadfile').click()}
           >
-            📂 Please upload your GC-IMS file for visualization.
+            📂 Please upload your GC-IMS file for visualization
+              <br />
+                (click here)
           </span>
           <div style={{display: 'none'}}>
            <GCIMSUploadButton onUpload={handleGCIMSDataUpload}/>
@@ -991,7 +956,7 @@ return (
               >
                 <HeatmapVis
                   className={styles.container5}
-                  title={"GC_IMS Spectrum" + ": " + titleName}
+                  title={"(Py-)GC-IMS Spectrum" + ": " + titleName}
                   abscissaParams={{ value: retentionTimes, label: "Retention time (s)" }}
                   ordinateParams={{ value: driftTimes, label: "Drift time (ms)" }}
                   aspect="auto"
@@ -1129,7 +1094,7 @@ return (
                   onChange={handleImsSliderChange}
                 />
                 <span style={{ color: "#000", marginLeft: "10px", fontSize: 20 }}>
-                  {[selectedIndex]}
+                  {retentionTimes?.[selectedIndex]?.toFixed(3)} s
                 </span>
               </div>
             </>
@@ -1168,7 +1133,7 @@ return (
                   scaleType={"linear"}
                   curveType="OnlyLine"
                   showGrid={showGrid}
-                  title={"GC_IMS Graph" + ": " + titleName}
+                  title={"GC-IMS Graph" + ": " + titleName}
                   abscissaParams={{
                     value:
                       currentPolarity === 0 ? retentionTimes0 : retentionTimes1,
@@ -1219,9 +1184,7 @@ return (
                   onChange={handleGcSliderChange}
                 />
                 <span style={{ color: "#000", marginLeft: "10px", fontSize: 20 }}>
-                  {currentPolarity === 0
-                    ? [selectedGcIndex]
-                    : [selectedGcIndex]}
+                    {(currentPolarity === 0 ? driftTimes0?.[selectedGcIndex] : driftTimes1?.[selectedGcIndex])?.toFixed(3)} ms
                 </span>
               </div>
             </>

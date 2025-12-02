@@ -360,6 +360,7 @@ function IMSLineCharts() {
           firstColumn[i] = dataArray0.get(i, 0);            
       }
       const initialLine = ndarray(firstColumn, [firstColumn.length]);
+      
 
       if (chartNumber === 1) {
         setTitleName(filename);
@@ -526,6 +527,7 @@ const handleDownloadLineData1 = async () => {
   });
 };
 
+console.log(lineDomain1);
 
 const handleDownloadLineData2 = async () => {
   // Ask for password with SweetAlert2 (hidden input)
@@ -1000,7 +1002,9 @@ return (
           <span style={{ textDecoration: 'underline', cursor: 'pointer' }}
             onClick={() => imsUploadRef.current?.openFileDialog()}
             >
-          📂 Please upload your IMS files for visualization.
+          📂 Please upload your IMS files for visualization. 
+            <br />
+              (click here)
           </span>
         </div>
       ) : (
@@ -1158,9 +1162,11 @@ return (
             </div>
 
             <div>
+              {lineData2 && lineDomain2 && driftTimes2 &&(
               <label htmlFor="column-slider2" style={{ color: "#000", fontSize: 18 }}>
                 Select Measurement Time #2:
               </label>
+              )}
               {dataArray2 && (
                 <>
                   <input
