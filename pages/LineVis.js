@@ -624,7 +624,7 @@ const handleRunPrediction1 = async () => {
     });
 
 
-      const response = await fetch(`${API_URL}/api/predict/ims/dpm-model`, {
+      const response = await fetch(`${API_URL}/api/predict/ims/cwa-model`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -681,6 +681,7 @@ useEffect(() => {
   } else if (typeof pictogram_code === "string") {
     pictogramList = pictogram_code.split(",").map(id => id.trim());
   }
+  const mul_confidence1 = (confidence * 100)
 
   // ===== DATE + TIME =====
   const now = new Date();
@@ -723,7 +724,7 @@ useEffect(() => {
           isGreen
             ? `<div style="font-size: 20px; text-align:center; max-width:420px;">
                  ${message ? `<div style="margin-top:10px;">${message}</div>` : ""}
-                 ${confidence ? `<div style="margin-top:10px;">Confidence: <b>${confidence}%</b></div>` : ""}
+                 ${confidence ? `<div style="margin-top:10px;">Confidence: <b>${mul_confidence1}</b></div>` : ""}
                </div>`
             : ""
         }
@@ -807,7 +808,7 @@ const handleRunPrediction2 = async () => {
       },
     });
 
-      const response = await fetch(`${API_URL}/api/predict/ims/dpm-model`, {
+      const response = await fetch(`${API_URL}/api/predict/ims/cwa-model`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -857,6 +858,7 @@ useEffect(() => {
   const criticalNotes = ["TMP", "TEP", "DMMP", "DEMP"];
   const finalRedAlert = criticalNotes.includes(note); // red if note matches
   const isGreen = !finalRedAlert; // green otherwise
+  const mul_confidence2 = (confidence * 100)
 
   let pictogramList = [];
   if (Array.isArray(pictogram_code)) {
@@ -906,7 +908,7 @@ useEffect(() => {
           isGreen
             ? `<div style="font-size: 20px; text-align:center; max-width:420px;">
                  ${message ? `<div style="margin-top:10px;">${message}</div>` : ""}
-                 ${confidence ? `<div style="margin-top:10px;">Confidence: <b>${confidence}%</b></div>` : ""}
+                 ${confidence ? `<div style="margin-top:10px;">Confidence: <b>${mul_confidence2}</b></div>` : ""}
                </div>`
             : ""
         }
@@ -1155,7 +1157,7 @@ return (
                     onChange={handleImsSliderChange}
                   />
                   <span style={{ color: "#000", marginLeft: "10px", fontSize: 20 }}>
-                    {[selectedIndex]}
+                    {[selectedIndex]}(min)
                   </span>
                 </>
               )}
@@ -1178,7 +1180,7 @@ return (
                     onChange={handleSlider2}
                   />
                   <span style={{ color: "#000", marginLeft: "10px", fontSize: 20 }}>
-                    {[selectedIndex2]}
+                    {[selectedIndex2]}(min)
                   </span>
                 </>
               )}

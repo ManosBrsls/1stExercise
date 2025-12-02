@@ -766,6 +766,8 @@ useEffect(() => {
     red_alert
   } = predictionResult;
 
+  const mul_confidence = (confidence * 100)
+
   // Determine alert type based on red_alert
   let alertColor = "#00aa00"; // default green
   let isRed = false;
@@ -828,7 +830,7 @@ useEffect(() => {
         <!-- ALERT CONTENT -->
         <div style="font-size:20px; text-align:center; margin-top:20px;">
           ${message ? `<div style="margin-top:10px;">${message}</div>` : ""}
-          ${confidence ? `<div style="margin-top:10px;">Confidence: <b>${confidence}%</b></div>` : ""}
+          ${confidence ? `<div style="margin-top:10px;">Confidence: <b>${mul_confidence}</b></div>` : ""}
         </div>
 
         <!-- Pictogram + GHS LABEL -->
@@ -901,7 +903,7 @@ return (
             style={{ textDecoration: 'underline', cursor: 'pointer' }}
             onClick={() => document.getElementById('gcims-uploadfile').click()}
           >
-            📂 Please upload your GC-IMS file for visualization
+            📂 Please upload your (Py-)GC-IMS file for visualization
               <br />
                 (click here)
           </span>

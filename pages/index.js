@@ -46,9 +46,9 @@ export default function Home() {
             </div>
 
             <div className={styles.card2}>
-              <h2>Gas Chromatography–Ion Mobility Spectrometry (GC-IMS)</h2>
+              <h2> (Pyrolysis)-Gas Chromatography–Ion Mobility Spectrometry (Py-GC-IMS)</h2>
               <p>
-                Gas Chromatography–Ion Mobility Spectrometry (GC-IMS) combines gas
+                (Pyrolysis)-Gas Chromatography–Ion Mobility Spectrometry (Py-GC-IMS) combines gas
                 chromatography (GC) and ion mobility spectrometry (IMS) to achieve
                 highly selective and sensitive chemical analysis. The GC first
                 separates complex mixtures into individual compounds based on
